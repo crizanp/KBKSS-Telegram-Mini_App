@@ -49,6 +49,7 @@ const RewardModalContainer = styled.div`
 const ModalHeader = styled.h2`
   text-align: center;
   color: #333;
+  font-size:34px;
 `;
 
 // Claim Button
@@ -57,8 +58,8 @@ const ClaimButton = styled.button`
   color: white;
   border: none;
   border-radius: 10px;
-  padding: 15px 20px;
-  font-size: 16px;
+  padding: 12px 20px;
+  font-size: 23px;
   cursor: pointer;
   width: 100%;
   margin-top: 20px;
@@ -100,10 +101,10 @@ const GameUnlockModal = ({ message, onConfirm, onCancel, loading, iconUrl, title
         {/* Icon Image */}
         <StyledImage src={iconUrl} alt="Modal Icon" />
 
-        <p style={{ textAlign: "center", color: "#333", marginBottom: "20px" }}>{message}</p>
+        <p style={{ textAlign: "center", color: "#333", marginBottom: "20px",fontSize:"large" }}>{message}</p>
 
         <ClaimButton onClick={onConfirm} disabled={loading}>
-          {loading ? "Unlocking..." : `Go Ahead - Spend ${pointsCost} Points`}
+          {loading ? "Unlocking..." : `Go Ahead`}
         </ClaimButton>
       </RewardModalContainer>
     </ModalOverlay>

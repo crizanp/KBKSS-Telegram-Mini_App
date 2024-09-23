@@ -222,7 +222,7 @@ const handleUnlockQuiz = async () => {
               <GameIcon src="https://i.ibb.co/rMcfScz/3d-1.png" alt="Quiz Icon" />
             </DimmedIconWrapper>
             <div>Quiz</div>
-            <small>Unlock by spending 25,000 points!</small>
+            <small>Unlock by spending 25,000 $GEMS!</small>
           </GameItem>
         ) : (
           <GameItem to="/ecosystem">
