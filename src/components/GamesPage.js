@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import UserInfo from './UserInfo';
 import GameUnlockModal from "./GameUnlockModal";
 import { usePoints } from "../context/PointsContext";
+import { showToast } from './ToastNotification'; // Import showToast function
+import { ToastContainer } from 'react-toastify'; // Import ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // Import toastify styles
 
 // Import styles from external file
 import {
@@ -18,7 +19,7 @@ import {
   GameTitle,
   GameDescription,
   GameIcon,
-  GameItemTitle // Import the new title component
+  GameItemTitle
 } from './GamesPageStyles'; // Import styled components
 
 function GamesPage() {
@@ -39,7 +40,7 @@ function GamesPage() {
           const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
           setQuizUnlocked(response.data.quizUnlocked);
         } catch (error) {
-          console.error('Error fetching user info:', error);
+          showToast('Error fetching user info.', 'error');
         }
       };
       fetchUserInfo();
@@ -59,29 +60,9 @@ function GamesPage() {
       await axios.put(`${process.env.REACT_APP_API_URL}/user-info/unlock-quiz/${userID}`, {
         points: newPoints,
       });
-      toast.success('Success! You have unlocked the quiz!', { 
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: true,
-        style: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          color: 'white',
-          borderRadius: '10px',
-        },
-      });
+      showToast('Success! You have unlocked the quiz!', 'success');
     } catch (error) {
-      console.error('Error syncing unlock with server:', error);
-      toast.error('Error unlocking quiz. Please try again!', { 
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: true,
-        style: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          color: 'white',
-          borderRadius: '10px',
-        },
-      });
-
+      showToast('Error unlocking quiz. Please try again!', 'error');
       setPoints(userPoints);
       localStorage.setItem(`points_${userID}`, userPoints);
       setQuizUnlocked(false);
@@ -96,16 +77,7 @@ function GamesPage() {
     if (userPoints >= 25000 && !quizUnlocked) {
       setModalOpen(true);
     } else if (userPoints < 25000) {
-      toast.warn('Oops! You do not have sufficient balance to unlock this game.', {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: true,
-        style: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          color: 'white',
-          borderRadius: '10px',
-        },
-      });
+      showToast('Oops! You do not have sufficient balance to unlock this game.', 'warn');
     }
   };
 
@@ -141,16 +113,7 @@ function GamesPage() {
           <GameItemTitle>Spin Wheel</GameItemTitle>
         </GameItem>
 
-        <GameItem onClick={() => toast.warn('Oops! You do not have sufficient balance to unlock this game.', {
-          position: "top-center",
-          autoClose: 3000,
-          hideProgressBar: true,
-          style: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
-            borderRadius: '10px',
-          },
-        })} locked>
+        <GameItem onClick={() => showToast('Oops! You do not have sufficient balance to unlock this game.', 'warn')} locked>
           <LockIcon />
           <DimmedIconWrapper>
             <GameIcon src="https://i.ibb.co/20zNsDw/3d-3.png" alt="Treasure Hunt Icon" />
@@ -158,16 +121,7 @@ function GamesPage() {
           <GameItemTitle>Treasure Hunt</GameItemTitle>
         </GameItem>
 
-        <GameItem onClick={() => toast.warn('this game is on the way keep calm.', {
-          position: "top-center",
-          autoClose: 3000,
-          hideProgressBar: true,
-          style: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
-            borderRadius: '10px',
-          },
-        })} locked>
+        <GameItem onClick={() => showToast('This game is on the way, stay tuned.', 'warn')} locked>
           <LockIcon />
           <DimmedIconWrapper>
             <GameIcon src="https://cdn-icons-png.freepik.com/512/8853/8853822.png" alt="Predict & Win Icon" />
@@ -175,16 +129,7 @@ function GamesPage() {
           <GameItemTitle>Predict & Win</GameItemTitle>
         </GameItem>
 
-        <GameItem onClick={() => toast.warn('this game is on the way keep calm', {
-          position: "top-center",
-          autoClose: 3000,
-          hideProgressBar: true,
-          style: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
-            borderRadius: '10px',
-          },
-        })} locked>
+        <GameItem onClick={() => showToast('This game is on the way, stay tuned', 'warn')} locked>
           <LockIcon />
           <DimmedIconWrapper>
             <GameIcon src="https://www.freeiconspng.com/thumbs/eagle-icon-png/eagle-icon-png-9.png" alt="Catch the Eagle Icon" />

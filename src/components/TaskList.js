@@ -5,7 +5,8 @@ import { usePoints } from "../context/PointsContext";
 import { getUserID } from "../utils/getUserID";
 import UserInfo from "./UserInfo";
 import { FaChevronRight } from "react-icons/fa";
-import FloatingMessage from "./FloatingMessage";
+import { showToast } from './ToastNotification'; // Import the showToast function
+import ToastNotification from './ToastNotification'; // Import the ToastNotification component
 import { FaRegGem } from "react-icons/fa";
 import styled from "styled-components";
 import SkeletonLoaderTaskPage from "./SkeletonLoaderTaskPage";
@@ -133,7 +134,6 @@ const TaskList = () => {
   const [timer, setTimer] = useState(10);
   const [timerStarted, setTimerStarted] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const audioRef = useRef(null);
   const [windowSize, setWindowSize] = useState({
@@ -171,7 +171,7 @@ const TaskList = () => {
         });
         setCompletedTasks(completedTasksMap);
       } catch (error) {
-        console.error("Unexpected error fetching user data:", error);
+        showToast('Unexpected error fetching user data', 'error');
       }
 
       try {
@@ -189,7 +189,7 @@ const TaskList = () => {
 
         setTasks(categorizedTasks);
       } catch (taskFetchError) {
-        console.error("Error fetching tasks:", taskFetchError);
+        showToast('Error fetching tasks', 'error');
       } finally {
         setLoading(false);
       }
@@ -273,7 +273,7 @@ const TaskList = () => {
       }));
 
       // Show success message and confetti
-      setMessage({ text: "Points awarded!", type: "success" });
+      showToast('Points awarded!', 'success');
       setShowConfetti(true);
       audioRef.current.play();
 
@@ -285,7 +285,7 @@ const TaskList = () => {
       setSelectedTask(null);
     } catch (error) {
       console.error("Error claiming reward:", error);
-      setMessage({ text: "Error claiming the reward.", type: "error" });
+      showToast('Error claiming the reward.', 'error');
     } finally {
       setUnderModeration(false);
     }
@@ -297,17 +297,8 @@ const TaskList = () => {
 
   return (
     <>
-      {message && (
-        <FloatingMessage
-          message={message.text}
-          type={message.type}
-          duration={3000}
-          onClose={() => setMessage(null)}
-        />
-      )}
-
+      {/* Confetti and Points Display */}
       <audio ref={audioRef} src={celebrationSound} />
-
       {showConfetti && (
         <Confetti width={windowSize.width} height={windowSize.height} />
       )}
@@ -436,6 +427,9 @@ const TaskList = () => {
           )}
         </TaskContainer>
       )}
+
+      {/* Render the ToastContainer globally */}
+      <ToastNotification />
     </>
   );
 };
