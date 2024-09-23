@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
-import { FaLock } from "react-icons/fa"; // Importing the lock icon from react-icons
+import { FaLock } from "react-icons/fa";
+import axios from "axios";
 import UserInfo from './UserInfo';
+import ConfirmationModal from "./ConfirmationModal";  // Your confirmation modal component
+import { usePoints } from "../context/PointsContext"; // Import usePoints from your context
 
 // Animations
 const fadeIn = keyframes`
@@ -44,20 +47,20 @@ const GameList = styled.div`
 `;
 
 const GameItem = styled(Link)`
-  background-color: rgba(31, 31, 31, 0.85); // Transparent dark background for a glassy effect
+  background-color: rgba(31, 31, 31, 0.85);
   padding: 30px 20px;
   border-radius: 15px;
   display: flex;
   flex-direction: column;
-  justify-content: center;  // Centering content vertically
-  align-items: center;  // Centering content horizontally
+  justify-content: center;
+  align-items: center;
   color: white;
   text-decoration: none;
-  font-size: 22px;  // Increased text size
+  font-size: 22px;
   text-align: center;
   transition: transform 0.3s, background-color 0.3s, box-shadow 0.3s;
   backdrop-filter: blur(10px);
-  position: relative;  // Relative positioning to align the lock icon
+  position: relative;
 
   &:hover {
     transform: translateY(-8px);
@@ -82,10 +85,10 @@ const GameItem = styled(Link)`
     locked &&
     `
     position: relative;
-    pointer-events: none; // Prevents clickability
+    pointer-events: none;
     &:hover {
       transform: none;
-      background-color: rgba(31, 31, 31, 0.85); // No hover effect when locked
+      background-color: rgba(31, 31, 31, 0.85);
       box-shadow: none;
     }
   `}
@@ -94,63 +97,87 @@ const GameItem = styled(Link)`
 // Lock icon styling on the left with silver color
 const LockIcon = styled(FaLock)`
   position: absolute;
-  top: 10px;      // Position at the top
-  left: 10px;     // Position at the left
-  font-size: 18px; // Smaller size for the lock icon
-  color: #c0c0c0; // Silver color for lock
+  top: 10px;
+  left: 10px;
+  font-size: 18px;
+  color: #c0c0c0;
 `;
 
-// Dimmed styling for locked items
 const DimmedIconWrapper = styled.div`
-  font-size: 80px;  // Icon size
+  font-size: 80px;
   margin-bottom: 10px;
-  color: rgba(255, 255, 255, 0.2);  // More dimmed icon color
+  color: rgba(255, 255, 255, 0.2);
   display: flex;
-  justify-content: center;  // Horizontal centering
-  align-items: center;  // Vertical centering
-  height: 100px;  // Set a fixed height for proper vertical alignment
-`;
-
-const DimmedText = styled.div`
-  color: rgba(255, 255, 255, 0.3); // More dimmed text color
+  justify-content: center;
+  align-items: center;
+  height: 100px;
 `;
 
 const IconWrapper = styled.div`
-  font-size: 80px;  // Icon size
+  font-size: 80px;
   margin-bottom: 10px;
   color: #00bfff;
   display: flex;
-  justify-content: center;  // Horizontal centering
-  align-items: center;  // Vertical centering
-  height: 100px;  // Set a fixed height for proper vertical alignment
+  justify-content: center;
+  align-items: center;
+  height: 100px;
 `;
 
 const GameTitle = styled.h2`
-  font-size: 40px;  // Made title quite big
+  font-size: 40px;
   font-weight: bold;
   margin-bottom: 20px;
   color: #cad2d5;
 `;
 
 const GameDescription = styled.p`
-  font-size: 16px;  // Made description smaller
+  font-size: 16px;
   color: #cfcfcf;
   max-width: 600px;
 `;
 
+const GameIcon = styled.img`
+  width: 100px;
+  height: 100px;
+  margin-bottom: 20px;
+`;
+
+// Define ComingSoonText here
 const ComingSoonText = styled.small`
   font-style: italic;
   color: grey;
 `;
 
-const GameIcon = styled.img`
-  width: 100px;  // Increased logo size
-  height: 100px;  // Increased logo size
-  margin-bottom: 20px;  // Added some space below the icon
-`;
-
-// GamesPage Component
 function GamesPage() {
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+  const [quizUnlocked, setQuizUnlocked] = useState(false); // Check if quiz is unlocked
+
+  // Retrieve userID and points from the context
+  const { userID, points: userPoints, setPoints } = usePoints(); // Get userID from PointsContext
+
+  // Function to handle unlock quiz
+  const handleUnlockQuiz = async () => {
+    setUnlocking(true);
+    try {
+      const response = await axios.put(`${process.env.REACT_APP_API_URL}/user-info/unlock-quiz/${userID}`);
+      setPoints(response.data.points); // Update points after unlocking
+      setQuizUnlocked(true);
+      setModalOpen(false); // Close modal after success
+    } catch (error) {
+      console.error('Error unlocking quiz:', error);
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  // Show modal to confirm unlock
+  const confirmUnlockQuiz = () => {
+    if (userPoints >= 25000 && !quizUnlocked) {
+      setModalOpen(true);
+    }
+  };
+
   return (
     <GamesContainer>
       <UserInfo />
@@ -159,18 +186,27 @@ function GamesPage() {
         Play and earn points by completing exciting challenges!
       </GameDescription>
       <GameList>
-        {/* Quiz Game - Locked */}
-        <GameItem locked>
-          <LockIcon /> {/* Displaying the lock icon at the left */}
-          <DimmedIconWrapper>
-            <GameIcon src="https://i.ibb.co/rMcfScz/3d-1.png" alt="Quiz Icon" />
-          </DimmedIconWrapper>
-          <div>Quiz</div>
-          <small>Test your knowledge!</small>
-        </GameItem>
-
-        {/* Spin the Wheel */}
-        <GameItem to="/spin-wheel">
+        {/* Quiz Game - Lock/Unlock logic */}
+        {!quizUnlocked ? (
+          <GameItem onClick={confirmUnlockQuiz} locked={userPoints < 25000}>
+            <LockIcon />
+            <DimmedIconWrapper>
+              <GameIcon src="https://i.ibb.co/rMcfScz/3d-1.png" alt="Quiz Icon" />
+            </DimmedIconWrapper>
+            <div>Quiz</div>
+            <small>Unlock by spending 25,000 points!</small>
+          </GameItem>
+        ) : (
+          <GameItem to="/quiz">
+            <IconWrapper>
+              <GameIcon src="https://i.ibb.co/rMcfScz/3d-1.png" alt="Quiz Icon" />
+            </IconWrapper>
+            <div>Quiz</div>
+            <small>Test your knowledge!</small>
+          </GameItem>
+        )}
+         {/* Spin the Wheel */}
+         <GameItem to="/spin-wheel">
           <IconWrapper>
             <GameIcon src="https://i.ibb.co/W3tQ6hf/3d-2.png" alt="Spin the Wheel Icon" />
           </IconWrapper>
@@ -197,6 +233,16 @@ function GamesPage() {
           <ComingSoonText>More games on the way!</ComingSoonText>
         </GameItem>
       </GameList>
+
+      {/* Confirmation Modal */}
+      {isModalOpen && (
+  <ConfirmationModal
+    message={`Are you sure you want to spend 25,000 points to unlock the quiz?`}
+    onConfirm={handleUnlockQuiz}
+    onCancel={() => setModalOpen(false)}
+    loading={unlocking}
+  />
+)}
     </GamesContainer>
   );
 }
