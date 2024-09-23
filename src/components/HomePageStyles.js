@@ -58,7 +58,6 @@ export const HomeContainer = styled.div`
   padding: 20px 20px;
   position: relative;
 
-  background-image: url('https://i.postimg.cc/c4yj24gK/background.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

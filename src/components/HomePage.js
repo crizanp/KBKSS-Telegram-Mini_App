@@ -191,14 +191,22 @@ function HomePage() {
   const fetchActiveBackground = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/background/active`);
+      console.log("Background response:", response.data); // Add this line to log the response
+  
       if (response.data && response.data.url) {
         setBackgroundImage(response.data.url); // Set the active background
+      } else {
+        console.warn("No background URL found in the response.");
       }
     } catch (error) {
       console.error("Error fetching active background:", error);
     }
   }, []);
-  
+  useEffect(() => {
+    // Fetch the active background when the component mounts
+    fetchActiveBackground();
+  }, [fetchActiveBackground]); // Add fetchActiveBackground as a dependency
+
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({
