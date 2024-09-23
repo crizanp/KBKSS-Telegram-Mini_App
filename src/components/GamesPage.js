@@ -209,7 +209,7 @@ function GamesPage() {
             <small>Unlock by spending 25,000 points!</small>
           </GameItem>
         ) : (
-          <GameItem to="/quiz">
+          <GameItem to="/ecosystem">
             <IconWrapper>
               <GameIcon src="https://i.ibb.co/rMcfScz/3d-1.png" alt="Quiz Icon" />
             </IconWrapper>
