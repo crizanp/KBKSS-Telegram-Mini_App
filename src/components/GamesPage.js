@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 import { FaLock } from "react-icons/fa";
 import axios from "axios";
 import UserInfo from './UserInfo';
-import ConfirmationModal from "./ConfirmationModal";  // Your confirmation modal component
-import { usePoints } from "../context/PointsContext"; // Import usePoints from your context
+import ConfirmationModal from "./ConfirmationModal"; 
+import { usePoints } from "../context/PointsContext"; 
 
 // Animations
 const fadeIn = keyframes`
@@ -152,9 +152,21 @@ function GamesPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [quizUnlocked, setQuizUnlocked] = useState(false); // Check if quiz is unlocked
+  const { userID, points: userPoints, setPoints } = usePoints(); 
 
-  // Retrieve userID and points from the context
-  const { userID, points: userPoints, setPoints } = usePoints(); // Get userID from PointsContext
+  // Fetch the user info when the component mounts to check if quiz is already unlocked
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
+        setQuizUnlocked(response.data.quizUnlocked); // Set the quizUnlocked state
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+
+    fetchUserInfo();
+  }, [userID]);
 
   // Function to handle unlock quiz
   const handleUnlockQuiz = async () => {
@@ -162,7 +174,7 @@ function GamesPage() {
     try {
       const response = await axios.put(`${process.env.REACT_APP_API_URL}/user-info/unlock-quiz/${userID}`);
       setPoints(response.data.points); // Update points after unlocking
-      setQuizUnlocked(true);
+      setQuizUnlocked(true); // Update quizUnlocked status
       setModalOpen(false); // Close modal after success
     } catch (error) {
       console.error('Error unlocking quiz:', error);
@@ -205,8 +217,9 @@ function GamesPage() {
             <small>Test your knowledge!</small>
           </GameItem>
         )}
-         {/* Spin the Wheel */}
-         <GameItem to="/spin-wheel">
+
+        {/* Spin the Wheel */}
+        <GameItem to="/spin-wheel">
           <IconWrapper>
             <GameIcon src="https://i.ibb.co/W3tQ6hf/3d-2.png" alt="Spin the Wheel Icon" />
           </IconWrapper>
@@ -236,13 +249,13 @@ function GamesPage() {
 
       {/* Confirmation Modal */}
       {isModalOpen && (
-  <ConfirmationModal
-    message={`Are you sure you want to spend 25,000 points to unlock the quiz?`}
-    onConfirm={handleUnlockQuiz}
-    onCancel={() => setModalOpen(false)}
-    loading={unlocking}
-  />
-)}
+        <ConfirmationModal
+          message={`Are you sure you want to spend 25,000 points to unlock the quiz?`}
+          onConfirm={handleUnlockQuiz}
+          onCancel={() => setModalOpen(false)}
+          loading={unlocking}
+        />
+      )}
     </GamesContainer>
   );
 }
