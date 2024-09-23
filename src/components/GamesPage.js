@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { FaLock } from "react-icons/fa";
 import axios from "axios";
 import UserInfo from './UserInfo';
-import ConfirmationModal from "./ConfirmationModal"; 
+import GameUnlockModal from "./GameUnlockModal"; // Updated modal
 import { usePoints } from "../context/PointsContext"; 
 
 // Animations
@@ -142,46 +142,62 @@ const GameIcon = styled.img`
   margin-bottom: 20px;
 `;
 
-// Define ComingSoonText here
-const ComingSoonText = styled.small`
-  font-style: italic;
-  color: grey;
-`;
-
 function GamesPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [quizUnlocked, setQuizUnlocked] = useState(false); // Check if quiz is unlocked
-  const { userID, points: userPoints, setPoints } = usePoints(); 
+  const { userID, points: userPoints, setPoints } = usePoints();
 
   // Fetch the user info when the component mounts to check if quiz is already unlocked
   useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
-        setQuizUnlocked(response.data.quizUnlocked); // Set the quizUnlocked state
-      } catch (error) {
-        console.error('Error fetching user info:', error);
-      }
-    };
-
-    fetchUserInfo();
+    const localUnlocked = localStorage.getItem(`quizUnlocked_${userID}`);
+    if (localUnlocked) {
+      setQuizUnlocked(true);
+    } else {
+      const fetchUserInfo = async () => {
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
+          setQuizUnlocked(response.data.quizUnlocked); // Set the quizUnlocked state
+        } catch (error) {
+          console.error('Error fetching user info:', error);
+        }
+      };
+      fetchUserInfo();
+    }
   }, [userID]);
 
   // Function to handle unlock quiz
-  const handleUnlockQuiz = async () => {
-    setUnlocking(true);
-    try {
-      const response = await axios.put(`${process.env.REACT_APP_API_URL}/user-info/unlock-quiz/${userID}`);
-      setPoints(response.data.points); // Update points after unlocking
-      setQuizUnlocked(true); // Update quizUnlocked status
-      setModalOpen(false); // Close modal after success
-    } catch (error) {
-      console.error('Error unlocking quiz:', error);
-    } finally {
-      setUnlocking(false);
-    }
-  };
+const handleUnlockQuiz = async () => {
+  setUnlocking(true);
+
+  // Deduct points locally
+  const newPoints = userPoints - 25000;
+  setPoints(newPoints);
+  localStorage.setItem(`points_${userID}`, newPoints); // Store updated points locally
+
+  // Set quiz as unlocked locally
+  setQuizUnlocked(true); 
+  localStorage.setItem(`quizUnlocked_${userID}`, true); // Store unlocked status locally
+
+  try {
+    // Optionally, hit the server for updating points and quiz unlock status
+    await axios.put(`${process.env.REACT_APP_API_URL}/user-info/unlock-quiz/${userID}`, {
+      points: newPoints, // Send the updated points to the server
+    });
+    // The server will return the updated points after syncing (if necessary)
+  } catch (error) {
+    console.error('Error syncing unlock with server:', error);
+    // Optionally, revert the points and unlock state locally if the server call fails
+    setPoints(userPoints); // Revert points in case of failure
+    localStorage.setItem(`points_${userID}`, userPoints); // Revert local storage points
+    setQuizUnlocked(false);
+    localStorage.removeItem(`quizUnlocked_${userID}`);
+  } finally {
+    setUnlocking(false);
+    setModalOpen(false); // Close modal after success or error
+  }
+};
+
 
   // Show modal to confirm unlock
   const confirmUnlockQuiz = () => {
@@ -243,17 +259,20 @@ function GamesPage() {
             <GameIcon src="https://i.ibb.co/887LhN5/3d-4.png" alt="Coming Soon Icon" />
           </IconWrapper>
           <div>Coming Soon</div>
-          <ComingSoonText>More games on the way!</ComingSoonText>
+          <small>More games on the way!</small>
         </GameItem>
       </GameList>
 
-      {/* Confirmation Modal */}
+      {/* Game Unlock Confirmation Modal */}
       {isModalOpen && (
-        <ConfirmationModal
+        <GameUnlockModal
           message={`Are you sure you want to spend 25,000 points to unlock the quiz?`}
           onConfirm={handleUnlockQuiz}
           onCancel={() => setModalOpen(false)}
           loading={unlocking}
+          iconUrl="https://i.ibb.co/z2c4kfZ/3d.png" // Example icon
+          title="Unlock Quiz"
+          pointsCost={25000}
         />
       )}
     </GamesContainer>
