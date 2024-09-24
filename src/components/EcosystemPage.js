@@ -9,6 +9,7 @@ import UserInfo from "./UserInfo";
 import Modal from "./Modal"; // Modal for showing correct answer
 import { FaRegGem } from "react-icons/fa"; // For the gem icon
 import wrongAnswerSound from "../assets/wrong-answer.mp3";
+import SkeletonLoaderEcosystemPage from "./SkeletonLoaderEcosystemPage"; // Import the skeleton loader
 
 import {
   QuizContainer,
@@ -348,17 +349,18 @@ function EcosystemPage() {
         </CategoryContainer>
 
         <ScrollableContent>
-          {loading ? (
-            <p>Loading quiz...</p>
-          ) : noMoreQuizzes ? (
-            <CompletionContainer>
-              <CompletionImage
-                src="https://www.greatperthbookkeeping.com.au/wp-content/uploads/2014/06/done.png"
-                alt="All done"
-              />
-              <p>You have completed all the quizzes! Great job!</p>
-            </CompletionContainer>
-          ) : currentQuiz ? (
+        {loading ? (
+    // Render the Skeleton Loader when loading
+    <SkeletonLoaderEcosystemPage />
+  ) : noMoreQuizzes ? (
+    <CompletionContainer>
+      <CompletionImage
+        src="https://www.greatperthbookkeeping.com.au/wp-content/uploads/2014/06/done.png"
+        alt="All done"
+      />
+      <p>You have completed all the quizzes! Great job!</p>
+    </CompletionContainer>
+  ) : currentQuiz ? (
             <>
               <QuizBox>
                 <QuizPoints>
@@ -415,14 +417,15 @@ function EcosystemPage() {
                 )}
         </ScrollableContent>
 
-        {!noMoreQuizzes && (
-          <NextButton
-            onClick={handleNextQuiz}
-            disabled={loading || noMoreQuizzes}
-          >
-            Next
-          </NextButton>
-        )}
+        {!noMoreQuizzes && !loading && (
+  <NextButton
+    onClick={handleNextQuiz}
+    disabled={loading || noMoreQuizzes}
+  >
+    Next
+  </NextButton>
+)}
+
 
         {showCorrectAnswerModal && (
           <Modal
