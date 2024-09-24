@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Confetti from "react-confetti"; // Import react-confetti
 import { usePoints } from "../context/PointsContext";
-import { showToast } from './ToastNotification'; // Use toast messages
-import ToastNotification from './ToastNotification'; // For displaying toast notifications globally
+import { showToast } from "./ToastNotification"; // Use toast messages
+import ToastNotification from "./ToastNotification"; // For displaying toast notifications globally
 import celebrationSound from "../assets/celebration.mp3"; // Import the celebration sound
 import UserInfo from "./UserInfo";
 import Modal from "./Modal"; // Modal for showing correct answer
-import { FaRegGem } from 'react-icons/fa'; // For the gem icon
+import { FaRegGem } from "react-icons/fa"; // For the gem icon
+import wrongAnswerSound from "../assets/wrong-answer.mp3";
 
 import {
   QuizContainer,
@@ -29,16 +30,15 @@ import styled from "styled-components";
 
 // Styled button for correct answer
 const CorrectAnswerButton = styled.button`
-  background-color: #0088cc;
-  color: white;
-  padding: 12px 20px;
+ 
+  color: #505050;
+  padding: 8px 20px;
   border-radius: 8px;
   font-size: 16px;
   font-weight: bold;
   border: none;
   cursor: pointer;
   transition: background-color 0.3s;
-  margin-top: 10px;
 
   &:hover {
     background-color: #00aced;
@@ -47,15 +47,22 @@ const CorrectAnswerButton = styled.button`
 
 // Styled text for showing the correct answer
 const CorrectAnswerText = styled.p`
-  color: #4caf50; /* Green color for correct answer */
-  margin-top: 20px;
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
-  background-color: #e8f5e9; /* Soft green background */
-  padding: 10px 20px;
-  border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for professionalism */
+  color: #4caf50;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    background-color: #e8f5e914;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    height: 89px;
+    flex-direction: row;
+    /* flex-wrap: nowrap; */
+    align-content: center;
+    justify-content: space-between;
 `;
 
 // Container for showing quiz points (gems)
@@ -64,12 +71,10 @@ const QuizPoints = styled.div`
   align-items: center;
   justify-content: center;
 
-
   font-size: 18px;
   color: #36a8e5;
   margin-bottom: 10px;
 `;
-
 
 function EcosystemPage() {
   const { points, setPoints, userID } = usePoints();
@@ -138,7 +143,10 @@ function EcosystemPage() {
 
         const response = await axios.get(url);
 
-        if (!response.data || response.data.message === "No remaining quizzes found") {
+        if (
+          !response.data ||
+          response.data.message === "No remaining quizzes found"
+        ) {
           setCurrentQuiz(null);
           setNoMoreQuizzes(true);
         } else {
@@ -161,53 +169,75 @@ function EcosystemPage() {
   }, [userID, selectedCategory]);
 
   // Handle submitting the selected answer
+  // Handle submitting the selected answer
   const handleSubmit = async () => {
     if (selectedOption === null) return;
-
+  
     const isCorrect = currentQuiz.options[selectedOption].isCorrect;
     const pointsEarned = isCorrect ? currentQuiz.points : 0;
-
+  
     try {
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/user-info/submit-quiz`,
-        {
-          userID,
-          quizId: currentQuiz._id,
-          pointsEarned,
-        }
-      );
-
-      // Update points in context and local storage
-      setPoints((prevPoints) => {
-        const updatedPoints = prevPoints + pointsEarned;
-        localStorage.setItem(`points_${userID}`, updatedPoints);
-        return updatedPoints;
+      // Always submit the quiz as completed, even if the answer is wrong
+      await axios.post(`${process.env.REACT_APP_API_URL}/user-info/submit-quiz`, {
+        userID,
+        quizId: currentQuiz._id,
+        pointsEarned,
       });
-
-      setDisableSubmit(true);
-      setCorrectOption(
-        isCorrect
-          ? selectedOption
-          : currentQuiz.options.findIndex((option) => option.isCorrect)
-      );
-      setShowFeedback(true);
-
+  
+      // If correct, award points and show confetti
       if (isCorrect) {
+        setPoints((prevPoints) => {
+          const updatedPoints = prevPoints + pointsEarned;
+          localStorage.setItem(`points_${userID}`, updatedPoints);
+          return updatedPoints;
+        });
+  
+        setDisableSubmit(true);
+        setCorrectOption(selectedOption);
+        setShowFeedback(true);
         setShowConfetti(true);
-        audioRef.current.play();
-
+        audioRef.current.play(); // Play the celebration sound
+  
         setTimeout(() => {
           setShowConfetti(false);
         }, 5000);
-
-        showToast("Correct answer! 🎉", "success");
+  
+        showToast(`Correct answer! 🎉! ${pointsEarned} $GEMS added.`, "success");
       } else {
-        showToast("Wrong answer!", "error");
+        // Play the wrong answer sound
+        const wrongAnswerAudio = new Audio(wrongAnswerSound);
+        wrongAnswerAudio.play();
+  
+        // Deduct 50% of points if incorrect
+        const pointsToDeduct = currentQuiz.points * 0.5;
+  
+        // Deduct the points from the backend
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_URL}/user-info/deduct-points`,
+          {
+            userID: userID,
+            pointsToDeduct,
+          }
+        );
+  
+        // Update points in context and local storage
+        const updatedPoints = response.data.points;
+        setPoints(updatedPoints);
+        localStorage.setItem(`points_${userID}`, updatedPoints);
+  
+        setDisableSubmit(true);
+        setCorrectOption(
+          currentQuiz.options.findIndex((option) => option.isCorrect)
+        );
+        setShowFeedback(true);
+        showToast(`Wrong answer 😒! ${pointsToDeduct} points deducted.`, "error");
       }
     } catch (error) {
       showToast("Error submitting answer", "error");
     }
   };
+  
+  
 
   // Show the correct answer modal
   const handleShowCorrectAnswer = () => {
@@ -267,7 +297,10 @@ function EcosystemPage() {
 
       const response = await axios.get(url);
 
-      if (!response.data || response.data.message === "No remaining quizzes found") {
+      if (
+        !response.data ||
+        response.data.message === "No remaining quizzes found"
+      ) {
         setCurrentQuiz(null);
         setNoMoreQuizzes(true);
       } else {
@@ -327,18 +360,22 @@ function EcosystemPage() {
             </CompletionContainer>
           ) : currentQuiz ? (
             <>
-              
-              <QuizBox><QuizPoints>
-                <FaRegGem style={{ marginRight: "5px", color: "#36a8e5" }} />
-                {currentQuiz.points} $GEMS
-              </QuizPoints>
+              <QuizBox>
+                <QuizPoints>
+                  <FaRegGem style={{ marginRight: "5px", color: "#36a8e5" }} />
+                  {currentQuiz.points} $GEMS
+                </QuizPoints>
                 <QuestionText>{currentQuiz.questionText}</QuestionText>
                 {currentQuiz.options.map((option, index) => (
                   <Option
                     key={index}
                     $selected={selectedOption === index}
                     $correct={showFeedback && index === correctOption}
-                    $wrong={showFeedback && index === selectedOption && !option.isCorrect}
+                    $wrong={
+                      showFeedback &&
+                      index === selectedOption &&
+                      !option.isCorrect
+                    }
                     $isDisabled={disableSubmit}
                     onClick={() => handleOptionSelect(index)}
                   >
@@ -352,8 +389,16 @@ function EcosystemPage() {
                   Submit
                 </SubmitButton>
 
-                {/* Show the correct answer button if the answer is wrong and enough points */}
-                {showFeedback &&
+                
+              </QuizBox>
+            </>
+          ) : (
+            <NoQuestionsMessage>
+              No quiz available at the moment.
+            </NoQuestionsMessage>
+          )}
+          {/* Show the correct answer button if the answer is wrong and enough points */}
+{showFeedback &&
                   selectedOption !== correctOption &&
                   !showCorrectAnswer &&
                   points >= 50 && (
@@ -368,13 +413,6 @@ function EcosystemPage() {
                     Correct Answer: {currentQuiz.options[correctOption].text}
                   </CorrectAnswerText>
                 )}
-              </QuizBox>
-            </>
-          ) : (
-            <NoQuestionsMessage>
-              No quiz available at the moment.
-            </NoQuestionsMessage>
-          )}
         </ScrollableContent>
 
         {!noMoreQuizzes && (

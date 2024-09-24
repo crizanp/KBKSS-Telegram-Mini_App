@@ -147,7 +147,7 @@ function GamesPage() {
 
       {isModalOpen && (
         <GameUnlockModal
-          message={`Are you sure you want to spend 25,000 points to unlock the quiz?`}
+          message={`Are you sure you want to spend 25,000 $GEMS to unlock the quiz?`}
           onConfirm={handleUnlockQuiz}
           onCancel={() => setModalOpen(false)}
           loading={unlocking}

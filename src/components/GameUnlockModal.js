@@ -49,7 +49,7 @@ const RewardModalContainer = styled.div`
 const ModalHeader = styled.h2`
   text-align: center;
   color: #333;
-  font-size:34px;
+  font-size:40px;
 `;
 
 // Claim Button
@@ -101,7 +101,7 @@ const GameUnlockModal = ({ message, onConfirm, onCancel, loading, iconUrl, title
         {/* Icon Image */}
         <StyledImage src={iconUrl} alt="Modal Icon" />
 
-        <p style={{ textAlign: "center", color: "#333", marginBottom: "20px",fontSize:"large" }}>{message}</p>
+        <p style={{ textAlign: "center", color: "#333", marginBottom: "20px",fontSize:"25px" }}>{message}</p>
 
         <ClaimButton onClick={onConfirm} disabled={loading}>
           {loading ? "Unlocking..." : `Go Ahead`}
