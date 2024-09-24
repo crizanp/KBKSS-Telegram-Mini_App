@@ -23,7 +23,7 @@ const MainContainer = styled.div`
   background: ${mainBackground};
   padding: 30px 20px;
   color: ${white};
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Orbitron',sans-serif;
 `;
 
 // User Info Section

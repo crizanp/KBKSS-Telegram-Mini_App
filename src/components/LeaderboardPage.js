@@ -25,7 +25,7 @@ const LeaderboardContainer = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: "Orbitron", sans-serif;
+  font-family: 'Orbitron',sans-serif;
   overflow-x: hidden;
   padding-bottom: 60px;
 `;

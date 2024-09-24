@@ -45,7 +45,7 @@ const slapEffectAnimation = keyframes`
 `;
 
 export const HomeContainer = styled.div`
-  font-family: "Orbitron", sans-serif;
+  font-family: 'Orbitron',sans-serif;
   color: white;
   display: flex;
   flex-direction: column;

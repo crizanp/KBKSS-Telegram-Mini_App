@@ -96,7 +96,7 @@ export const TaskContainer = styled.div`
   padding: 20px;
   color: white;
   padding-bottom: 80px;
-  font-family: "Orbitron", sans-serif;
+  font-family: 'Orbitron',sans-serif;
   min-height: 87vh;
 
   @media (max-width: 768px) {

@@ -5,7 +5,7 @@ import BottomMenu from './BottomMenu';  // Make sure the path is correct
 import LoadingPage from './LoadingPage';  // Make sure the path is correct
 
 const LayoutContainer = styled.div`
-  font-family: 'Orbitron,sans-serif';
+  font-family: 'Orbitron',sans-serif;
   background-color: #090c12;
   max-width: 460px;
   

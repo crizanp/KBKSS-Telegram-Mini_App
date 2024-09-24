@@ -122,14 +122,14 @@ export const GameTitle = styled.h2`
     margin-top: 28px;
     margin-bottom: 10px;
     color: white;
-    font-family: 'Orbitron,sans-serif';
+    font-family: 'Orbitron',sans-serif;
 `;
 
 export const GameDescription = styled.p`
   font-size: 14px;
   color: #cfcfcf;
   max-width: 600px;
-  font-family: 'Orbitron,sans-serif';
+  font-family: 'Orbitron',sans-serif;
 `;
 
 export const GameIcon = styled.img`

@@ -7,7 +7,7 @@ export const QuizContainer = styled.div`
     background-color: #000000;
     color: white;
     text-align: center;
-    font-family: "Arial, sans-serif";
+    font-family: 'Orbitron',sans-serif;
     min-height: 130%;
     padding-top: 40px;
     position: relative;
@@ -212,7 +212,7 @@ export const NextButton = styled.button`
   }
 
   @media (max-width: 480px) {
-    font-size: 35px;
+    font-size: 27px;
         padding: 7px 35px;
   }
 `;
