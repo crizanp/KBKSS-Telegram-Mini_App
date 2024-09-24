@@ -141,24 +141,11 @@ const SkeletonLoaderEcosystemPage = () => {
 
   return (
     <div>
-      {/* Header skeleton */}
-      {isLoading && <SkeletonHeader />}
-
-      {/* Category buttons skeleton */}
-      {isLoading && (
-        <SkeletonCategoryContainer>
-          <SkeletonCategoryButton />
-          <SkeletonCategoryButton />
-          <SkeletonCategoryButton />
-          {/* Add more buttons if needed */}
-        </SkeletonCategoryContainer>
-      )}
 
       {/* Single skeleton quiz box */}
       {isLoading && <SkeletonQuiz />}
 
-      {/* Next button skeleton */}
-      {isLoading && <SkeletonNextButton />}
+     
 
       {/* Completion state skeleton (conditionally rendered) */}
       {!isLoading && isCompleted && (
