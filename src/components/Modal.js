@@ -17,11 +17,14 @@ const ModalOverlay = styled.div`
 `;
 
 // Modal container with slide-up animation
+// Modal Container with slide-up animation
 const RewardModalContainer = styled.div`
   width: 100%;
   max-width: 460px;
   background-color: #000000;
-    border: 2px solid #e1e3d6;
+  border-top: 2px solid #e1e3d6;
+  border-right: 2px solid #e1e3d6;
+  border-left: 2px solid #e1e3d6;
   padding: 20px;
   border-radius: 20px 20px 0 0;
   position: relative;
@@ -45,6 +48,7 @@ const RewardModalContainer = styled.div`
     }
   }
 `;
+
 
 // Header for the modal
 const ModalHeader = styled.h2`
