@@ -118,7 +118,16 @@ const PerformAgainButton = styled(ClaimButton)`
   margin-left: 0px;
   width: 95%;
 `;
-
+const AirdropDescription = styled.p`
+  color: #aaaaaa;
+  margin-bottom: 20px;
+  margin-left: 18px;
+    margin-right: 18px;
+  
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.5;
+`;
 const TaskList = () => {
   const { points, setPoints, userID, setUserID, setUsername } = usePoints();
   const [tasks, setTasks] = useState({
@@ -324,7 +333,9 @@ const TaskList = () => {
       </PointsDisplayContainer>
 
       <CoinText>Earn more tokens by completing tasks</CoinText>
-
+      <AirdropDescription>
+      <b>Note:</b> In the final phase, we will review all tasks. If any task is completed but not properly recorded from a specific user, the user will be disqualified. Do not attempt to mislead the system. Please be respectful and ensure all tasks are completed correctly.
+      </AirdropDescription>
       {loading ? (
         <SkeletonLoaderTaskPage />
       ) : (

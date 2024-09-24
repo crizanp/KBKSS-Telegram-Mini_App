@@ -75,6 +75,15 @@ const TableRow = styled.tr`
   }
 `;
 
+// New styled component for "Top 30 Leader" text
+const Top30LeaderText = styled.h1`
+  font-size: 36px;
+  color:#e1ecf2;
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+`;
+
 const RankCell = styled.td`
   width: 20%;
   padding: 8px;
@@ -290,6 +299,8 @@ const formatPoints = (points) => {
             }}
           />
         </PointsDisplay>
+         {/* Top 30 Leader text */}
+         <Top30LeaderText>Top 30 Leader</Top30LeaderText>
       </PointsDisplayContainer>
 
       {isLoading ? (
