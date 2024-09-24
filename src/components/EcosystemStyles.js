@@ -208,12 +208,12 @@ export const NextButton = styled.button`
   transition: background-color 0.3s;
 
   &:hover {
-    background-color: #66bb6a;
+    background-color:#1fa3e6;
   }
 
   @media (max-width: 480px) {
-    font-size: 22px;
-        padding: 8px 31px;
+    font-size: 35px;
+        padding: 7px 35px;
   }
 `;
 

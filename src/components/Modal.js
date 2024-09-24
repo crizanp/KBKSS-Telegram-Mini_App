@@ -19,8 +19,9 @@ const ModalOverlay = styled.div`
 // Modal container with slide-up animation
 const RewardModalContainer = styled.div`
   width: 100%;
-  max-width: 400px;
-  background-color: white;
+  max-width: 460px;
+  background-color: #000000;
+    border: 2px solid #e1e3d6;
   padding: 20px;
   border-radius: 20px 20px 0 0;
   position: relative;
@@ -48,7 +49,8 @@ const RewardModalContainer = styled.div`
 // Header for the modal
 const ModalHeader = styled.h2`
   text-align: center;
-  color: #333;
+  font-size: 34px;
+    color: #d3cece;
 `;
 
 // Button to claim or confirm an action
@@ -58,7 +60,7 @@ const ClaimButton = styled.button`
   border: none;
   border-radius: 10px;
   padding: 15px 20px;
-  font-size: 16px;
+  font-size: 22px;
   cursor: pointer;
   width: 100%;
   margin-top: 20px;
@@ -85,8 +87,8 @@ const CloseButton = styled.button`
   position: absolute;
   top: 10px;
   right: 15px;
-  font-size: 30px;
-  color: #333;
+  font-size: 40px;
+    color: #d3cece;
   background: none;
   border: none;
   cursor: pointer;
@@ -94,8 +96,8 @@ const CloseButton = styled.button`
 
 // Styled image component
 const StyledImage = styled.img`
-  width: 105px;
-  height: 120px;
+ width: 135px;
+ height: 150px;
   display: block;
   margin: 0 auto 20px;
 `;
@@ -111,11 +113,11 @@ const Modal = ({ onGoAhead, onClose, isClosing }) => {
         <StyledImage src="https://i.ibb.co/z2c4kfZ/3d.png" alt="Crown" />
 
         <PointsDisplayModal>
-          <span>50 GEMS</span>
+          <span style={{ fontSize:"32px" }}>50 $GEMS</span>
         </PointsDisplayModal>
 
-        <p style={{ textAlign: "center", color: "#333" }}>
-          Viewing the correct answer will deduct 50 GEMS from your total.
+        <p style={{ textAlign: "center", color: "rgb(221 204 204)",fontSize:"20px" }}>
+          Viewing the correct answer will deduct 50 $GEMS from your total.
         </p>
 
         <ClaimButton onClick={onGoAhead}>Go Ahead</ClaimButton>
