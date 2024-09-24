@@ -2,17 +2,49 @@ import styled from "styled-components";
 
 export const QuizContainer = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #000000;
-  color: white;
+    flex-direction: column;
+    align-items: center;
+    background-color: #000000;
+    color: white;
+    text-align: center;
+    font-family: "Arial, sans-serif";
+    min-height: 130%;
+    padding-top: 40px;
+    position: relative;
+`;
+// For the Correct Answer text
+export const CorrectAnswerText = styled.p`
+  color: #4caf50; /* Green color for correct answer */
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: bold;
   text-align: center;
-  font-family: "Arial, sans-serif";
-  min-height: 170%;
-  padding-top: 60px;
-  position: relative;
+  background-color: #e8f5e9; /* Soft green background */
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for professionalism */
 `;
 
+// For the "You are all done" message
+export const CompletionContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 50vh; /* Ensure it's vertically centered */
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 20px;
+`;
+
+export const CompletionImage = styled.img`
+  width: 120px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+`;
 export const ScrollableContent = styled.div`
   width: 95%;
   max-width: 600px;

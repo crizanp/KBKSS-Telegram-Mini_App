@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import Confetti from "react-confetti"; // Import react-confetti
 import { usePoints } from "../context/PointsContext";
+import { showToast } from './ToastNotification'; // Use toast messages
+import ToastNotification from './ToastNotification'; // For displaying toast notifications globally
+import celebrationSound from "../assets/celebration.mp3"; // Import the celebration sound
 import UserInfo from "./UserInfo";
-import styled from "styled-components";
-import FloatingMessage from "./FloatingMessage";
 import Modal from "./Modal"; // Modal for showing correct answer
+import { FaRegGem } from 'react-icons/fa'; // For the gem icon
 
 import {
   QuizContainer,
@@ -18,9 +21,13 @@ import {
   CategoryButton,
   NextButton,
   NoQuestionsMessage,
+  CompletionImage,
+  CompletionContainer,
+  PointsContainer, // New container for quiz points
 } from "./EcosystemStyles";
+import styled from "styled-components";
 
-// Styled Components for Points and Quiz Container
+// Styled button for correct answer
 const CorrectAnswerButton = styled.button`
   background-color: #0088cc;
   color: white;
@@ -38,6 +45,32 @@ const CorrectAnswerButton = styled.button`
   }
 `;
 
+// Styled text for showing the correct answer
+const CorrectAnswerText = styled.p`
+  color: #4caf50; /* Green color for correct answer */
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  background-color: #e8f5e9; /* Soft green background */
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for professionalism */
+`;
+
+// Container for showing quiz points (gems)
+const QuizPoints = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+
+  font-size: 18px;
+  color: #36a8e5;
+  margin-bottom: 10px;
+`;
+
+
 function EcosystemPage() {
   const { points, setPoints, userID } = usePoints();
   const [categories, setCategories] = useState([]);
@@ -51,10 +84,31 @@ function EcosystemPage() {
   const [noMoreQuizzes, setNoMoreQuizzes] = useState(false);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   const [showCorrectAnswerModal, setShowCorrectAnswerModal] = useState(false);
-  const [floatingMessage, setFloatingMessage] = useState(null); // Floating message state
-  const [floatingMessageType, setFloatingMessageType] = useState("success"); // Floating message type
 
-  // Fetch categories on component mount
+  const [showConfetti, setShowConfetti] = useState(false);
+  const audioRef = useRef(null);
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  const handleOptionSelect = (index) => {
+    if (!disableSubmit) {
+      setSelectedOption(index);
+    }
+  };
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -63,14 +117,14 @@ function EcosystemPage() {
         );
         setCategories([{ name: "Random", _id: "random" }, ...response.data]);
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        showToast("Error fetching categories", "error");
       }
     };
 
     fetchCategories();
   }, []);
 
-  // Fetch remaining quizzes when userID or selectedCategory changes
+  // Fetch remaining quizzes
   useEffect(() => {
     const fetchRemainingQuizzes = async () => {
       try {
@@ -84,10 +138,7 @@ function EcosystemPage() {
 
         const response = await axios.get(url);
 
-        if (
-          !response.data ||
-          response.data.message === "No remaining quizzes found"
-        ) {
+        if (!response.data || response.data.message === "No remaining quizzes found") {
           setCurrentQuiz(null);
           setNoMoreQuizzes(true);
         } else {
@@ -95,30 +146,21 @@ function EcosystemPage() {
           setNoMoreQuizzes(false);
         }
 
-        // Reset states when new quiz is loaded
         setLoading(false);
         setSelectedOption(null);
         setDisableSubmit(false);
         setCorrectOption(null);
         setShowFeedback(false);
-        setShowCorrectAnswer(false); // Reset correct answer visibility
+        setShowCorrectAnswer(false);
       } catch (error) {
-        console.error("Error fetching remaining quizzes:", error);
-        setLoading(false);
-        setCurrentQuiz(null);
-        setNoMoreQuizzes(true);
+        showToast("Error fetching quizzes", "error");
       }
     };
 
     fetchRemainingQuizzes();
   }, [userID, selectedCategory]);
 
-  const handleOptionSelect = (index) => {
-    if (!disableSubmit) {
-      setSelectedOption(index);
-    }
-  };
-
+  // Handle submitting the selected answer
   const handleSubmit = async () => {
     if (selectedOption === null) return;
 
@@ -135,7 +177,13 @@ function EcosystemPage() {
         }
       );
 
-      setPoints((prevPoints) => prevPoints + pointsEarned);
+      // Update points in context and local storage
+      setPoints((prevPoints) => {
+        const updatedPoints = prevPoints + pointsEarned;
+        localStorage.setItem(`points_${userID}`, updatedPoints);
+        return updatedPoints;
+      });
+
       setDisableSubmit(true);
       setCorrectOption(
         isCorrect
@@ -144,28 +192,33 @@ function EcosystemPage() {
       );
       setShowFeedback(true);
 
-      // Set floating message based on whether the answer is correct or wrong
       if (isCorrect) {
-        setFloatingMessage("Correct answer!");
-        setFloatingMessageType("success");
+        setShowConfetti(true);
+        audioRef.current.play();
+
+        setTimeout(() => {
+          setShowConfetti(false);
+        }, 5000);
+
+        showToast("Correct answer! 🎉", "success");
       } else {
-        setFloatingMessage("Wrong answer!");
-        setFloatingMessageType("error");
+        showToast("Wrong answer!", "error");
       }
     } catch (error) {
-      console.error("Error submitting quiz:", error);
+      showToast("Error submitting answer", "error");
     }
   };
 
+  // Show the correct answer modal
   const handleShowCorrectAnswer = () => {
     setShowCorrectAnswerModal(true);
   };
 
+  // Handle deduction of points to show correct answer
   const handleGoAhead = async () => {
     if (points < 50) {
-      setFloatingMessage("Not enough points to show the correct answer!");
-      setFloatingMessageType("error");
-      return; // Stop the function if not enough points
+      showToast("Not enough points to show the correct answer!", "error");
+      return;
     }
 
     try {
@@ -178,34 +231,29 @@ function EcosystemPage() {
         }
       );
 
-      // Fetch the updated points from the response
       const updatedPoints = response.data.points;
 
-      // Update points in state
+      // Update points in context and local storage
       setPoints(updatedPoints);
-
-      // Store the updated points in local storage
       localStorage.setItem(`points_${userID}`, updatedPoints);
 
       // Show the correct answer after deduction
       setShowCorrectAnswer(true);
-      setShowCorrectAnswerModal(false); // Close the modal after deduction
+      setShowCorrectAnswerModal(false); // Close the modal
+      showToast("50 GEMS deducted to show the correct answer", "success");
     } catch (error) {
       console.error("Error deducting points:", error);
-      setFloatingMessage("Error deducting points!");
-      setFloatingMessageType("error");
+      showToast("Error deducting points!", "error");
     }
   };
 
+  // Handle loading the next quiz
   const handleNextQuiz = async () => {
-    // Reset the state before loading the new quiz
     setSelectedOption(null);
     setDisableSubmit(false);
     setCorrectOption(null);
     setShowFeedback(false);
     setShowCorrectAnswer(false);
-    setFloatingMessage(null); // Clear floating message on next quiz
-
     setLoading(true);
 
     try {
@@ -219,10 +267,7 @@ function EcosystemPage() {
 
       const response = await axios.get(url);
 
-      if (
-        !response.data ||
-        response.data.message === "No remaining quizzes found"
-      ) {
+      if (!response.data || response.data.message === "No remaining quizzes found") {
         setCurrentQuiz(null);
         setNoMoreQuizzes(true);
       } else {
@@ -245,18 +290,16 @@ function EcosystemPage() {
 
   return (
     <>
-      {/* Floating message placed at the top of the quiz container */}
-      {floatingMessage && (
-        <FloatingMessage
-          message={floatingMessage}
-          type={floatingMessageType}
-          duration={3000}
-          onClose={() => setFloatingMessage(null)}
-        />
+      <audio ref={audioRef} src={celebrationSound} />
+      {showConfetti && (
+        <Confetti width={windowSize.width} height={windowSize.height} />
       )}
 
-      <QuizContainer key={currentQuiz ? currentQuiz._id : "no-quiz"}>
+      <ToastNotification />
+
+      <QuizContainer>
         <UserInfo />
+
         <HeaderText>Answer and Earn</HeaderText>
 
         <CategoryContainer>
@@ -275,52 +318,58 @@ function EcosystemPage() {
           {loading ? (
             <p>Loading quiz...</p>
           ) : noMoreQuizzes ? (
-            <NoQuestionsMessage>
-              You are all done! No remaining quizzes available.
-            </NoQuestionsMessage>
+            <CompletionContainer>
+              <CompletionImage
+                src="https://www.greatperthbookkeeping.com.au/wp-content/uploads/2014/06/done.png"
+                alt="All done"
+              />
+              <p>You have completed all the quizzes! Great job!</p>
+            </CompletionContainer>
           ) : currentQuiz ? (
-            <QuizBox>
-              <QuestionText>{currentQuiz.questionText}</QuestionText>
-              {currentQuiz.options.map((option, index) => (
-                <Option
-                  key={index}
-                  $selected={selectedOption === index}
-                  $correct={showFeedback && index === correctOption}
-                  $wrong={
-                    showFeedback &&
-                    index === selectedOption &&
-                    !option.isCorrect
-                  }
-                  $isDisabled={disableSubmit}
-                  onClick={() => handleOptionSelect(index)}
+            <>
+              
+              <QuizBox><QuizPoints>
+                <FaRegGem style={{ marginRight: "5px", color: "#36a8e5" }} />
+                {currentQuiz.points} $GEMS
+              </QuizPoints>
+                <QuestionText>{currentQuiz.questionText}</QuestionText>
+                {currentQuiz.options.map((option, index) => (
+                  <Option
+                    key={index}
+                    $selected={selectedOption === index}
+                    $correct={showFeedback && index === correctOption}
+                    $wrong={showFeedback && index === selectedOption && !option.isCorrect}
+                    $isDisabled={disableSubmit}
+                    onClick={() => handleOptionSelect(index)}
+                  >
+                    {option.text}
+                  </Option>
+                ))}
+                <SubmitButton
+                  onClick={handleSubmit}
+                  disabled={selectedOption === null || disableSubmit}
                 >
-                  {option.text}
-                </Option>
-              ))}
-              <SubmitButton
-                onClick={handleSubmit}
-                disabled={selectedOption === null || disableSubmit}
-              >
-                Submit
-              </SubmitButton>
+                  Submit
+                </SubmitButton>
 
-              {/* Only show the button if the answer is wrong and submitted */}
-              {showFeedback &&
-                selectedOption !== correctOption &&
-                !showCorrectAnswer &&
-                points >= 50 && ( // Only show the button if the user has at least 50 points
-                  <CorrectAnswerButton onClick={handleShowCorrectAnswer}>
-                    Show Correct Answer
-                  </CorrectAnswerButton>
+                {/* Show the correct answer button if the answer is wrong and enough points */}
+                {showFeedback &&
+                  selectedOption !== correctOption &&
+                  !showCorrectAnswer &&
+                  points >= 50 && (
+                    <CorrectAnswerButton onClick={handleShowCorrectAnswer}>
+                      Show Correct Answer
+                    </CorrectAnswerButton>
+                  )}
+
+                {/* Display the correct answer */}
+                {showCorrectAnswer && (
+                  <CorrectAnswerText>
+                    Correct Answer: {currentQuiz.options[correctOption].text}
+                  </CorrectAnswerText>
                 )}
-
-              {/* Show correct answer after clicking "Go Ahead" */}
-              {showCorrectAnswer && (
-                <p style={{ color: "green", marginTop: "10px" }}>
-                  Correct Answer: {currentQuiz.options[correctOption].text}
-                </p>
-              )}
-            </QuizBox>
+              </QuizBox>
+            </>
           ) : (
             <NoQuestionsMessage>
               No quiz available at the moment.
@@ -329,7 +378,10 @@ function EcosystemPage() {
         </ScrollableContent>
 
         {!noMoreQuizzes && (
-          <NextButton onClick={handleNextQuiz} disabled={loading}>
+          <NextButton
+            onClick={handleNextQuiz}
+            disabled={loading || noMoreQuizzes}
+          >
             Next
           </NextButton>
         )}
