@@ -182,6 +182,7 @@ function HomePage() {
 
   // Accumulate unsynced points to avoid sending too many server requests
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
+  const [syncTimeout, setSyncTimeout] = useState(null);
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
@@ -276,91 +277,62 @@ function HomePage() {
   };
 
   const syncPointsWithServer = useCallback(
-    debounce(async (totalPointsToAdd) => {
+    async (pointsToSync) => {
       try {
-        const response = await axios.put(
+        const unsyncedLocalPoints = JSON.parse(localStorage.getItem(`points_${userID}_unsynced`)) || 0;
+        const totalPointsToSync = pointsToSync + unsyncedLocalPoints;
+  
+        // Optimistically clear local storage before the API call
+        localStorage.removeItem(`points_${userID}_unsynced`);
+  
+        // Make the API call to sync points
+        await axios.put(
           `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-          { pointsToAdd: totalPointsToAdd }
+          { pointsToAdd: totalPointsToSync }
         );
-        setPoints(response.data.points);
-        localStorage.setItem(`points_${userID}`, response.data.points);
+  
         setUnsyncedPoints(0); // Reset unsynced points after successful sync
       } catch (error) {
         console.error("Error syncing points with server:", error);
+  
+        // If the API request fails, restore the points in localStorage
+        localStorage.setItem(`points_${userID}_unsynced`, JSON.stringify(pointsToSync));
       }
-    }, 2000),
-    [userID, setPoints]
+    },
+    [userID]
   );
+  
 
   const handleTap = useCallback(
     (e) => {
-      if (energy <= 0) {
-        return;
-      }
+      if (energy <= 0) return;
   
-      if (curvedBorderRef.current && bottomMenuRef.current) {
-        const curvedBorderRect = curvedBorderRef.current.getBoundingClientRect();
-        const bottomMenuRect = bottomMenuRef.current.getBoundingClientRect();
+      const pointsToAdd = calculatePoints();
+      setPoints((prevPoints) => {
+        const newPoints = prevPoints + pointsToAdd;
+        localStorage.setItem(`points_${userID}`, newPoints);
+        return newPoints;
+      });
   
-        const isDoubleTap = e.touches && e.touches.length === 2;
-        const isValidTap = e.touches.length <= 2; // Allow only up to 2 fingers
+      setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
   
-        if (!isValidTap) {
-          return; // Ignore if more than 2 fingers are used
-        }
+      // Store unsynced points in localStorage
+      const currentUnsyncedPoints = JSON.parse(localStorage.getItem(`points_${userID}_unsynced`)) || 0;
+      localStorage.setItem(
+        `points_${userID}_unsynced`,
+        JSON.stringify(currentUnsyncedPoints + pointsToAdd)
+      );
   
-        const pointsToAdd = calculatePoints() * (isDoubleTap ? 2 : 1); // Always add a maximum of 2 points
-        const clickX = e.touches[0].clientX;
-        const clickY = e.touches[0].clientY;
+      // Clear the existing timeout and set a new one
+      if (syncTimeout) clearTimeout(syncTimeout);
   
-        if (clickY > curvedBorderRect.bottom && clickY < bottomMenuRect.top) {
-          const eagleElement = document.querySelector(".eagle-image");
-          eagleElement.classList.add("shift-up");
-          setTimeout(() => {
-            eagleElement.classList.remove("shift-up");
-          }, 300);
-  
-          setPoints((prevPoints) => {
-            const newPoints = prevPoints + pointsToAdd;
-            localStorage.setItem(`points_${userID}`, newPoints);
-            return newPoints;
-          });
-  
-          setTapCount((prevTapCount) => prevTapCount + 1);
-  
-          const animateFlyingPoints = () => {
-            const id = Date.now();
-            setFlyingNumbers((prevNumbers) => [
-              ...prevNumbers,
-              { id, x: clickX, y: clickY - 30, value: pointsToAdd },
-            ]);
-  
-            setTimeout(() => {
-              setFlyingNumbers((prevNumbers) =>
-                prevNumbers.filter((num) => num.id !== id)
-              );
-            }, 750);
-          };
-  
-          animateFlyingPoints();
-  
-          setSlapEmojis((prevEmojis) => [
-            ...prevEmojis,
-            { id: Date.now(), x: clickX, y: clickY },
-          ]);
-  
-          setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
-          setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
-  
-          decreaseEnergy(isDoubleTap ? 2 : 1);
-  
-          if (navigator.onLine) {
-            syncPointsWithServer(unsyncedPoints + pointsToAdd);
-          }
-        }
-      }
+      setSyncTimeout(
+        setTimeout(() => {
+          syncPointsWithServer(unsyncedPoints + pointsToAdd);
+        }, 2000) // Sync after 2 seconds of inactivity
+      );
     },
-    [syncPointsWithServer, setPoints, unsyncedPoints, offlinePoints, energy, decreaseEnergy, userID]
+    [unsyncedPoints, syncTimeout, syncPointsWithServer, energy, userID]
   );
   
 
@@ -398,18 +370,20 @@ function HomePage() {
   };
 
   useEffect(() => {
-    const syncBeforeUnload = (e) => {
-      if (navigator.onLine && unsyncedPoints > 0) {
-        syncPointsWithServer(unsyncedPoints);
+    const syncBeforeUnload = () => {
+      const unsyncedLocalPoints = JSON.parse(localStorage.getItem(`points_${userID}_unsynced`)) || 0;
+      if (unsyncedLocalPoints > 0) {
+        syncPointsWithServer(unsyncedLocalPoints);
       }
     };
+  
     window.addEventListener("beforeunload", syncBeforeUnload);
-
+  
     return () => {
       window.removeEventListener("beforeunload", syncBeforeUnload);
     };
-  }, [unsyncedPoints, syncPointsWithServer]);
-
+  }, [syncPointsWithServer, userID]);
+  
   return (
     <HomeContainer 
   style={{
