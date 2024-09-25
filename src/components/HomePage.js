@@ -57,13 +57,12 @@ const ModalOverlay = styled.div`
   align-items: flex-end;
   z-index: 1000;
 `;
+
 const FireIcon = styled(FaFire)`
   font-size: 1rem;
   margin-right: 0px;
   color: ${(props) =>
-    props.$available
-      ? "#f39c12"
-      : "#a0a0a0"}; // Yellow if available, grey if not
+    props.$available ? "#f39c12" : "#a0a0a0"}; // Yellow if available, grey if not
 `;
 
 const RewardModalContainer = styled.div`
@@ -137,26 +136,27 @@ const CloseButton = styled.button`
   border: none;
   cursor: pointer;
 `;
+
 const LeaderboardImage = styled.img`
   width: 50px; // Adjust the size as needed
   height: auto;
-  animation: tiltEffect 5s ease-in-out infinite; // Slower and smoother tilting animation
+  animation: tiltEffect 5s ease-in-out infinite;
 
   @keyframes tiltEffect {
     0% {
       transform: rotate(0deg);
     }
     25% {
-      transform: rotate(10deg); // Tilts 5 degrees to the right
+      transform: rotate(10deg);
     }
     50% {
-      transform: rotate(-10deg); // Tilts 5 degrees to the left
+      transform: rotate(-10deg);
     }
     75% {
-      transform: rotate(7deg); // Tilts back slightly to the right
+      transform: rotate(7deg);
     }
     100% {
-      transform: rotate(0deg); // Returns to original position
+      transform: rotate(0deg);
     }
   }
 `;
@@ -169,20 +169,19 @@ function HomePage() {
   const [slapEmojis, setSlapEmojis] = useState([]);
   const [offlinePoints, setOfflinePoints] = useState(0);
   const [isRewardAvailable, setIsRewardAvailable] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // For loading state
-  const [showModal, setShowModal] = useState(false); // Modal visibility state
-  const [showConfetti, setShowConfetti] = useState(false); // Confetti state
-  const [rewardClaimed, setRewardClaimed] = useState(false); // Reward claimed state
-  const audioRef = useRef(null); // Ref for playing sound
+  const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [rewardClaimed, setRewardClaimed] = useState(false);
+  const audioRef = useRef(null);
   const [isClosing, setIsClosing] = useState(false);
   const curvedBorderRef = useRef(null);
   const bottomMenuRef = useRef(null);
-  const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
+  const [backgroundImage, setBackgroundImage] = useState("");
 
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
   const [timeoutId, setTimeoutId] = useState(null);
 
-  // Confetti window size
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -194,7 +193,7 @@ function HomePage() {
         `${process.env.REACT_APP_API_URL}/background/active`
       );
       if (response.data && response.data.url) {
-        setBackgroundImage(response.data.url); // Set the active background
+        setBackgroundImage(response.data.url);
       }
     } catch (error) {
       console.error("Error fetching active background:", error);
@@ -202,7 +201,6 @@ function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Fetch the active background when the component mounts
     fetchActiveBackground();
   }, [fetchActiveBackground]);
 
@@ -218,60 +216,6 @@ function HomePage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const checkDailyRewardAvailability = useCallback(async () => {
-    try {
-      setIsLoading(true); // Set loading state while checking
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/user-info/${userID}`
-      );
-
-      const lastDailyReward = response.data.lastDailyReward || new Date(0);
-      const now = new Date();
-      const hoursSinceLastClaim = Math.floor(
-        (now - new Date(lastDailyReward)) / (1000 * 60 * 60)
-      ); // Calculate hours since the last claim
-
-      if (hoursSinceLastClaim >= 24) {
-        setIsRewardAvailable(true); // Reward is available, button becomes clickable
-      } else {
-        setIsRewardAvailable(false); // Reward is not available, button stays disabled
-      }
-    } finally {
-      setIsLoading(false); // End loading state
-    }
-  }, [userID]);
-
-  const initializeUser = useCallback(async () => {
-    if (!userID) {
-      const userId = await getUserID(setUserID);
-      setUserID(userId);
-    }
-
-    const savedPoints = localStorage.getItem(`points_${userID}`);
-    if (savedPoints) {
-      setPoints(parseFloat(savedPoints));
-    }
-
-    checkDailyRewardAvailability();
-  }, [userID, setUserID, setPoints, checkDailyRewardAvailability]);
-
-  const handleContextMenu = (e) => {
-    e.preventDefault(); // This will prevent the default long-press behavior
-  };
-
-  useEffect(() => {
-    if (userID) {
-      initializeUser();
-    }
-  }, [userID, initializeUser]);
-
-  const getMessage = useMemo(() => {
-    if (tapCount >= 150) return "He's feeling it! Keep going!";
-    if (tapCount >= 100) return "Ouch! That's gotta hurt!";
-    if (tapCount >= 50) return "Yeah, slap him more! :)";
-    return "Slap this eagle, he took my Golden CHICK!";
-  }, [tapCount]);
-
   const calculatePoints = () => {
     return 1;
   };
@@ -285,10 +229,10 @@ function HomePage() {
         );
         setPoints(response.data.points);
         localStorage.removeItem(`points_${userID}`);
-        setUnsyncedPoints(0); // Reset unsynced points after successful sync
+        setUnsyncedPoints(0);
       } catch (error) {
         console.error("Error syncing points with server:", error);
-        setUnsyncedPoints((prev) => prev + totalPointsToAdd); // Add back unsynced points if error occurs
+        setUnsyncedPoints((prev) => prev + totalPointsToAdd);
       }
     },
     [userID, setPoints]
@@ -299,100 +243,84 @@ function HomePage() {
       if (energy <= 0) {
         return;
       }
-  
+
       if (curvedBorderRef.current && bottomMenuRef.current) {
         const curvedBorderRect = curvedBorderRef.current.getBoundingClientRect();
         const bottomMenuRect = bottomMenuRef.current.getBoundingClientRect();
-  
+
         const isDoubleTap = e.touches && e.touches.length === 2;
-        const isValidTap = e.touches.length <= 2; // Allow only up to 2 fingers
-  
+        const isValidTap = e.touches.length <= 2;
+
         if (!isValidTap) {
-          return; // Ignore if more than 2 fingers are used
+          return;
         }
-  
-        const pointsToAdd = calculatePoints() * (isDoubleTap ? 2 : 1); // Always add a maximum of 2 points
+
+        const pointsToAdd = calculatePoints() * (isDoubleTap ? 2 : 1);
         const clickX = e.touches[0].clientX;
         const clickY = e.touches[0].clientY;
-  
+
         if (clickY > curvedBorderRect.bottom && clickY < bottomMenuRect.top) {
           const eagleElement = document.querySelector(".eagle-image");
           eagleElement.classList.add("shift-up");
           setTimeout(() => {
             eagleElement.classList.remove("shift-up");
           }, 300);
-  
+
           setPoints((prevPoints) => {
             const newPoints = prevPoints + pointsToAdd;
             localStorage.setItem(`points_${userID}`, newPoints);
             return newPoints;
           });
-  
+
           setTapCount((prevTapCount) => prevTapCount + 1);
-  
-          // Add a flying number for each tap (always display "+1" for visual feedback)
-          const animateFlyingPoints = () => {
-            for (let i = 0; i < e.touches.length; i++) {
-              const id = Date.now() + i; // Ensure unique IDs for each flying number
-              setFlyingNumbers((prevNumbers) => [
-                ...prevNumbers,
-                { id, x: e.touches[i].clientX, y: e.touches[i].clientY - 30, value: 1 },
-              ]);
-    
-              setTimeout(() => {
-                setFlyingNumbers((prevNumbers) =>
-                  prevNumbers.filter((num) => num.id !== id)
-                );
-              }, 750);
-            }
-          };
-  
-          animateFlyingPoints();
-  
-          // Add slap emojis
+
+          const id = Date.now();
+          setFlyingNumbers((prevNumbers) => [
+            ...prevNumbers,
+            { id, x: clickX, y: clickY - 30, value: pointsToAdd },
+          ]);
+
           setSlapEmojis((prevEmojis) => [
             ...prevEmojis,
             { id: Date.now(), x: clickX, y: clickY },
           ]);
-  
+
           setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
           setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
-  
+
           decreaseEnergy(isDoubleTap ? 2 : 1);
-  
+
           if (timeoutId) clearTimeout(timeoutId);
-  
+
           const newTimeoutId = setTimeout(() => {
             if (unsyncedPoints > 0 && navigator.onLine) {
               syncPointsWithServer(unsyncedPoints);
             }
-          }, 3000); // Send data after 3 seconds of inactivity
-          
+          }, 3000);
+
           setTimeoutId(newTimeoutId);
         }
       }
     },
     [syncPointsWithServer, setPoints, unsyncedPoints, timeoutId, offlinePoints, energy, decreaseEnergy, userID]
   );
-  
 
   const claimDailyReward = async () => {
     try {
-      setShowModal(false); // Close the modal immediately after the claim button is clicked
-
+      setShowModal(false);
       const response = await axios.put(
         `${process.env.REACT_APP_API_URL}/user-info/claim-daily-reward/${userID}`
       );
       const newPoints = response.data.points;
 
       setPoints(newPoints);
-      localStorage.setItem(`points_${userID}`, newPoints); // Update points in local storage
+      localStorage.setItem(`points_${userID}`, newPoints);
       setIsRewardAvailable(false);
       setShowConfetti(true);
-      audioRef.current.play(); // Play celebration sound
+      audioRef.current.play();
 
       setTimeout(() => {
-        setShowConfetti(false); // Hide confetti after 5 seconds
+        setShowConfetti(false);
       }, 5000);
     } catch (error) {
       console.error("Error claiming daily reward:", error);
@@ -402,11 +330,11 @@ function HomePage() {
   const openModal = () => setShowModal(true);
 
   const closeModal = () => {
-    setIsClosing(true); // Trigger the closing animation
+    setIsClosing(true);
     setTimeout(() => {
-      setShowModal(false); // Hide the modal after the slide-down animation completes
-      setIsClosing(false); // Reset the closing state
-    }, 500); // Ensure this timeout matches the animation duration (500ms)
+      setShowModal(false);
+      setIsClosing(false);
+    }, 500);
   };
 
   useEffect(() => {
@@ -422,13 +350,20 @@ function HomePage() {
     };
   }, [unsyncedPoints, syncPointsWithServer]);
 
+  const getMessage = useMemo(() => {
+    if (tapCount >= 150) return "He's feeling it! Keep going!";
+    if (tapCount >= 100) return "Ouch! That's gotta hurt!";
+    if (tapCount >= 50) return "Yeah, slap him more! :)";
+    return "Slap this eagle, he took my Golden CHICK!";
+  }, [tapCount]);
+
   return (
-    <HomeContainer 
-  style={{
-    backgroundImage: `url(${backgroundImage})`,
-  }} 
-  onTouchStart={handleTap}
->
+    <HomeContainer
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+      }}
+      onTouchStart={handleTap}
+    >
       <UserInfo />
       <CurvedBorderContainer ref={curvedBorderRef} className="curved-border" />
       <PointsDisplayContainer>
@@ -451,7 +386,7 @@ function HomePage() {
 
       <BottomContainer ref={bottomMenuRef} className="bottom-menu">
         <Link to="/leaderboard" style={{ textDecoration: "none" }}>
-            <LeaderboardImage src={leaderboardImage} alt="Leaderboard" />
+          <LeaderboardImage src={leaderboardImage} alt="Leaderboard" />
         </Link>
 
         <EnergyContainer>
