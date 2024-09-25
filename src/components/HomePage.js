@@ -161,7 +161,6 @@ const LeaderboardImage = styled.img`
   }
 `;
 
-
 function HomePage() {
   const { points, setPoints, userID, setUserID } = usePoints();
   const { energy, decreaseEnergy } = useEnergy();
@@ -180,33 +179,32 @@ function HomePage() {
   const bottomMenuRef = useRef(null);
   const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
 
-  // Accumulate unsynced points to avoid sending too many server requests
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
-  const [syncTimeout, setSyncTimeout] = useState(null);
+  const [timeoutId, setTimeoutId] = useState(null);
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
+
   const fetchActiveBackground = useCallback(async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/background/active`);
-      console.log("Background response:", response.data); // Add this line to log the response
-  
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/background/active`
+      );
       if (response.data && response.data.url) {
         setBackgroundImage(response.data.url); // Set the active background
-      } else {
-        console.warn("No background URL found in the response.");
       }
     } catch (error) {
       console.error("Error fetching active background:", error);
     }
   }, []);
+
   useEffect(() => {
     // Fetch the active background when the component mounts
     fetchActiveBackground();
-  }, [fetchActiveBackground]); // Add fetchActiveBackground as a dependency
+  }, [fetchActiveBackground]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -256,9 +254,11 @@ function HomePage() {
 
     checkDailyRewardAvailability();
   }, [userID, setUserID, setPoints, checkDailyRewardAvailability]);
+
   const handleContextMenu = (e) => {
     e.preventDefault(); // This will prevent the default long-press behavior
   };
+
   useEffect(() => {
     if (userID) {
       initializeUser();
@@ -277,62 +277,102 @@ function HomePage() {
   };
 
   const syncPointsWithServer = useCallback(
-    async (pointsToSync) => {
+    async (totalPointsToAdd) => {
       try {
-        const unsyncedLocalPoints = JSON.parse(localStorage.getItem(`points_${userID}_unsynced`)) || 0;
-        const totalPointsToSync = pointsToSync + unsyncedLocalPoints;
-  
-        // Optimistically clear local storage before the API call
-        localStorage.removeItem(`points_${userID}_unsynced`);
-  
-        // Make the API call to sync points
-        await axios.put(
+        const response = await axios.put(
           `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-          { pointsToAdd: totalPointsToSync }
+          { pointsToAdd: totalPointsToAdd }
         );
-  
+        setPoints(response.data.points);
+        localStorage.removeItem(`points_${userID}`);
         setUnsyncedPoints(0); // Reset unsynced points after successful sync
       } catch (error) {
         console.error("Error syncing points with server:", error);
-  
-        // If the API request fails, restore the points in localStorage
-        localStorage.setItem(`points_${userID}_unsynced`, JSON.stringify(pointsToSync));
+        setUnsyncedPoints((prev) => prev + totalPointsToAdd); // Add back unsynced points if error occurs
       }
     },
-    [userID]
+    [userID, setPoints]
   );
-  
 
   const handleTap = useCallback(
     (e) => {
-      if (energy <= 0) return;
+      if (energy <= 0) {
+        return;
+      }
   
-      const pointsToAdd = calculatePoints();
-      setPoints((prevPoints) => {
-        const newPoints = prevPoints + pointsToAdd;
-        localStorage.setItem(`points_${userID}`, newPoints);
-        return newPoints;
-      });
+      if (curvedBorderRef.current && bottomMenuRef.current) {
+        const curvedBorderRect = curvedBorderRef.current.getBoundingClientRect();
+        const bottomMenuRect = bottomMenuRef.current.getBoundingClientRect();
   
-      setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
+        const isDoubleTap = e.touches && e.touches.length === 2;
+        const isValidTap = e.touches.length <= 2; // Allow only up to 2 fingers
   
-      // Store unsynced points in localStorage
-      const currentUnsyncedPoints = JSON.parse(localStorage.getItem(`points_${userID}_unsynced`)) || 0;
-      localStorage.setItem(
-        `points_${userID}_unsynced`,
-        JSON.stringify(currentUnsyncedPoints + pointsToAdd)
-      );
+        if (!isValidTap) {
+          return; // Ignore if more than 2 fingers are used
+        }
   
-      // Clear the existing timeout and set a new one
-      if (syncTimeout) clearTimeout(syncTimeout);
+        const pointsToAdd = calculatePoints() * (isDoubleTap ? 2 : 1); // Always add a maximum of 2 points
+        const clickX = e.touches[0].clientX;
+        const clickY = e.touches[0].clientY;
   
-      setSyncTimeout(
-        setTimeout(() => {
-          syncPointsWithServer(unsyncedPoints + pointsToAdd);
-        }, 2000) // Sync after 2 seconds of inactivity
-      );
+        if (clickY > curvedBorderRect.bottom && clickY < bottomMenuRect.top) {
+          const eagleElement = document.querySelector(".eagle-image");
+          eagleElement.classList.add("shift-up");
+          setTimeout(() => {
+            eagleElement.classList.remove("shift-up");
+          }, 300);
+  
+          setPoints((prevPoints) => {
+            const newPoints = prevPoints + pointsToAdd;
+            localStorage.setItem(`points_${userID}`, newPoints);
+            return newPoints;
+          });
+  
+          setTapCount((prevTapCount) => prevTapCount + 1);
+  
+          // Add a flying number for each tap (always display "+1" for visual feedback)
+          const animateFlyingPoints = () => {
+            for (let i = 0; i < e.touches.length; i++) {
+              const id = Date.now() + i; // Ensure unique IDs for each flying number
+              setFlyingNumbers((prevNumbers) => [
+                ...prevNumbers,
+                { id, x: e.touches[i].clientX, y: e.touches[i].clientY - 30, value: 1 },
+              ]);
+    
+              setTimeout(() => {
+                setFlyingNumbers((prevNumbers) =>
+                  prevNumbers.filter((num) => num.id !== id)
+                );
+              }, 750);
+            }
+          };
+  
+          animateFlyingPoints();
+  
+          // Add slap emojis
+          setSlapEmojis((prevEmojis) => [
+            ...prevEmojis,
+            { id: Date.now(), x: clickX, y: clickY },
+          ]);
+  
+          setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
+          setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
+  
+          decreaseEnergy(isDoubleTap ? 2 : 1);
+  
+          if (timeoutId) clearTimeout(timeoutId);
+  
+          const newTimeoutId = setTimeout(() => {
+            if (unsyncedPoints > 0 && navigator.onLine) {
+              syncPointsWithServer(unsyncedPoints);
+            }
+          }, 3000); // Send data after 3 seconds of inactivity
+          
+          setTimeoutId(newTimeoutId);
+        }
+      }
     },
-    [unsyncedPoints, syncTimeout, syncPointsWithServer, energy, userID]
+    [syncPointsWithServer, setPoints, unsyncedPoints, timeoutId, offlinePoints, energy, decreaseEnergy, userID]
   );
   
 
@@ -370,20 +410,18 @@ function HomePage() {
   };
 
   useEffect(() => {
-    const syncBeforeUnload = () => {
-      const unsyncedLocalPoints = JSON.parse(localStorage.getItem(`points_${userID}_unsynced`)) || 0;
-      if (unsyncedLocalPoints > 0) {
-        syncPointsWithServer(unsyncedLocalPoints);
+    const syncBeforeUnload = (e) => {
+      if (navigator.onLine && unsyncedPoints > 0) {
+        syncPointsWithServer(unsyncedPoints);
       }
     };
-  
     window.addEventListener("beforeunload", syncBeforeUnload);
-  
+
     return () => {
       window.removeEventListener("beforeunload", syncBeforeUnload);
     };
-  }, [syncPointsWithServer, userID]);
-  
+  }, [unsyncedPoints, syncPointsWithServer]);
+
   return (
     <HomeContainer 
   style={{
@@ -401,51 +439,47 @@ function HomePage() {
       </PointsDisplayContainer>
       <MiddleSection>
         <Message>{getMessage}</Message>{" "}
-        {/* Use getMessage directly as a value, not a function */}
         <EagleContainer>
           <EagleImage
             src={eagleImage}
             alt="Eagle"
             className="eagle-image"
-            onContextMenu={(e) => e.preventDefault()} // Prevent default context menu
+            onContextMenu={(e) => e.preventDefault()}
           />
         </EagleContainer>
       </MiddleSection>
 
       <BottomContainer ref={bottomMenuRef} className="bottom-menu">
-  {/* Leaderboard section with animated image */}
-  <Link to="/leaderboard" style={{ textDecoration: "none" }}>
-      <LeaderboardImage src={leaderboardImage} alt="Leaderboard" />
-  </Link>
+        <Link to="/leaderboard" style={{ textDecoration: "none" }}>
+            <LeaderboardImage src={leaderboardImage} alt="Leaderboard" />
+        </Link>
 
-  <EnergyContainer>
-    <EnergyIcon energy={energy} />
-    <EnergyCounter>{Math.floor(energy)}/1000</EnergyCounter>
-  </EnergyContainer>
+        <EnergyContainer>
+          <EnergyIcon energy={energy} />
+          <EnergyCounter>{Math.floor(energy)}/1000</EnergyCounter>
+        </EnergyContainer>
 
-  {/* Daily Reward Button with Fire Icon */}
-  <Link
-    to="#"
-    onClick={isRewardAvailable ? openModal : null}
-    style={{
-      textDecoration: "none",
-      pointerEvents: isRewardAvailable ? "auto" : "none",
-      opacity: isRewardAvailable ? 1 : 0.5,
-    }}
-  >
-    <EnergyContainer>
-      <FireIcon $available={isRewardAvailable} />
-      Daily Reward
-    </EnergyContainer>
-  </Link>
-</BottomContainer>
-
+        <Link
+          to="#"
+          onClick={isRewardAvailable ? openModal : null}
+          style={{
+            textDecoration: "none",
+            pointerEvents: isRewardAvailable ? "auto" : "none",
+            opacity: isRewardAvailable ? 1 : 0.5,
+          }}
+        >
+          <EnergyContainer>
+            <FireIcon $available={isRewardAvailable} />
+            Daily Reward
+          </EnergyContainer>
+        </Link>
+      </BottomContainer>
 
       {showModal && (
         <ModalOverlay onClick={closeModal}>
           <RewardModalContainer
             onClick={(e) => e.stopPropagation()}
-            isClosing={isClosing} // Pass the closing state as a prop
+            isClosing={isClosing}
           >
             <CloseButton onClick={closeModal}>×</CloseButton>
             <ModalHeader>Claim Your Daily Reward!</ModalHeader>
@@ -461,7 +495,6 @@ function HomePage() {
         </ModalOverlay>
       )}
 
-      {/* Confetti */}
       {showConfetti && (
         <Confetti width={windowSize.width} height={windowSize.height} />
       )}
