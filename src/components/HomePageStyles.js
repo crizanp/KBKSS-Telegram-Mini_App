@@ -5,12 +5,13 @@ const eagleShiftUp = keyframes`
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-15px); /* Slight upward movement */
+    transform: translateY(-10px); /* Slight upward movement */
   }
   100% {
     transform: translateY(0); /* Return to original position */
   }
 `;
+
 const pointFlyingAnimation = keyframes`
   0% {
     opacity: 1;
@@ -45,7 +46,7 @@ const slapEffectAnimation = keyframes`
 `;
 
 export const HomeContainer = styled.div`
-  font-family: 'Orbitron',sans-serif;
+  font-family: "Orbitron", sans-serif;
   color: white;
   display: flex;
   flex-direction: column;
@@ -120,10 +121,10 @@ export const EagleImage = styled.img`
   user-select: none;      /* Disable text/image selection */
   pointer-events: none;   /* Disable all pointer events */
   -webkit-user-drag: none; /* Disable drag on image in Webkit-based browsers */
-  z-index:100;
-  
+  z-index: 1000;
+
   &.shift-up {
-    animation: ${eagleShiftUp} 0.3s ease-in-out; /* Smooth and fast animation */
+    animation: ${eagleShiftUp} 0.2s ease-in-out; /* Slight and quick animation */
   }
 `;
 
@@ -134,6 +135,9 @@ export const BottomContainer = styled.div`
   width: 100%;
   padding: 0 20px;
   box-sizing: border-box;
+  align-items: flex-end;
+
+
 `;
 
 
@@ -172,7 +176,7 @@ export const EnergyContainer = styled.div`
     font-size: 13px;
     font-weight: bold;
     cursor: pointer;
-    width: 100px;
+    width: 107px;
     height: 35px;
     text-align: justify;
     border: 2px solid #1fa3e6;
@@ -205,11 +209,11 @@ export const FlyingNumber = styled.div`
   animation: ${pointFlyingAnimation} 0.75s ease-in-out;
   top: ${({ y }) => `${y}px`};
   left: ${({ x }) => `${x}px`};
-  z-index: 101;
+  z-index: 1001;
   pointer-events: none;
-  transform: translate(-50%, -100%);
+  transform: translate(-50%, -100%); /* Adjust for proper centering */
   
-  /* Add this to ensure it disappears completely */
+  /* Ensure the points fade away completely */
   opacity: 0;
   transition: opacity 0.75s ease-in-out;
 `;
@@ -219,16 +223,29 @@ export const FlyingNumber = styled.div`
 
 
 
-export const SlapEmoji = styled.div`
+export const SlapEmojiImage = styled.img`
   position: absolute;
-  top: ${({ y }) => y}px;
-  left: ${({ x }) => x}px;
-  font-size: 36px;
-  color: #ffffff;
-  z-index: 101;
-  transform: translate(-50%, -50%);
-  animation: ${slapEffectAnimation} 0.6s ease forwards;
+  width: 350px; /* Reduced size */
+  height: 350px;
+  left: ${(props) => props.x}px;
+  top: ${(props) => props.y}px;
+  transform: translate(-50%, -50%); /* Center the image */
+  animation: fadeOut 0.75s ease-out forwards; /* Add fade-out animation */
+  pointer-events: none; /* Make sure it doesn't interfere with user interactions */
+  z-index: 100;
+
+  @keyframes fadeOut {
+    0% {
+      opacity: 0.5; /* Reduced opacity for more transparency */
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) translateY(-20px); /* Moves it upwards slightly before disappearing */
+    }
+  }
 `;
+
+
 export const CurvedBorderContainer = styled.div`
   width: 110%;
   height: 21px;
