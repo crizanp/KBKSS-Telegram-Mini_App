@@ -18,7 +18,7 @@ function LoadingPage() {
 
   useEffect(() => {
     const checkEnvironment = () => {
-      const isLocalhost = window.location.hostname === 'localhost';
+      const isLocalhost = window.location.hostname === 'localhost' || "192.188.1.74";
       const tg = window.Telegram.WebApp;
 
       if (isLocalhost) {

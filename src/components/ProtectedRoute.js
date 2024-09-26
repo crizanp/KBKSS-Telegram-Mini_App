@@ -4,7 +4,7 @@ import { usePoints } from '../context/PointsContext';
 
 const ProtectedRoute = ({ children }) => {
   const { userID } = usePoints();
-  const isLocalhost = window.location.hostname === 'localhost';
+  const isLocalhost = window.location.hostname === 'localhost' || "192.188.1.74";
 
   // If userID is not set and not on localhost, redirect to LoadingPage
   if (!userID && !isLocalhost) {

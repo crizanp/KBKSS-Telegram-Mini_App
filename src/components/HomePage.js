@@ -13,7 +13,7 @@ import { Link } from "react-router-dom";
 import { FaTasks, FaRegGem, FaFire } from "react-icons/fa";
 import Confetti from "react-confetti";
 import celebrationSound from "../assets/celebration.mp3";
-import styled from "styled-components";
+import styled,{ keyframes }  from "styled-components";
 import leaderboardImage from "../assets/leaderboard.png";
 
 import {
@@ -62,7 +62,9 @@ const FireIcon = styled(FaFire)`
   font-size: 1rem;
   margin-right: 0px;
   color: ${(props) =>
-    props.$available ? "#f39c12" : "#a0a0a0"}; // Yellow if available, grey if not
+    props.$available
+      ? "#f39c12"
+      : "#a0a0a0"}; // Yellow if available, grey if not
 `;
 
 const RewardModalContainer = styled.div`
@@ -160,6 +162,33 @@ const LeaderboardImage = styled.img`
     }
   }
 `;
+// Define a keyframe for the shiny effect
+const shineAnimation = keyframes`
+  0% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+`;
+
+// Styled Shiny Overlay
+const ShinyOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 40%);
+  animation: ${shineAnimation} 0.5s ease-in-out forwards;
+  pointer-events: none; // Prevent interaction with the overlay
+`;
 
 function HomePage() {
   const { points, setPoints, userID, setUserID } = usePoints();
@@ -178,6 +207,7 @@ function HomePage() {
   const curvedBorderRef = useRef(null);
   const bottomMenuRef = useRef(null);
   const [backgroundImage, setBackgroundImage] = useState("");
+const [showShinyEffect, setShowShinyEffect] = useState(false);
 
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
   const [timeoutId, setTimeoutId] = useState(null);
@@ -245,7 +275,8 @@ function HomePage() {
       }
 
       if (curvedBorderRef.current && bottomMenuRef.current) {
-        const curvedBorderRect = curvedBorderRef.current.getBoundingClientRect();
+        const curvedBorderRect =
+          curvedBorderRef.current.getBoundingClientRect();
         const bottomMenuRect = bottomMenuRef.current.getBoundingClientRect();
 
         const isDoubleTap = e.touches && e.touches.length === 2;
@@ -285,8 +316,12 @@ function HomePage() {
             { id: Date.now(), x: clickX, y: clickY },
           ]);
 
-          setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
-          setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
+          setOfflinePoints(
+            (prevOfflinePoints) => prevOfflinePoints + pointsToAdd
+          );
+          setUnsyncedPoints(
+            (prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd
+          );
 
           decreaseEnergy(isDoubleTap ? 2 : 1);
 
@@ -301,8 +336,21 @@ function HomePage() {
           setTimeoutId(newTimeoutId);
         }
       }
+      setShowShinyEffect(true);
+    setTimeout(() => {
+      setShowShinyEffect(false);
+    }, 500); // Duration of the shiny effect
     },
-    [syncPointsWithServer, setPoints, unsyncedPoints, timeoutId, offlinePoints, energy, decreaseEnergy, userID]
+    [
+      syncPointsWithServer,
+      setPoints,
+      unsyncedPoints,
+      timeoutId,
+      offlinePoints,
+      energy,
+      decreaseEnergy,
+      userID,
+    ]
   );
 
   const claimDailyReward = async () => {
@@ -375,13 +423,15 @@ function HomePage() {
       <MiddleSection>
         <Message>{getMessage}</Message>{" "}
         <EagleContainer>
-          <EagleImage
-            src={eagleImage}
-            alt="Eagle"
-            className="eagle-image"
-            onContextMenu={(e) => e.preventDefault()}
-          />
-        </EagleContainer>
+  <EagleImage
+    src={eagleImage}
+    alt="Eagle"
+    className="eagle-image"
+    onContextMenu={(e) => e.preventDefault()}
+  />
+  {showShinyEffect && <ShinyOverlay />} {/* Render the shiny effect */}
+</EagleContainer>
+
       </MiddleSection>
 
       <BottomContainer ref={bottomMenuRef} className="bottom-menu">

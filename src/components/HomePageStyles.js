@@ -120,6 +120,7 @@ export const EagleImage = styled.img`
   user-select: none;      /* Disable text/image selection */
   pointer-events: none;   /* Disable all pointer events */
   -webkit-user-drag: none; /* Disable drag on image in Webkit-based browsers */
+  z-index:100;
   
   &.shift-up {
     animation: ${eagleShiftUp} 0.3s ease-in-out; /* Smooth and fast animation */
@@ -204,7 +205,7 @@ export const FlyingNumber = styled.div`
   animation: ${pointFlyingAnimation} 0.75s ease-in-out;
   top: ${({ y }) => `${y}px`};
   left: ${({ x }) => `${x}px`};
-  z-index: 10;
+  z-index: 101;
   pointer-events: none;
   transform: translate(-50%, -100%);
   
@@ -224,7 +225,7 @@ export const SlapEmoji = styled.div`
   left: ${({ x }) => x}px;
   font-size: 36px;
   color: #ffffff;
-  z-index: 10;
+  z-index: 101;
   transform: translate(-50%, -50%);
   animation: ${slapEffectAnimation} 0.6s ease forwards;
 `;
