@@ -368,7 +368,7 @@ function HomePage() {
   
       // Get the tap coordinates for each touch point
       const touchPoints = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }];
-      
+  
       const topBoundaryElement = curvedBorderRef.current; // Reference for CurvedBorderContainer
       const bottomBoundaryElement = bottomMenuRef.current; // Reference for BottomContainer
   
@@ -396,10 +396,8 @@ function HomePage() {
           }, 200); // Match animation duration
         });
   
-        const isDoubleTap = e.touches && e.touches.length === 2;
-  
-        // Points should be added as +1 for the tap, regardless of the number of fingers used
-        const pointsToAdd = 1; // Always add just 1 point for any tap (even if multiple fingers)
+        // Points should be added as +1 for the entire tap, regardless of how many fingers are used
+        const pointsToAdd = 1; // Always add just 1 point for the tap gesture (even with multiple fingers)
         const unsyncedTaps = parseInt(localStorage.getItem(`unsyncedTaps_${userID}`), 10) || 0;
         const newUnsyncedTaps = unsyncedTaps + pointsToAdd;
         localStorage.setItem(`unsyncedTaps_${userID}`, newUnsyncedTaps);
@@ -414,7 +412,7 @@ function HomePage() {
         // Call debounced sync function
         syncPointsWithServer(newUnsyncedTaps);
   
-        // Handle flying numbers and slap emojis for each touch point
+        // Handle flying numbers and slap emojis for each touch point (visual effect only, no points)
         touchPoints.forEach((point) => {
           const id = Date.now() + Math.random(); // Create a unique ID for each flying number
   
@@ -438,10 +436,10 @@ function HomePage() {
           }, 750);
         });
   
-        // Decrease energy on tap
-        decreaseEnergy(1); // Only decrease energy by 1 regardless of the number of fingers used
+        // Decrease energy on tap (only once, not per finger)
+        decreaseEnergy(1); // Decrease energy by 1 regardless of the number of fingers used
   
-        // Increment tap count
+        // Increment tap count (only once per gesture)
         setTapCount((prevTapCount) => prevTapCount + 1);
       }
     },
