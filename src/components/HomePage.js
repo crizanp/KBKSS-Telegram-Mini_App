@@ -362,6 +362,9 @@ function HomePage() {
 
   const handleTap = useCallback(
     (e) => {
+      // Prevent default system gestures like three-finger or four-finger taps
+      e.preventDefault();
+  
       if (energy <= 0) {
         return;
       }
