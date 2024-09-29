@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { FaRegGem, FaBell, FaLevelUpAlt } from 'react-icons/fa'; // Import necessary icons
-import { usePoints } from '../context/PointsContext';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { usePoints } from '../context/PointsContext';
+import { getUserID } from '../utils/getUserID'; // Assuming the file is named getUserID.js
 
 // Main container with dark theme and compact mobile-first size
 const UserInfoContainer = styled.div`
@@ -96,22 +98,31 @@ const StyledLink = styled(Link)`
   text-decoration: none;  // Remove the underline
 `;
 
-// Function to calculate user level based on points
-const calculateLevel = (points) => {
-  return Math.floor(points / 10000) + 1;  // Level-up every 10000 points
-};
-
 const UserInfo = () => {
-  const { points } = usePoints();
-  
-  // Get the first name from Telegram WebApp or fallback to 'User'
-  let firstName = window.Telegram.WebApp?.initDataUnsafe?.user?.first_name || 'User';
-  
-  // Trim the first name to the first 10 alphanumeric characters
-  firstName = firstName.split(/[^\w]+/)[0].slice(0, 10);
+  const [userLevel, setUserLevel] = useState(0);  // Default to 0
+  const [firstName, setFirstName] = useState('User');
+  const { points } = usePoints();  // Points context
 
-  // Calculate the user's current level
-  const userLevel = calculateLevel(points);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userID = await getUserID(() => {}, () => {});
+
+        // Fetch the user's level from the API
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`);
+        const data = response.data;
+
+        // Set the user's level and first name, default to 0 if level is missing
+        setUserLevel(data.currentLevel ?? 0);
+        setFirstName(window.Telegram.WebApp?.initDataUnsafe?.user?.first_name || 'User');
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        setUserLevel(0);  // Default to level 0 on error
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   return (
     <UserInfoContainer>
@@ -121,14 +132,14 @@ const UserInfo = () => {
         {/* Apply the styled Link here */}
         <StyledLink to="/levelpage">
           <LevelContainer>
-            <LevelIcon /> Lvl {userLevel}
+            <LevelIcon /> Lvl {userLevel}  {/* Dynamically display user level */}
           </LevelContainer>
         </StyledLink>
       </UserLevelContainer>
 
       {/* Display points and bell icon */}
       <PointsContainer>
-        <GemIcon /> {Math.floor(points)} GEMS
+        <GemIcon /> {Math.floor(points)} GEMS  {/* Keep points functionality as in the previous version */}
         {/* Link to Telegram for notifications */}
         <a href="https://t.me/gemhuntersclub" target="_blank" rel="noopener noreferrer">
           <BellIcon />

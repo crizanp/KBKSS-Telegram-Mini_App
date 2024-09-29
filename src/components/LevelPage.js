@@ -1,18 +1,31 @@
-import React, { useState } from 'react';
-import styled, { keyframes } from 'styled-components';
-import { FaArrowAltCircleLeft, FaGem, FaCheckCircle, FaGamepad, FaUserFriends } from 'react-icons/fa';
-import UserInfo from './UserInfo'; // Import UserInfo component
+import React, { useState, useEffect } from "react";
+import styled, { keyframes } from "styled-components";
+import {
+  FaArrowAltCircleLeft,
+  FaGem,
+  FaCheckCircle,
+  FaGamepad,
+  FaUserFriends,
+} from "react-icons/fa";
+import axios from "axios";
+import UserInfo from "./UserInfo"; // Import UserInfo component
+import { getUserID } from "../utils/getUserID"; // Assuming the file is named getUserID.js
+import avatar1 from '../assets/avatar/1.png';
+import avatar2 from '../assets/avatar/2.png';
+import avatar3 from '../assets/avatar/3.png';
+import avatar4 from '../assets/avatar/4.png';
+import avatar5 from '../assets/avatar/5.png';
 
 // Glowing animation for the level circle
 const glow = keyframes`
   0% {
-    box-shadow: 0 0 5px ${(props) => props.color || '#36a8e5'}, 0 0 20px ${(props) => props.color || '#36a8e5'}, 0 0 30px ${(props) => props.color || '#36a8e5'}, 0 0 40px ${(props) => props.color || '#36a8e5'};
+    box-shadow: 0 0 5px ${(props) => props.color || "#36a8e5"}, 0 0 20px ${(props) => props.color || "#36a8e5"}, 0 0 30px ${(props) => props.color || "#36a8e5"}, 0 0 40px ${(props) => props.color || "#36a8e5"};
   }
   50% {
-    box-shadow: 0 0 10px ${(props) => props.color || '#36a8e5'}, 0 0 30px ${(props) => props.color || '#36a8e5'}, 0 0 60px ${(props) => props.color || '#36a8e5'}, 0 0 80px ${(props) => props.color || '#36a8e5'};
+    box-shadow: 0 0 15px ${(props) => props.color || "#36a8e5"}, 0 0 30px ${(props) => props.color || "#36a8e5"}, 0 0 60px ${(props) => props.color || "#36a8e5"}, 0 0 80px ${(props) => props.color || "#36a8e5"};
   }
   100% {
-    box-shadow: 0 0 5px ${(props) => props.color || '#36a8e5'}, 0 0 20px ${(props) => props.color || '#36a8e5'}, 0 0 30px ${(props) => props.color || '#36a8e5'}, 0 0 40px ${(props) => props.color || '#36a8e5'};
+    box-shadow: 0 0 5px ${(props) => props.color || "#36a8e5"}, 0 0 20px ${(props) => props.color || "#36a8e5"}, 0 0 30px ${(props) => props.color || "#36a8e5"}, 0 0 40px ${(props) => props.color || "#36a8e5"};
   }
 `;
 
@@ -25,12 +38,19 @@ const LevelPageContainer = styled.div`
   justify-content: center;
   align-items: center;
   padding: 20px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: "Orbitron", sans-serif;
   position: relative;
   overflow: hidden;
   min-height: 100vh;
 `;
-
+const Avatar = styled.img`
+  width: 160px;    /* Adjust size as needed */
+  height: 160px;   /* Adjust size as needed */
+  border-radius: 50%;   /* Make it circular */
+  border: 5px solid #fff;  /* Cute white border */
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);  /* Optional glow */
+  margin-bottom: 15px;   /* Space below the avatar */
+`;
 // Arrow Button Styles
 const SliderIconContainer = styled.div`
   position: absolute;
@@ -46,13 +66,11 @@ const SliderIconContainer = styled.div`
   border-radius: 50%;
 `;
 
-// Left Arrow Button
 const LeftSliderIcon = styled(FaArrowAltCircleLeft)`
-  color:#fafafa;
+  color: #fafafa;
   font-size: 3rem;
 `;
 
-// Right Arrow Button
 const RightSliderIcon = styled(FaArrowAltCircleLeft)`
   color: #fafafa;
   font-size: 3rem;
@@ -72,7 +90,7 @@ const LevelContent = styled.div`
 
 // Level Circle with glowing animation
 const LevelCircle = styled.div`
-  background-color: ${(props) => props.color || '#36a8e5'};
+  background-color: ${(props) => props.color || "#36a8e5"};
   border-radius: 50%;
   width: 160px;
   height: 160px;
@@ -81,31 +99,30 @@ const LevelCircle = styled.div`
   align-items: center;
   font-size: 4rem;
   color: white;
-  animation: ${glow} 2s ease-in-out infinite;
-  margin-bottom: 10px;
+  box-shadow: ${(props) => (props.$isActive ? "0 0 15px #36a8e5" : "none")};
 `;
 
-// Level name display
+// Level name display with "(current)" if it's the user's current level
 const LevelName = styled.h2`
   font-size: 2rem;
-  color: ${(props) => props.color || '#36a8e5'};
+  color: ${(props) => props.color || "#36a8e5"};
   text-transform: uppercase;
   margin-bottom: 10px;
 `;
 
 // Progress Bar Wrapper with fixed width
 const ProgressBarWrapper = styled.div`
-  width: 100%;
-  max-width: 500px; // All progress bars will have the same width
+  width: 140%;
+  max-width: 500px;
   display: flex;
   justify-content: center;
   margin-bottom: 10px;
 `;
 
-// Progress Bar Container with fixed width and overflow fix
+// Progress Bar Container
 const ProgressBarContainer = styled.div`
   width: 100%;
-  height: 20px;
+  height: 25px;
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   position: relative;
@@ -117,8 +134,8 @@ const ProgressBarContainer = styled.div`
 // Progress Bar Fill, using dynamic width for progress
 const ProgressFill = styled.div`
   height: 100%;
-  width: ${(props) => props.width || '50%'};
-  background-color: ${(props) => props.color || '#36a8e5'};
+  width: ${(props) => props.width || "50%"};
+  background-color: ${(props) => props.color || "#36a8e5"};
   border-radius: 10px;
   transition: width 0.4s ease;
 `;
@@ -126,10 +143,10 @@ const ProgressFill = styled.div`
 // Gem icon for progress
 const GemIcon = styled(FaGem)`
   position: absolute;
-  top: -2px;
-  left: ${(props) => props.position || '0%'};
+  top: 1px;
+  left: ${(props) => props.position || "0%"};
   transform: translateX(-50%);
-  font-size: 1.45rem;
+  font-size: 1.4rem;
   color: #fff;
 `;
 
@@ -154,167 +171,248 @@ const CriterionBox = styled.div`
   border-radius: 10px;
   margin: 10px 0;
   font-size: 1.2rem;
-  color: #e0e0e0;
+  color: ${(props) => (props.completed ? "#4caf50" : "#e0e0e0")}; // Green for completed criteria
 `;
-const CriterionIcon = styled.div`
-  margin:  0px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
+
+// Styled for small "Completed", "Not Completed", or "Checking..." text
+const StatusText = styled.span`
+  font-size: 0.9rem;
+  background-color: ${(props) =>
+    props.completed === null
+      ? "transparent"
+      : props.completed
+      ? "#fff"
+      : "transparent"};
+  color: ${(props) =>
+    props.completed === null ? "#e0e0e0" : props.completed ? "#000" : "#e0e0e0"};
+  padding: 2px 5px;
+  border-radius: 5px;
+  margin-left: 10px;
+  margin-right: 15px;
 `;
+
 const CriterionText = styled.div`
   flex: 1;
   text-align: left;
   font-size: 1.2rem;
 `;
 
+const CriterionIcon = styled.div`
+  margin-right: 25px;
+  margin-left: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+`;
+
 // Dummy data for levels with multiple criteria
 const levelsData = [
   {
     level: 1,
-    name: 'Novice',
+    name: "Novice",
     criteria: {
-      points: 'Collect 10,000 $GEMS',
-      tasks: 'Finish 5 tasks',
-      games: 'Unlock 1 game',
-      invite: 'Invite 1 friend',
+      tasks: "Finish 5 tasks",
+      games: "Unlock 1 game",
+      invites: "Invite 1 friend",
     },
-    color: '#36a8e5',
+    color: "#36a8e5",
     progress: 30,
-    starsNeeded: 50, // Example stars needed for the next level
+    starsNeeded: 50,
   },
   {
     level: 2,
-    name: 'Apprentice',
+    name: "Apprentice",
     criteria: {
-      points: 'Collect 50,000 $GEMS',
-      tasks: 'Finish 15 tasks',
-      games: 'Unlock 1 games',
-      invite: 'Invite 3 friends',
+      tasks: "Finish 15 tasks",
+      games: "Unlock 1 game",
+      invites: "Invite 3 friends",
     },
-    color: '#4caf50',
+    color: "#4caf50",
     progress: 50,
     starsNeeded: 100,
   },
   {
     level: 3,
-    name: 'Warrior',
+    name: "Warrior",
     criteria: {
-      points: 'Collect 100,000 $GEMS',
-      tasks: 'Finish 20 tasks',
-      games: 'Unlock 1 game',
-      invite: 'Invite 5 friends',
+      tasks: "Finish 20 tasks",
+      games: "Unlock 1 game",
+      invites: "Invite 5 friends",
     },
-    color: '#ff5722',
+    color: "#ff5722",
     progress: 70,
     starsNeeded: 200,
   },
   {
     level: 4,
-    name: 'Champion',
+    name: "Champion",
     criteria: {
-      points: 'Collect 200,000 $GEMS',
-      tasks: 'Finish 25 tasks',
-      games: 'Unlock 2 games',
-      invite: 'Invite 10 friends',
+      tasks: "Finish 25 tasks",
+      games: "Unlock 2 games",
+      invites: "Invite 10 friends",
     },
-    color: '#36a8e5',
+    color: "#36a8e5",
     progress: 80,
     starsNeeded: 400,
   },
   {
     level: 5,
-    name: 'Legend',
+    name: "Legend",
     criteria: {
-      points: 'Collect 500,000 $GEMS',
-      tasks: 'Finish 25 tasks',
-      games: 'Unlock 2 games',
-      invite: 'Invite 20 friends',
+      tasks: "Finish 25 tasks",
+      games: "Unlock 2 games",
+      invites: "Invite 20 friends",
     },
-    color: '#9c27b0',
+    color: "#9c27b0",
     progress: 95,
     starsNeeded: 800,
   },
 ];
-
+// Define a function to return avatar based on level
+const getAvatarByLevel = (level) => {
+  switch (level) {
+    case 1:
+      return avatar1;
+    case 2:
+      return avatar2;
+    case 3:
+      return avatar3;
+    case 4:
+      return avatar4;
+    case 5:
+      return avatar5;
+    default:
+      return avatar1; // Default avatar if level is out of range
+  }
+};
 const LevelPage = () => {
+  const [userLevelData, setUserLevelData] = useState(null); // Store user's level data
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
-  const [currentStars, setCurrentStars] = useState(0); // Example state for current stars
+  const [loading, setLoading] = useState(true); // Loading state for criteria
 
-  // Navigate to the previous level
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Use no-op functions as placeholders for setUserID and setUsername
+        const userID = await getUserID(() => {}, () => {});
+
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`
+        );
+        const data = response.data;
+        setUserLevelData(data);
+        setLoading(false); // Data has finished loading
+
+        const currentLevel = levelsData.findIndex(
+          (level) => level.level === data.currentLevel
+        );
+        if (currentLevel !== -1) {
+          setCurrentLevelIndex(currentLevel);
+        }
+      } catch (error) {
+        console.error("Error fetching user level data:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const handlePrevious = () => {
     setCurrentLevelIndex((prevIndex) =>
       prevIndex > 0 ? prevIndex - 1 : levelsData.length - 1
     );
   };
 
-  // Navigate to the next level
   const handleNext = () => {
     setCurrentLevelIndex((prevIndex) =>
       prevIndex < levelsData.length - 1 ? prevIndex + 1 : 0
     );
   };
 
-  const { level, name, criteria, color, progress } = levelsData[currentLevelIndex];
+  const currentLevel = levelsData[currentLevelIndex];
+
+  // Get avatar based on current level
+  const userAvatar = getAvatarByLevel(currentLevel.level);
+
+  // Check if criteria are completed
+  const tasksCompleted =
+    userLevelData?.actualTasksCompleted >=
+    parseInt(currentLevel.criteria.tasks.split(" ")[1]);
+  const gamesUnlocked =
+    userLevelData?.actualGamesUnlocked >=
+    parseInt(currentLevel.criteria.games.split(" ")[1]);
+  const invitesCompleted =
+    userLevelData?.actualInvites >=
+    parseInt(currentLevel.criteria.invites.split(" ")[1]);
 
   return (
     <LevelPageContainer>
-      {/* Include UserInfo at the top */}
       <UserInfo />
 
       {/* Left arrow button */}
-      <SliderIconContainer style={{ left: '10px' }} onClick={handlePrevious}>
+      <SliderIconContainer style={{ left: "10px" }} onClick={handlePrevious}>
         <LeftSliderIcon />
       </SliderIconContainer>
 
       {/* Display the current level */}
       <LevelContent>
-        <LevelCircle color={color}>{level}</LevelCircle>
-        <LevelName style={{ color }}>{name}</LevelName>
+        <Avatar src={userAvatar} alt="User Avatar" />
+
+        {/* Show level name with "(current)" if it's the user's current level */}
+        <LevelName style={{ color: currentLevel.color }}>
+          Lvl {currentLevel.level}{" "}
+          {currentLevel.level === userLevelData?.currentLevel && "(current)"}
+        </LevelName>
 
         {/* Progress Bar */}
         <ProgressBarWrapper>
           <ProgressBarContainer>
-            <ProgressFill width={`${progress}%`} color={color} />
-            <GemIcon position={`${progress}%`} />
+            <ProgressFill
+              width={`${currentLevel.progress}%`}
+              color={currentLevel.color}
+            />
+            <GemIcon position={`${currentLevel.progress}%`} />
           </ProgressBarContainer>
         </ProgressBarWrapper>
       </LevelContent>
 
       {/* Task Criteria Section */}
       <CriteriaContainer>
-        <CriterionBox>
+        <CriterionBox completed={tasksCompleted}>
           <CriterionIcon>
             <FaCheckCircle />
           </CriterionIcon>
-          <CriterionText>{criteria.points}</CriterionText>
+          <CriterionText>{currentLevel.criteria.tasks}</CriterionText>
+          <StatusText completed={loading ? null : tasksCompleted}>
+            {loading ? "Checking..." : tasksCompleted ? "Completed" : "Not Completed"}
+          </StatusText>
         </CriterionBox>
 
-        <CriterionBox>
-          <CriterionIcon>
-            <FaCheckCircle />
-          </CriterionIcon>
-          <CriterionText>{criteria.tasks}</CriterionText>
-        </CriterionBox>
-
-        <CriterionBox>
+        <CriterionBox completed={gamesUnlocked}>
           <CriterionIcon>
             <FaGamepad />
           </CriterionIcon>
-          <CriterionText>{criteria.games}</CriterionText>
+          <CriterionText>{currentLevel.criteria.games}</CriterionText>
+          <StatusText completed={loading ? null : gamesUnlocked}>
+            {loading ? "Checking..." : gamesUnlocked ? "Completed" : "Not Completed"}
+          </StatusText>
         </CriterionBox>
 
-        <CriterionBox>
+        <CriterionBox completed={invitesCompleted}>
           <CriterionIcon>
             <FaUserFriends />
           </CriterionIcon>
-          <CriterionText>{criteria.invite}</CriterionText>
+          <CriterionText>{currentLevel.criteria.invites}</CriterionText>
+          <StatusText completed={loading ? null : invitesCompleted}>
+            {loading ? "Checking..." : invitesCompleted ? "Completed" : "Not Completed"}
+          </StatusText>
         </CriterionBox>
       </CriteriaContainer>
 
       {/* Right arrow button */}
-      <SliderIconContainer style={{ right: '10px' }} onClick={handleNext}>
+      <SliderIconContainer style={{ right: "10px" }} onClick={handleNext}>
         <RightSliderIcon />
       </SliderIconContainer>
     </LevelPageContainer>
