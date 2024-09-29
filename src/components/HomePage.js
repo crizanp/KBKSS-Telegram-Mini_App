@@ -362,32 +362,31 @@ function HomePage() {
 
   const handleTap = useCallback(
     (e) => {
-      // Prevent default system gestures like three-finger or four-finger taps
       e.preventDefault();
   
       if (energy <= 0) {
         return;
       }
   
-      // Get the tap coordinates for each touch point
-      const touchPoints = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }];
+      const touchPoints = e.touches
+        ? Array.from(e.touches)
+        : [{ clientX: e.clientX, clientY: e.clientY }];
   
-      const topBoundaryElement = curvedBorderRef.current; // Reference for CurvedBorderContainer
-      const bottomBoundaryElement = bottomMenuRef.current; // Reference for BottomContainer
+      const topBoundaryElement = curvedBorderRef.current;
+      const bottomBoundaryElement = bottomMenuRef.current;
   
       if (topBoundaryElement && bottomBoundaryElement) {
         const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
         const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
   
         // Ignore taps outside the valid region
-        if (touchPoints.some(point => point.clientY < topBoundary || point.clientY > bottomBoundary)) {
+        if (touchPoints.some((point) => point.clientY < topBoundary || point.clientY > bottomBoundary)) {
           return;
         }
   
         const eagleElement = document.querySelector(".eagle-image");
         const eagleRect = eagleElement.getBoundingClientRect();
   
-        // Eagle's center for slap emoji effect
         const eagleCenterX = eagleRect.left + eagleRect.width / 2;
         const eagleCenterY = eagleRect.top + eagleRect.height / 2;
   
@@ -396,66 +395,47 @@ function HomePage() {
         requestAnimationFrame(() => {
           setTimeout(() => {
             eagleElement.classList.remove("shift-up");
-          }, 200); // Match animation duration
+          }, 200);
         });
   
-        // Points should be added as +1 for the entire tap, regardless of how many fingers are used
-        const pointsToAdd = 1; // Always add just 1 point for the tap gesture (even with multiple fingers)
+        // Only add 1 point regardless of the number of fingers
+        const pointsToAdd = 1; // Always add just 1 point
+  
         const unsyncedTaps = parseInt(localStorage.getItem(`unsyncedTaps_${userID}`), 10) || 0;
         const newUnsyncedTaps = unsyncedTaps + pointsToAdd;
         localStorage.setItem(`unsyncedTaps_${userID}`, newUnsyncedTaps);
   
-        // Update the points locally and optimistically update localStorage
         const currentPoints = parseInt(localStorage.getItem(`points_${userID}`), 10) || 0;
         const newPoints = currentPoints + pointsToAdd;
   
-        setPoints(newPoints); // Update the state
-        localStorage.setItem(`points_${userID}`, newPoints); // Update localStorage for points
+        setPoints(newPoints);
+        localStorage.setItem(`points_${userID}`, newPoints);
   
-        // Call debounced sync function
         syncPointsWithServer(newUnsyncedTaps);
   
-        // Handle flying numbers and slap emojis for each touch point (visual effect only, no points)
-        touchPoints.forEach((point) => {
-          const id = Date.now() + Math.random(); // Create a unique ID for each flying number
+        // Add flying numbers and slap emoji for visual effect, but only once
+        const id = Date.now() + Math.random();
+        setFlyingNumbers((prevNumbers) => [
+          ...prevNumbers,
+          { id, x: touchPoints[0].clientX, y: touchPoints[0].clientY - 30, value: 1 },
+        ]);
   
-          // Visual flying number for each touch point
-          setFlyingNumbers((prevNumbers) => [
-            ...prevNumbers,
-            { id, x: point.clientX, y: point.clientY - 30, value: 1 }, // Flying number always +1 for each finger
-          ]);
+        setSlapEmojis((prevEmojis) => [
+          ...prevEmojis,
+          { id: Date.now(), x: eagleCenterX, y: eagleCenterY },
+        ]);
   
-          // Add slap emoji effect centered at the eagle image
-          setSlapEmojis((prevEmojis) => [
-            ...prevEmojis,
-            { id: Date.now(), x: eagleCenterX, y: eagleCenterY },
-          ]);
+        setTimeout(() => {
+          setFlyingNumbers((prevNumbers) => prevNumbers.filter((num) => num.id !== id));
+        }, 750);
   
-          // Clean up flying numbers after animation
-          setTimeout(() => {
-            setFlyingNumbers((prevNumbers) =>
-              prevNumbers.filter((num) => num.id !== id)
-            );
-          }, 750);
-        });
-  
-        // Decrease energy on tap (only once, not per finger)
-        decreaseEnergy(1); // Decrease energy by 1 regardless of the number of fingers used
-  
-        // Increment tap count (only once per gesture)
+        decreaseEnergy(1); // Decrease energy once, not per finger
         setTapCount((prevTapCount) => prevTapCount + 1);
       }
     },
-    [
-      energy,
-      decreaseEnergy,
-      userID,
-      setPoints,
-      syncPointsWithServer,
-      curvedBorderRef,
-      bottomMenuRef,
-    ]
+    [energy, decreaseEnergy, userID, setPoints, syncPointsWithServer, curvedBorderRef, bottomMenuRef]
   );
+  
   
 
   const claimDailyReward = async () => {
