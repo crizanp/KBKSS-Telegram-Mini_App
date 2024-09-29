@@ -339,35 +339,40 @@ function HomePage() {
       if (energy <= 0) {
         return;
       }
-
+  
+      // Get the number of fingers used for the tap
+      const fingersUsed = e.touches ? e.touches.length : 1;
+  
+      // Limit the number of fingers to a maximum of 4
+      const pointsToAdd = Math.min(fingersUsed, 4);
+  
       // Get the touch or click coordinates from the event
       const tapX = e.touches ? e.touches[0].clientX : e.clientX;
       const tapY = e.touches ? e.touches[0].clientY : e.clientY;
-
+  
       // Get boundaries of the CurvedBorderContainer and BottomContainer
-      const topBoundaryElement = curvedBorderRef.current; // Ref for the CurvedBorderContainer
-      const bottomBoundaryElement = bottomMenuRef.current; // Ref for the BottomContainer
-
+      const topBoundaryElement = curvedBorderRef.current;
+      const bottomBoundaryElement = bottomMenuRef.current;
+  
       if (topBoundaryElement && bottomBoundaryElement) {
         const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
-        const bottomBoundary =
-          bottomBoundaryElement.getBoundingClientRect().top;
-
+        const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
+  
         // Check if the tap is within the designated boundaries
         if (tapY < topBoundary || tapY > bottomBoundary) {
           return; // Ignore taps outside the valid region
         }
-
+  
         const eagleElement = document.querySelector(".eagle-image");
         const eagleRect = eagleElement.getBoundingClientRect();
-
+  
         // Calculate the center of the eagle image for the sparkle slap effect
         const eagleCenterX = eagleRect.left + eagleRect.width / 2;
         const eagleCenterY = eagleRect.top + eagleRect.height / 2;
-
+  
         // Add the 'shift-up' class to trigger the motion
         eagleElement.classList.add("shift-up");
-
+  
         // Use requestAnimationFrame to ensure the animation runs smoothly on rapid taps
         requestAnimationFrame(() => {
           // Remove the class after the animation is completed (0.2s)
@@ -375,24 +380,15 @@ function HomePage() {
             eagleElement.classList.remove("shift-up");
           }, 200); // Match the duration of the animation
         });
-
-        const isDoubleTap = e.touches && e.touches.length === 2;
-        const isValidTap = e.touches.length <= 2; // Allow only up to 2 fingers
-
-        if (!isValidTap) {
-          return; // Ignore if more than 2 fingers are used
-        }
-
-        const pointsToAdd = calculatePoints() * (isDoubleTap ? 2 : 1);
-
+  
         setPoints((prevPoints) => {
           const newPoints = prevPoints + pointsToAdd;
           localStorage.setItem(`points_${userID}`, newPoints);
           return newPoints;
         });
-
+  
         setTapCount((prevTapCount) => prevTapCount + 1);
-
+  
         // Create flying points at the exact touch location
         const animateFlyingPoints = () => {
           const id = Date.now();
@@ -400,31 +396,29 @@ function HomePage() {
             ...prevNumbers,
             { id, x: tapX, y: tapY - 30, value: pointsToAdd }, // Use tapX and tapY
           ]);
-
+  
           setTimeout(() => {
             setFlyingNumbers((prevNumbers) =>
               prevNumbers.filter((num) => num.id !== id)
             );
           }, 750);
         };
-
+  
         animateFlyingPoints();
-
+  
         // Add slap emoji effect centered at the eagle image
         setSlapEmojis((prevEmojis) => [
           ...prevEmojis,
           { id: Date.now(), x: eagleCenterX, y: eagleCenterY },
         ]);
-
-        setOfflinePoints(
-          (prevOfflinePoints) => prevOfflinePoints + pointsToAdd
-        );
+  
+        setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
         setUnsyncedPoints(
           (prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd
         );
-
-        decreaseEnergy(isDoubleTap ? 2 : 1);
-
+  
+        decreaseEnergy(pointsToAdd);
+  
         if (navigator.onLine) {
           syncPointsWithServer(unsyncedPoints + pointsToAdd);
         }
@@ -440,6 +434,7 @@ function HomePage() {
       userID,
     ]
   );
+  
 
   const claimDailyReward = async () => {
     try {
