@@ -18,7 +18,7 @@ const UserInfoContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 15px;
+  font-size: 12px;
   font-weight: bold;
   position: fixed;
   left: 50%;
@@ -40,7 +40,7 @@ const Username = styled.div`
   display: flex;
   align-items: center;
   color: #fff;
-  font-size: 15px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-right: 8px;  // Space between username and level
@@ -58,7 +58,7 @@ const PointsContainer = styled.div`
   background: rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 4px 8px;
-  font-size: 17px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   color: white;
