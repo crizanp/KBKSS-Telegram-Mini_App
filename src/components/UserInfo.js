@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FaRegGem, FaBell, FaLevelUpAlt } from 'react-icons/fa'; // Import necessary icons
 import { usePoints } from '../context/PointsContext';
+import { Link } from 'react-router-dom';
 
 // Main container with dark theme and compact mobile-first size
 const UserInfoContainer = styled.div`
@@ -9,6 +10,8 @@ const UserInfoContainer = styled.div`
   background-color: #000000;  // Dark background
   padding: 10px 10px;
   border-radius: 20px;
+  border: #867c7c 1px solid;
+  top:2%;
   width: 85%;  
   display: flex;
   justify-content: space-between;
@@ -109,9 +112,9 @@ const UserInfo = () => {
       {/* Display the username and level together */}
       <UserLevelContainer>
         <Username>Hi {firstName}</Username>
-        <LevelContainer>
+        <Link to="/levelpage"> <LevelContainer>
           <LevelIcon /> Lvl {userLevel}
-        </LevelContainer>
+        </LevelContainer></Link>
       </UserLevelContainer>
 
       {/* Display points and bell icon */}

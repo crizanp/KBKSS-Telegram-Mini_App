@@ -13,6 +13,7 @@ import SpinWheelPage from './components/SpinWheelPage';
 import LoadingPage from './components/LoadingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import LeaderboardPage from './components/LeaderboardPage';
+import LevelPage from './components/LevelPage';
 
 function App() {
   return (
@@ -85,6 +86,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <LeaderboardPage />
+                  </ProtectedRoute>
+                }
+              />
+               <Route
+                path="/levelpage"
+                element={
+                  <ProtectedRoute>
+                    <LevelPage />
                   </ProtectedRoute>
                 }
               />
