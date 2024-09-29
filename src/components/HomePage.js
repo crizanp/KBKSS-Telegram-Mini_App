@@ -186,10 +186,8 @@ function HomePage() {
   const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
   const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
 
-  const [unsyncedPoints, setUnsyncedPoints] = useState(
-    () => parseInt(localStorage.getItem("unsyncedPoints")) || 0
-  ); // Load from local storage if available
-  
+  const [unsyncedPoints, setUnsyncedPoints] = useState(0);
+
   const syncTimerRef = useRef(null); // Timer to debounce sync requests
 
   // Confetti window size
@@ -320,34 +318,33 @@ function HomePage() {
     return 1;
   };
 
-   // Sync points to server after a delay (debounced function)
-   const syncPointsWithServer = useCallback(
-    debounce(async () => {
-      try {
-        // Optimistically clear the unsynced points in local storage and state
-        const unsyncedPointsToSend = unsyncedPoints;
-        localStorage.removeItem("unsyncedPoints");
-        setUnsyncedPoints(0);
-
-        // Send the points to the API
-        await axios.put(
+  const syncPointsWithServer = useCallback(async () => {
+    try {
+      const pointsToSync = unsyncedPoints; // Get the accumulated unsynced points
+  
+      if (pointsToSync > 0) {
+        // Send the accumulated points to the server
+        const response = await axios.put(
           `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-          { pointsToAdd: unsyncedPointsToSend }
+          { pointsToAdd: pointsToSync }
         );
-      } catch (error) {
-        console.error("Error syncing points with server:", error);
-
-        // If the request fails, restore the unsynced points in local storage and state
-        localStorage.setItem(
-          "unsyncedPoints",
-          (parseInt(localStorage.getItem("unsyncedPoints")) || 0) +
-            unsyncedPoints
-        );
-        setUnsyncedPoints((prev) => prev + unsyncedPoints);
+  
+        // Update the points in state with the response
+        const newPoints = response.data.points;
+  
+        // Update both the points in state and localStorage
+        setPoints(newPoints);
+        localStorage.setItem(`points_${userID}`, newPoints); // Save updated points
+  
+        // Reset unsynced points after syncing successfully
+        setUnsyncedPoints(0);
       }
-    }, 2000), // Sync after 2 seconds of inactivity
-    [unsyncedPoints, userID]
-  );
+    } catch (error) {
+      console.error("Error syncing points with server:", error);
+      // Handle error logic here (retry, alert the user, etc.)
+    }
+  }, [userID, unsyncedPoints, setPoints]);
+  
   const handleTap = useCallback(
     (e) => {
       if (energy <= 0) {
@@ -393,25 +390,21 @@ function HomePage() {
           animateFlyingPoints();
         });
   
-        // Update points and local storage
-        setPoints((prevPoints) => {
-          const newPoints = prevPoints + pointsToAdd;
-          localStorage.setItem(`points_${userID}`, newPoints);
-          return newPoints;
+        // Accumulate points and local storage
+        setUnsyncedPoints((prevUnsyncedPoints) => {
+          const newTotalUnsyncedPoints = prevUnsyncedPoints + pointsToAdd;
+          localStorage.setItem(`points_${userID}`, points + newTotalUnsyncedPoints); // Update local storage
+          return newTotalUnsyncedPoints;
         });
   
+        setPoints((prevPoints) => prevPoints + pointsToAdd);
         setTapCount((prevTapCount) => prevTapCount + pointsToAdd);
   
-        // Add unsynced points to local storage and state
-        setUnsyncedPoints((prevUnsynced) => {
-          const newUnsyncedPoints = prevUnsynced + pointsToAdd;
-          localStorage.setItem("unsyncedPoints", newUnsyncedPoints);
-          return newUnsyncedPoints;
-        });
-  
-        // Clear the previous sync timer and set a new one
+        // Clear the previous sync timer and set a new one for syncing points to the server
         clearTimeout(syncTimerRef.current);
-        syncTimerRef.current = setTimeout(syncPointsWithServer, 2000);
+        syncTimerRef.current = setTimeout(() => {
+          syncPointsWithServer(); // Sync all accumulated points
+        }, 2000);
   
         // Decrease energy based on the number of touches
         decreaseEnergy(pointsToAdd);
@@ -419,6 +412,8 @@ function HomePage() {
     },
     [syncPointsWithServer, setPoints, energy, decreaseEnergy, userID]
   );
+   
+  
   
 
   const claimDailyReward = async () => {
