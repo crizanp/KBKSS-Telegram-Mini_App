@@ -55,7 +55,7 @@ function Layout({ children }) {
   }, []);
 
   useEffect(() => {
-    const isLocalhost = window.location.hostname === 'localhost' || "192.188.1.74";
+    const isLocalhost = window.location.hostname === 'localhost';
     const tg = window.Telegram?.WebApp;
 
     if (userID) {
@@ -90,7 +90,7 @@ function Layout({ children }) {
       } else {
         console.log('Restricted: Running on Telegram Desktop or Web');
         setRestricted(true);
-        setImageUrl('https://i.postimg.cc/qBX0zdSb/igh-tap-game-2.jpg'); // Set image for Telegram Desktop or Web
+        setImageUrl('https://i.postimg.cc/pLW4vhTm/igh-tap-game-1.jpg'); // Set image for Telegram Desktop or Web
         setLoading(false);
       }
     } else {
@@ -144,7 +144,7 @@ function Layout({ children }) {
           onCancel={handleClosePromoModal}
           loading={false}
           iconUrl="https://i.ibb.co/rMcfScz/3d-1.png" // Updated image for the promo
-          title="Unlock Quiz Game"
+          title="Unlock Quiz"
           pointsCost={25000} // 25,000 $GEMS to unlock the game
           buttonText="Unlock Now" // Custom button text
         />
