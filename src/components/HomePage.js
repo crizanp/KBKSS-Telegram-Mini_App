@@ -167,7 +167,6 @@ const SmallTimerText = styled.span`
   text-align: center;
   margin-bottom: 5px; /* Add space between timer and claim button */
 `;
-
 function HomePage() {
   const { points, setPoints, userID, setUserID } = usePoints();
   const { energy, decreaseEnergy } = useEnergy();
@@ -189,7 +188,6 @@ function HomePage() {
 
   // Accumulate unsynced points to avoid sending too many server requests
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
-  const [syncTimeout, setSyncTimeout] = useState(null);
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
@@ -198,20 +196,26 @@ function HomePage() {
   });
   const fetchActiveBackground = useCallback(async () => {
     try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/background/active`
-      );
-      console.log("Background response:", response.data); // Add this line to log the response
+      const cachedBackground = localStorage.getItem("activeBackground");
 
-      if (response.data && response.data.url) {
-        setBackgroundImage(response.data.url); // Set the active background
+      if (cachedBackground) {
+        setBackgroundImage(cachedBackground); // Use cached background if available
       } else {
-        console.warn("No background URL found in the response.");
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/background/active`
+        );
+        if (response.data && response.data.url) {
+          setBackgroundImage(response.data.url);
+          localStorage.setItem("activeBackground", response.data.url); // Cache the background URL
+        } else {
+          console.warn("No background URL found in the response.");
+        }
       }
     } catch (error) {
       console.error("Error fetching active background:", error);
     }
   }, []);
+
   useEffect(() => {
     // Fetch the active background when the component mounts
     fetchActiveBackground();
@@ -254,6 +258,12 @@ function HomePage() {
       }
     } finally {
       setIsLoading(false); // End loading state
+    }
+  }, [userID]);
+  useEffect(() => {
+    const savedTaps = localStorage.getItem(`unsyncedTaps_${userID}`);
+    if (savedTaps) {
+      setUnsyncedPoints(parseInt(savedTaps, 10));
     }
   }, [userID]);
 
@@ -314,105 +324,136 @@ function HomePage() {
   };
 
   const syncPointsWithServer = useCallback(
-    debounce(async (totalPointsToAdd) => {
+    debounce(async (unsyncedTaps) => {
       try {
-        // Optimistically clear localStorage after initiating the request
-        localStorage.removeItem(`points_${userID}`);
+        // Optimistically get the current points from localStorage
+        const currentPoints =
+          parseInt(localStorage.getItem(`points_${userID}`), 10) || 0;
+
+        // Remove the unsynced taps optimistically before making the request
+        localStorage.removeItem(`unsyncedTaps_${userID}`);
 
         const response = await axios.put(
           `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-          { pointsToAdd: totalPointsToAdd }
+          { pointsToAdd: unsyncedTaps }
         );
 
-        // If success, update points
-        setPoints(response.data.points);
-        setUnsyncedPoints(0); // Reset unsynced points after successful sync
+        const newPoints = response.data.points;
+
+        // Update the app’s points state with the latest points from the server
+        setPoints(newPoints);
+
+        // Also update the localStorage with the new total points from the server
+        localStorage.setItem(`points_${userID}`, newPoints);
       } catch (error) {
-        // If error, add the points back to localStorage
-        const currentLocalPoints = localStorage.getItem(`points_${userID}`) || 0;
+        console.error("Error syncing points:", error);
+
+        // Roll back unsynced taps in localStorage if API call fails
+        const currentUnsyncedTaps =
+          parseInt(localStorage.getItem(`unsyncedTaps_${userID}`), 10) || 0;
         localStorage.setItem(
-          `points_${userID}`,
-          parseFloat(currentLocalPoints) + totalPointsToAdd
+          `unsyncedTaps_${userID}`,
+          currentUnsyncedTaps + unsyncedTaps
         );
       }
-    }, 2000),
+    }, 2000), // Sync after 2000ms of no taps
     [userID, setPoints]
   );
 
   const handleTap = useCallback(
     (e) => {
-      if (energy <= 0) return; // Prevent tap if energy is depleted
-  
-      const curvedBorderRect = curvedBorderRef.current.getBoundingClientRect();
-      const bottomMenuRect = bottomMenuRef.current.getBoundingClientRect();
-  
-      // Get the tap location
-      const tapX = e.touches ? e.touches[0].clientX : e.clientX;
-      const tapY = e.touches ? e.touches[0].clientY : e.clientY;
-  
-      // Ensure tap is below the top border and above the bottom container
-      if (tapY <= curvedBorderRect.bottom || tapY >= bottomMenuRect.top) {
+      if (energy <= 0) {
         return;
       }
-  
-      const pointsToAdd = 1; // Example value, you can adjust the points per tap logic
-      setTapCount((prevTapCount) => prevTapCount + 1);
-      setPoints((prevPoints) => prevPoints + pointsToAdd);
-      setUnsyncedPoints((prevUnsynced) => prevUnsynced + pointsToAdd);
-      decreaseEnergy(1); // Reduce energy by 1 per tap
-  
-      // Update local storage optimistically
-      localStorage.setItem(
-        `points_${userID}`,
-        (parseFloat(localStorage.getItem(`points_${userID}`)) || 0) + pointsToAdd
-      );
-  
-      // Clear any existing timeout for syncing if user is still tapping
-      if (syncTimeout) clearTimeout(syncTimeout);
-  
-      // Set a new timeout for syncing points after 5 seconds of inactivity
-      const newTimeout = setTimeout(() => {
-        syncPointsWithServer(unsyncedPoints + pointsToAdd);
-      }, 5000); // Wait for 5 seconds of no taps before sending points to the server
-  
-      setSyncTimeout(newTimeout);
-  
-      // Create flying number animation at tap location
-      const id = Date.now();
-      setFlyingNumbers((prevNumbers) => [
-        ...prevNumbers,
-        { id, x: tapX, y: tapY - 30, value: pointsToAdd },
-      ]);
-  
-      setTimeout(() => {
-        setFlyingNumbers((prevNumbers) => prevNumbers.filter((num) => num.id !== id));
-      }, 750);
-  
-      // Slap emoji effect near the eagle's center
-      const eagleElement = document.querySelector(".eagle-image");
-      const eagleRect = eagleElement.getBoundingClientRect();
-      const eagleCenterX = eagleRect.left + eagleRect.width / 2;
-      const eagleCenterY = eagleRect.top + eagleRect.height / 2;
-  
-      setSlapEmojis((prevEmojis) => [
-        ...prevEmojis,
-        { id: Date.now(), x: eagleCenterX, y: eagleCenterY },
-      ]);
+
+      // Get the tap coordinates
+      const tapX = e.touches ? e.touches[0].clientX : e.clientX;
+      const tapY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const topBoundaryElement = curvedBorderRef.current; // Reference for CurvedBorderContainer
+      const bottomBoundaryElement = bottomMenuRef.current; // Reference for BottomContainer
+
+      if (topBoundaryElement && bottomBoundaryElement) {
+        const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
+        const bottomBoundary =
+          bottomBoundaryElement.getBoundingClientRect().top;
+
+        // Ignore taps outside the valid region
+        if (tapY < topBoundary || tapY > bottomBoundary) {
+          return;
+        }
+
+        const eagleElement = document.querySelector(".eagle-image");
+        const eagleRect = eagleElement.getBoundingClientRect();
+
+        // Eagle's center for slap emoji effect
+        const eagleCenterX = eagleRect.left + eagleRect.width / 2;
+        const eagleCenterY = eagleRect.top + eagleRect.height / 2;
+
+        // Add 'shift-up' animation to the eagle image
+        eagleElement.classList.add("shift-up");
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            eagleElement.classList.remove("shift-up");
+          }, 200); // Match animation duration
+        });
+
+        const isDoubleTap = e.touches && e.touches.length === 2;
+        const pointsToAdd = calculatePoints() * (isDoubleTap ? 2 : 1);
+
+        // Update unsynced taps in local storage
+        const unsyncedTaps =
+          parseInt(localStorage.getItem(`unsyncedTaps_${userID}`), 10) || 0;
+        const newUnsyncedTaps = unsyncedTaps + pointsToAdd;
+        localStorage.setItem(`unsyncedTaps_${userID}`, newUnsyncedTaps);
+
+        // Update the points locally and optimistically update localStorage
+        const currentPoints =
+          parseInt(localStorage.getItem(`points_${userID}`), 10) || 0;
+        const newPoints = currentPoints + pointsToAdd;
+
+        setPoints(newPoints); // Update the state
+        localStorage.setItem(`points_${userID}`, newPoints); // Update localStorage for points
+
+        // Call debounced sync function
+        syncPointsWithServer(newUnsyncedTaps);
+
+        // Visual flying number for points
+        const id = Date.now();
+        setFlyingNumbers((prevNumbers) => [
+          ...prevNumbers,
+          { id, x: tapX, y: tapY - 30, value: pointsToAdd },
+        ]);
+        setTimeout(() => {
+          setFlyingNumbers((prevNumbers) =>
+            prevNumbers.filter((num) => num.id !== id)
+          );
+        }, 750);
+
+        // Slap emoji effect
+        setSlapEmojis((prevEmojis) => [
+          ...prevEmojis,
+          { id: Date.now(), x: eagleCenterX, y: eagleCenterY },
+        ]);
+
+        // Decrease energy on tap
+        decreaseEnergy(isDoubleTap ? 2 : 1);
+
+        // Increment tap count
+        setTapCount((prevTapCount) => prevTapCount + 1);
+      }
     },
     [
-      syncTimeout,
-      unsyncedPoints,
       energy,
-      syncPointsWithServer,
-      setPoints,
       decreaseEnergy,
       userID,
+      setPoints,
+      syncPointsWithServer,
       curvedBorderRef,
       bottomMenuRef,
     ]
   );
-  
-  
+
   const claimDailyReward = async () => {
     try {
       setShowModal(false); // Close the modal immediately after the claim button is clicked
@@ -526,7 +567,12 @@ function HomePage() {
       {showModal && (
         <ModalOverlay onClick={closeModal}>
           <RewardModalContainer
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent the click event from propagating to the HomeContainer
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation(); // Prevent the touch event from propagating to the HomeContainer
+            }}
             isClosing={isClosing} // Pass the closing state as a prop
           >
             <CloseButton onClick={closeModal}>×</CloseButton>
