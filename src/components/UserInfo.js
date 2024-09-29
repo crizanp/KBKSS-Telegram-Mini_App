@@ -114,10 +114,18 @@ const UserInfo = () => {
 
         // Set the user's level and first name, default to 0 if level is missing
         setUserLevel(data.currentLevel ?? 0);
-        setFirstName(window.Telegram.WebApp?.initDataUnsafe?.user?.first_name || 'User');
+
+        // Get the first name from Telegram WebApp or fallback to 'User'
+        let firstNameFromTelegram = window.Telegram.WebApp?.initDataUnsafe?.user?.first_name || 'User';
+
+        // Trim the first name to the first 10 alphanumeric characters
+        firstNameFromTelegram = firstNameFromTelegram.split(/[^\w]+/)[0].slice(0, 10);
+
+        setFirstName(firstNameFromTelegram);
       } catch (error) {
         console.error('Error fetching user data:', error);
         setUserLevel(0);  // Default to level 0 on error
+        setFirstName('User');  // Default to 'User' on error
       }
     };
 
