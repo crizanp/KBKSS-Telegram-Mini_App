@@ -48,7 +48,7 @@ const PromoModalContainer = styled.div`
 // Modal Header with gradient text
 const ModalHeader = styled.h2`
   text-align: center;
-  font-size: 42px;
+  font-size: 30px;
   background: linear-gradient(45deg, #ffffff, #f1eaea); /* Gradient text color */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -57,19 +57,19 @@ const ModalHeader = styled.h2`
 
 // Claim Button with gradient background and hover effect
 const ClaimButton = styled.button`
-  background: #3a7bd5;
+  background: #3e9ed1;
   color: white;
   border: none;
   border-radius: 10px;
-  padding: 15px 20px;
-  font-size: 18px;
+  font-size: 20px;
+        padding: 10px 20px;
   cursor: pointer;
   width: 100%;
   margin-top: 20px;
   transition: background 0.3s ease, transform 0.2s;
 
   &:hover {
-    background: linear-gradient(90deg, #3a7bd5, #00d2ff); /* Change gradient on hover */
+    background: #00d2ff; /* Change gradient on hover */
     transform: translateY(-3px); /* Slight raise effect on hover */
   }
   
@@ -121,15 +121,16 @@ const PromoModal = ({ message, onConfirm, onCancel, loading, iconUrl, title, poi
     <ModalOverlay onClick={onCancel}>
       <PromoModalContainer onClick={(e) => e.stopPropagation()}>
         <CloseButton onClick={onCancel}>×</CloseButton>
+        {/* Icon Image */}
+          <StyledImage src={iconUrl} alt="Modal Icon" />
+
         <ModalHeader>{title}</ModalHeader>
 
-        {/* Icon Image */}
-        <StyledImage src={iconUrl} alt="Modal Icon" />
-
+        
         {/* <PointsDisplayModal>
           <span>{pointsCost ? `Spend ${pointsCost} $GEMS` : ""}</span>
         </PointsDisplayModal> */}
-        <p style={{ textAlign: "center", color: "#fff", marginBottom: "20px", fontSize: "18px" }}>
+        <p style={{ textAlign: "center", color: "#fff", marginBottom: "20px", fontSize: "16px" }}>
           {message}
         </p>
 

@@ -117,7 +117,7 @@ export const IconWrapper = styled.div`
 `;
 
 export const GameTitle = styled.h2`
-  font-size: 38px;
+  font-size: 24px;
     font-weight: bold;
     margin-top: 28px;
     margin-bottom: 10px;
@@ -141,7 +141,7 @@ export const GameIcon = styled.img`
 // New component for game titles inside GameItem
 export const GameItemTitle = styled.div`
   margin-top: 10px; // Add consistent margin-top for all game titles
-  font-size: 24px;
+  font-size: 18px;
   color: white;
 `;
 

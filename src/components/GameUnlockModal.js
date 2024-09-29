@@ -1,8 +1,9 @@
 import React from "react";
 import styled from "styled-components";
-import { FaTimes } from "react-icons/fa"; // Close button icon
+import { FaTimes } from "react-icons/fa";
+import { FaRegGem } from "react-icons/fa"; // Gem icon import
 
-// Modal Overlay
+// Overlay for the modal background
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -16,15 +17,19 @@ const ModalOverlay = styled.div`
   z-index: 1000;
 `;
 
-// Modal Container with slide-up animation
-// Modal Container with slide-up animation
+// Gem Icon styled component
+const GemIconModal = styled(FaRegGem)`
+  color: #36a8e5;
+  margin-left: 8px;
+  margin-right: 8px;
+  font-size: 1.9rem;
+`;
+
+// Modal container with slide-up animation
 const RewardModalContainer = styled.div`
   width: 100%;
   max-width: 460px;
-  background-color: #000000;
-  border-top: 2px solid #e1e3d6;
-  border-right: 2px solid #e1e3d6;
-  border-left: 2px solid #e1e3d6;
+  background: linear-gradient(135deg, #0f1a27, #0f1a27);
   padding: 20px;
   border-radius: 20px 20px 0 0;
   position: relative;
@@ -49,22 +54,21 @@ const RewardModalContainer = styled.div`
   }
 `;
 
-
-// Modal Header
+// Header for the modal
 const ModalHeader = styled.h2`
   text-align: center;
-  font-size: 40px;
-    color: #d3cece;
+  font-size: 26px;
+  color: #ffffff;
 `;
 
-// Claim Button
+// Button to confirm an action
 const ClaimButton = styled.button`
   background-color: #36a8e5;
   color: white;
+  font-size: 20px;
+  padding: 10px 20px;
   border: none;
   border-radius: 10px;
-  padding: 12px 20px;
-  font-size: 23px;
   cursor: pointer;
   width: 100%;
   margin-top: 20px;
@@ -74,9 +78,10 @@ const ClaimButton = styled.button`
     background-color: #298dc8;
   }
 `;
+
 // Display points or confirmation message
 const PointsDisplayModal = styled.div`
-  font-size: 1.5rem;
+  font-size: 22px;
   text-align: center;
   color: #36a8e5;
   margin: 20px 0;
@@ -84,43 +89,50 @@ const PointsDisplayModal = styled.div`
   justify-content: center;
   align-items: center;
 `;
-// Close Button
+
+// Close button
 const CloseButton = styled.button`
   position: absolute;
   top: 10px;
   right: 15px;
   font-size: 40px;
-    color: #d3cece;
+  color: #d3cece;
   background: none;
   border: none;
   cursor: pointer;
 `;
 
-// Icon Image in the Modal
+// Styled image component
 const StyledImage = styled.img`
-  width: 135px;
-  height: 150px;
+  width: 117px;
+  height: 131px;
   display: block;
   margin: 0 auto 20px;
 `;
 
-// Modal Component
+// GameUnlockModal Component
 const GameUnlockModal = ({ message, onConfirm, onCancel, loading, iconUrl, title, pointsCost }) => {
   return (
     <ModalOverlay onClick={onCancel}>
       <RewardModalContainer onClick={(e) => e.stopPropagation()}>
         <CloseButton onClick={onCancel}>×</CloseButton>
+        
+        <StyledImage src={iconUrl} alt="Modal Icon" />
+
         <ModalHeader>{title}</ModalHeader>
 
-        {/* Icon Image */}
-        <StyledImage src={iconUrl} alt="Modal Icon" />
+        {/* Updated Points Display with Gem Icon */}
         <PointsDisplayModal>
-          <span style={{ fontSize:"32px" }}>- 25,000 $GEMS</span>
+          <GemIconModal /> {/* This is where the gem icon is added */}
+          <span style={{ fontSize: "22px" }}>- {pointsCost} $GEMS</span>
         </PointsDisplayModal>
-        <p style={{ textAlign: "center", color: "rgb(202 190 190)", marginBottom: "20px",fontSize:"20px" }}>{message}</p>
+
+        <p style={{ textAlign: "center", color: "rgb(221 204 204)", fontSize: "16px", marginBottom: "20px" }}>
+          {message}
+        </p>
 
         <ClaimButton onClick={onConfirm} disabled={loading}>
-          {loading ? "Unlocking..." : `Go Ahead`}
+          {loading ? "Unlocking..." : "Go Ahead"}
         </ClaimButton>
       </RewardModalContainer>
     </ModalOverlay>

@@ -31,7 +31,6 @@ import styled from "styled-components";
 
 // Styled button for correct answer
 const CorrectAnswerButton = styled.button`
- 
   color: #505050;
   padding: 8px 20px;
   border-radius: 8px;
@@ -49,21 +48,19 @@ const CorrectAnswerButton = styled.button`
 // Styled text for showing the correct answer
 const CorrectAnswerText = styled.p`
   color: #4caf50;
-    margin-top: 20px;
-    font-size: 18px;
-    font-weight: bold;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    background-color: #e8f5e914;
-    padding: 10px 20px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    height: 89px;
-    flex-direction: row;
-    /* flex-wrap: nowrap; */
-    align-content: center;
-    justify-content: space-between;
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  background-color: #e8f5e914;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  height: 89px;
+  flex-direction: row;
+  justify-content: space-between;
 `;
 
 // Container for showing quiz points (gems)
@@ -84,7 +81,8 @@ function EcosystemPage() {
   const [currentQuiz, setCurrentQuiz] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("random");
   const [loading, setLoading] = useState(true);
-  const [disableSubmit, setDisableSubmit] = useState(false);
+  const [disableSubmit, setDisableSubmit] = useState(false); // Flag to disable button
+  const [submitting, setSubmitting] = useState(false); // Flag to track submission status
   const [correctOption, setCorrectOption] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [noMoreQuizzes, setNoMoreQuizzes] = useState(false);
@@ -109,11 +107,13 @@ function EcosystemPage() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
   const handleOptionSelect = (index) => {
     if (!disableSubmit) {
       setSelectedOption(index);
     }
   };
+
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
@@ -170,21 +170,25 @@ function EcosystemPage() {
   }, [userID, selectedCategory]);
 
   // Handle submitting the selected answer
-  // Handle submitting the selected answer
   const handleSubmit = async () => {
-    if (selectedOption === null) return;
-  
+    if (selectedOption === null || submitting) return; // Prevent further clicks if already submitting
+
+    setSubmitting(true); // Set submitting flag to true
+
     const isCorrect = currentQuiz.options[selectedOption].isCorrect;
     const pointsEarned = isCorrect ? currentQuiz.points : 0;
-  
+
     try {
       // Always submit the quiz as completed, even if the answer is wrong
-      await axios.post(`${process.env.REACT_APP_API_URL}/user-info/submit-quiz`, {
-        userID,
-        quizId: currentQuiz._id,
-        pointsEarned,
-      });
-  
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/user-info/submit-quiz`,
+        {
+          userID,
+          quizId: currentQuiz._id,
+          pointsEarned,
+        }
+      );
+
       // If correct, award points and show confetti
       if (isCorrect) {
         setPoints((prevPoints) => {
@@ -192,26 +196,29 @@ function EcosystemPage() {
           localStorage.setItem(`points_${userID}`, updatedPoints);
           return updatedPoints;
         });
-  
+
         setDisableSubmit(true);
         setCorrectOption(selectedOption);
         setShowFeedback(true);
         setShowConfetti(true);
         audioRef.current.play(); // Play the celebration sound
-  
+
         setTimeout(() => {
           setShowConfetti(false);
         }, 5000);
-  
-        showToast(`Correct answer! 🎉! ${pointsEarned} $GEMS added.`, "success");
+
+        showToast(
+          `Correct answer! 🎉! ${pointsEarned} $GEMS added.`,
+          "success"
+        );
       } else {
         // Play the wrong answer sound
         const wrongAnswerAudio = new Audio(wrongAnswerSound);
         wrongAnswerAudio.play();
-  
+
         // Deduct 50% of points if incorrect
         const pointsToDeduct = currentQuiz.points * 0.5;
-  
+
         // Deduct the points from the backend
         const response = await axios.post(
           `${process.env.REACT_APP_API_URL}/user-info/deduct-points`,
@@ -220,25 +227,28 @@ function EcosystemPage() {
             pointsToDeduct,
           }
         );
-  
+
         // Update points in context and local storage
         const updatedPoints = response.data.points;
         setPoints(updatedPoints);
         localStorage.setItem(`points_${userID}`, updatedPoints);
-  
+
         setDisableSubmit(true);
         setCorrectOption(
           currentQuiz.options.findIndex((option) => option.isCorrect)
         );
         setShowFeedback(true);
-        showToast(`Wrong answer 😒! ${pointsToDeduct} points deducted.`, "error");
+        showToast(
+          `Wrong answer 😒! ${pointsToDeduct} points deducted.`,
+          "error"
+        );
       }
     } catch (error) {
       showToast("Error submitting answer", "error");
+    } finally {
+      setSubmitting(false); // Reset submitting flag once done
     }
   };
-  
-  
 
   // Show the correct answer modal
   const handleShowCorrectAnswer = () => {
@@ -247,10 +257,12 @@ function EcosystemPage() {
 
   // Handle deduction of points to show correct answer
   const handleGoAhead = async () => {
-    if (points < 50) {
+    if (points < 50 || submitting) {
       showToast("Not enough points to show the correct answer!", "error");
       return;
     }
+
+    setSubmitting(true); // Set submitting flag
 
     try {
       // Deduct 50 points from the backend
@@ -275,6 +287,8 @@ function EcosystemPage() {
     } catch (error) {
       console.error("Error deducting points:", error);
       showToast("Error deducting points!", "error");
+    } finally {
+      setSubmitting(false); // Reset submitting flag
     }
   };
 
@@ -349,18 +363,18 @@ function EcosystemPage() {
         </CategoryContainer>
 
         <ScrollableContent>
-        {loading ? (
-    // Render the Skeleton Loader when loading
-    <SkeletonLoaderEcosystemPage />
-  ) : noMoreQuizzes ? (
-    <CompletionContainer>
-      <CompletionImage
-        src="https://www.greatperthbookkeeping.com.au/wp-content/uploads/2014/06/done.png"
-        alt="All done"
-      />
-      <p>You have completed all the quizzes! Great job!</p>
-    </CompletionContainer>
-  ) : currentQuiz ? (
+          {loading ? (
+            // Render the Skeleton Loader when loading
+            <SkeletonLoaderEcosystemPage />
+          ) : noMoreQuizzes ? (
+            <CompletionContainer>
+              <CompletionImage
+                src="https://www.greatperthbookkeeping.com.au/wp-content/uploads/2014/06/done.png"
+                alt="All done"
+              />
+              <p>You have completed all the quizzes! Great job!</p>
+            </CompletionContainer>
+          ) : currentQuiz ? (
             <>
               <QuizBox>
                 <QuizPoints>
@@ -386,12 +400,10 @@ function EcosystemPage() {
                 ))}
                 <SubmitButton
                   onClick={handleSubmit}
-                  disabled={selectedOption === null || disableSubmit}
+                  disabled={submitting || selectedOption === null || disableSubmit} // Disable button during submission
                 >
-                  Submit
+                  {submitting ? "Submitting..." : "Submit"} {/* Show submitting text */}
                 </SubmitButton>
-
-                
               </QuizBox>
             </>
           ) : (
@@ -399,33 +411,33 @@ function EcosystemPage() {
               No quiz available at the moment.
             </NoQuestionsMessage>
           )}
-          {/* Show the correct answer button if the answer is wrong and enough points */}
-{showFeedback &&
-                  selectedOption !== correctOption &&
-                  !showCorrectAnswer &&
-                  points >= 50 && (
-                    <CorrectAnswerButton onClick={handleShowCorrectAnswer}>
-                      Show Correct Answer
-                    </CorrectAnswerButton>
-                  )}
 
-                {/* Display the correct answer */}
-                {showCorrectAnswer && (
-                  <CorrectAnswerText>
-                    Correct Answer: {currentQuiz.options[correctOption].text}
-                  </CorrectAnswerText>
-                )}
+          {/* Show the correct answer button if the answer is wrong and enough points */}
+          {showFeedback &&
+            selectedOption !== correctOption &&
+            !showCorrectAnswer &&
+            points >= 50 && (
+              <CorrectAnswerButton onClick={handleShowCorrectAnswer}>
+                Show Correct Answer
+              </CorrectAnswerButton>
+            )}
+
+          {/* Display the correct answer */}
+          {showCorrectAnswer && (
+            <CorrectAnswerText>
+              Correct Answer: {currentQuiz.options[correctOption].text}
+            </CorrectAnswerText>
+          )}
         </ScrollableContent>
 
         {!noMoreQuizzes && !loading && (
-  <NextButton
-    onClick={handleNextQuiz}
-    disabled={loading || noMoreQuizzes}
-  >
-    Next
-  </NextButton>
-)}
-
+          <NextButton
+            onClick={handleNextQuiz}
+            disabled={loading || noMoreQuizzes}
+          >
+            Next
+          </NextButton>
+        )}
 
         {showCorrectAnswerModal && (
           <Modal

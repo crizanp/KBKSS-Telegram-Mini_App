@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const getUserID = async (setUserID, setUsername) => {
-  const isLocalhost = window.location.hostname === "localhost" || "192.188.1.74";
+  const isLocalhost = window.location.hostname === "localhost";
 
   // Check if the app is running inside Telegram
   const isTelegramAvailable = window.Telegram?.WebApp?.initDataUnsafe?.user;

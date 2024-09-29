@@ -24,7 +24,7 @@ const UserInfoContainer = styled.div`
   transform: translateX(-50%);
   z-index: 10;
   border: 2px solid #0088cc; 
-  font-family: 'Orbitron',sans-serif; /* Ensure the font is consistent */
+  font-family: 'Orbitron', sans-serif; /* Ensure the font is consistent */
 
   @media (max-width: 480px) {
     padding: 8px 15px;

@@ -9,7 +9,7 @@ const AirdropContainer = styled.div`
   padding: 20px;
   padding-bottom: 100px;
   min-height: 100vh;
-  font-family: 'Orbitron',sans-serif;
+  font-family: 'Arial', sans-serif;
   box-sizing: border-box;
 
   @media (max-width: 768px) {

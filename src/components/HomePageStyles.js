@@ -122,7 +122,6 @@ export const EagleImage = styled.img`
   pointer-events: none;   /* Disable all pointer events */
   -webkit-user-drag: none; /* Disable drag on image in Webkit-based browsers */
   z-index: 1000;
-  will-change: transform, opacity;
 
   &.shift-up {
     animation: ${eagleShiftUp} 0.2s ease-in-out; /* Slight and quick animation */
