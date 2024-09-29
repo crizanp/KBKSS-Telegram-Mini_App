@@ -333,30 +333,24 @@ function HomePage() {
     }, 2000),
     [userID, setPoints]
   );
-
   const handleTap = useCallback(
     (e) => {
       if (energy <= 0) {
         return;
       }
   
-      // Get the number of fingers used for the tap
-      const fingersUsed = e.touches ? e.touches.length : 1;
-  
-      // Limit the number of fingers to a maximum of 4
-      const pointsToAdd = Math.min(fingersUsed, 4);
-  
       // Get the touch or click coordinates from the event
       const tapX = e.touches ? e.touches[0].clientX : e.clientX;
       const tapY = e.touches ? e.touches[0].clientY : e.clientY;
   
       // Get boundaries of the CurvedBorderContainer and BottomContainer
-      const topBoundaryElement = curvedBorderRef.current;
-      const bottomBoundaryElement = bottomMenuRef.current;
+      const topBoundaryElement = curvedBorderRef.current; // Ref for the CurvedBorderContainer
+      const bottomBoundaryElement = bottomMenuRef.current; // Ref for the BottomContainer
   
       if (topBoundaryElement && bottomBoundaryElement) {
         const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
-        const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
+        const bottomBoundary =
+          bottomBoundaryElement.getBoundingClientRect().top;
   
         // Check if the tap is within the designated boundaries
         if (tapY < topBoundary || tapY > bottomBoundary) {
@@ -370,16 +364,17 @@ function HomePage() {
         const eagleCenterX = eagleRect.left + eagleRect.width / 2;
         const eagleCenterY = eagleRect.top + eagleRect.height / 2;
   
-        // Add the 'shift-up' class to trigger the motion
-        eagleElement.classList.add("shift-up");
+        // Remove the shift-up animation
+        // No 'shift-up' class is added anymore
   
-        // Use requestAnimationFrame to ensure the animation runs smoothly on rapid taps
-        requestAnimationFrame(() => {
-          // Remove the class after the animation is completed (0.2s)
-          setTimeout(() => {
-            eagleElement.classList.remove("shift-up");
-          }, 200); // Match the duration of the animation
-        });
+        const isValidTap = e.touches ? e.touches.length <= 2 : true; // Allow up to 2 fingers or 1 click
+  
+        if (!isValidTap) {
+          return; // Ignore if more than 2 fingers are used
+        }
+  
+        // Points should be equal to the number of fingers used (i.e., 1 point per finger)
+        const pointsToAdd = e.touches ? e.touches.length : 1; // Add 1 point for each finger
   
         setPoints((prevPoints) => {
           const newPoints = prevPoints + pointsToAdd;
@@ -387,7 +382,7 @@ function HomePage() {
           return newPoints;
         });
   
-        setTapCount((prevTapCount) => prevTapCount + 1);
+        setTapCount((prevTapCount) => prevTapCount + pointsToAdd); // Increment tap count by the number of touches
   
         // Create flying points at the exact touch location
         const animateFlyingPoints = () => {
@@ -412,12 +407,14 @@ function HomePage() {
           { id: Date.now(), x: eagleCenterX, y: eagleCenterY },
         ]);
   
-        setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
+        setOfflinePoints(
+          (prevOfflinePoints) => prevOfflinePoints + pointsToAdd
+        );
         setUnsyncedPoints(
           (prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd
         );
   
-        decreaseEnergy(pointsToAdd);
+        decreaseEnergy(pointsToAdd); // Decrease energy based on the number of fingers
   
         if (navigator.onLine) {
           syncPointsWithServer(unsyncedPoints + pointsToAdd);
