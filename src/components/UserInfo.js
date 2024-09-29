@@ -11,7 +11,7 @@ const UserInfoContainer = styled.div`
   padding: 10px 10px;
   border-radius: 20px;
   border: #867c7c 1px solid;
-  top:2%;
+  top: 2%;
   width: 85%;  
   display: flex;
   justify-content: space-between;
@@ -67,10 +67,10 @@ const LevelContainer = styled.div`
   display: flex;
   align-items: center;
   background-color: #222;
-  text-decoration:none;
+  text-decoration: none;
   border-radius: 10px;
   padding: 6px 10px;
-  margin-right:5px;
+  margin-right: 5px;
   font-size: 13px;
   color: #ffac00;
   font-weight: bold;
@@ -82,8 +82,6 @@ const LevelIcon = styled(FaLevelUpAlt)`
   color: #ffac00;
   font-size: 1rem;
   margin-right: 4px;
-  text-decoration:none;
-
 `;
 
 // Bell icon styled smaller for mobile notification
@@ -93,9 +91,14 @@ const BellIcon = styled(FaBell)`
   margin-left: 6px;
 `;
 
+// Styled Link to remove underline
+const StyledLink = styled(Link)`
+  text-decoration: none;  // Remove the underline
+`;
+
 // Function to calculate user level based on points
 const calculateLevel = (points) => {
-  return Math.floor(points / 10000) + 1;  // Level-up every 1000 points
+  return Math.floor(points / 10000) + 1;  // Level-up every 10000 points
 };
 
 const UserInfo = () => {
@@ -108,16 +111,19 @@ const UserInfo = () => {
   firstName = firstName.split(/[^\w]+/)[0].slice(0, 10);
 
   // Calculate the user's current level
-  const userLevel = 1;
+  const userLevel = calculateLevel(points);
 
   return (
     <UserInfoContainer>
       {/* Display the username and level together */}
       <UserLevelContainer>
         <Username>Hi {firstName}</Username>
-        <Link to="/levelpage"> <LevelContainer>
-          <LevelIcon /> Lvl {userLevel}
-        </LevelContainer></Link>
+        {/* Apply the styled Link here */}
+        <StyledLink to="/levelpage">
+          <LevelContainer>
+            <LevelIcon /> Lvl {userLevel}
+          </LevelContainer>
+        </StyledLink>
       </UserLevelContainer>
 
       {/* Display points and bell icon */}
