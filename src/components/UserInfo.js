@@ -67,6 +67,7 @@ const LevelContainer = styled.div`
   display: flex;
   align-items: center;
   background-color: #222;
+  text-decoration:none;
   border-radius: 10px;
   padding: 6px 10px;
   margin-right:5px;
@@ -92,7 +93,7 @@ const BellIcon = styled(FaBell)`
 
 // Function to calculate user level based on points
 const calculateLevel = (points) => {
-  return Math.floor(points / 1000) + 1;  // Level-up every 1000 points
+  return Math.floor(points / 10000) + 1;  // Level-up every 1000 points
 };
 
 const UserInfo = () => {
@@ -105,7 +106,7 @@ const UserInfo = () => {
   firstName = firstName.split(/[^\w]+/)[0].slice(0, 10);
 
   // Calculate the user's current level
-  const userLevel = calculateLevel(points);
+  const userLevel = 1;
 
   return (
     <UserInfoContainer>
