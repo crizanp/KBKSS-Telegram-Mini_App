@@ -118,15 +118,29 @@ export const EagleImage = styled.img`
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   margin-top: 10px;
-  user-select: none;      /* Disable text/image selection */
-  pointer-events: none;   /* Disable all pointer events */
-  -webkit-user-drag: none; /* Disable drag on image in Webkit-based browsers */
+  user-select: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
   z-index: 1000;
 
-  &.shift-up {
-    animation: ${eagleShiftUp} 0.2s ease-in-out; /* Slight and quick animation */
+  // Apply subtle animation on tap
+  &.tapped {
+    animation: bounceEffect 0.1s ease-out;
+  }
+
+  @keyframes bounceEffect {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.04);  /* Scale up slightly */
+    }
+    100% {
+      transform: scale(1);  /* Return to original size */
+    }
   }
 `;
+
 
 export const BottomContainer = styled.div`
   display: flex;

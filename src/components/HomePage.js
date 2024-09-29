@@ -352,16 +352,27 @@ function HomePage() {
     (e) => {
       if (energy <= 0) return; // Prevent tapping if there's no energy
   
+      // Trigger the bounce animation on the eagle image
+      const eagleElement = document.querySelector(".eagle-image");
+      if (eagleElement) {
+        eagleElement.classList.add("tapped");
+  
+        // Remove the class after animation completes to allow re-triggering
+        setTimeout(() => {
+          eagleElement.classList.remove("tapped");
+        }, 300); // Match the duration of the animation (0.3s)
+      }
+  
       // Get the touch or click event data (support both mobile and desktop)
       const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }];
-      
+  
       // Limit to a maximum of 4 simultaneous finger taps
-      const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4); 
+      const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4);
   
       validTouches.forEach((touch, index) => {
         const tapX = touch.clientX; // X coordinate of tap
         const tapY = touch.clientY; // Y coordinate of tap
-        
+  
         // Get the boundaries of the interactive area to ensure valid taps
         const topBoundaryElement = curvedBorderRef.current;
         const bottomBoundaryElement = bottomMenuRef.current;
@@ -398,9 +409,7 @@ function HomePage() {
   
             // Remove flying number after animation completes
             setTimeout(() => {
-              setFlyingNumbers((prevNumbers) =>
-                prevNumbers.filter((num) => num.id !== id)
-              );
+              setFlyingNumbers((prevNumbers) => prevNumbers.filter((num) => num.id !== id));
             }, 750); // Animation duration: 750ms
           };
   
