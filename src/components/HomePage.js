@@ -186,8 +186,11 @@ function HomePage() {
   const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
   const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
 
-  // Accumulate unsynced points to avoid sending too many server requests
-  const [unsyncedPoints, setUnsyncedPoints] = useState(0);
+  const [unsyncedPoints, setUnsyncedPoints] = useState(
+    () => parseInt(localStorage.getItem("unsyncedPoints")) || 0
+  ); // Load from local storage if available
+  
+  const syncTimerRef = useRef(null); // Timer to debounce sync requests
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
@@ -317,21 +320,33 @@ function HomePage() {
     return 1;
   };
 
-  const syncPointsWithServer = useCallback(
-    debounce(async (totalPointsToAdd) => {
+   // Sync points to server after a delay (debounced function)
+   const syncPointsWithServer = useCallback(
+    debounce(async () => {
       try {
-        const response = await axios.put(
+        // Optimistically clear the unsynced points in local storage and state
+        const unsyncedPointsToSend = unsyncedPoints;
+        localStorage.removeItem("unsyncedPoints");
+        setUnsyncedPoints(0);
+
+        // Send the points to the API
+        await axios.put(
           `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-          { pointsToAdd: totalPointsToAdd }
+          { pointsToAdd: unsyncedPointsToSend }
         );
-        setPoints(response.data.points);
-        localStorage.setItem(`points_${userID}`, response.data.points);
-        setUnsyncedPoints(0); // Reset unsynced points after successful sync
       } catch (error) {
         console.error("Error syncing points with server:", error);
+
+        // If the request fails, restore the unsynced points in local storage and state
+        localStorage.setItem(
+          "unsyncedPoints",
+          (parseInt(localStorage.getItem("unsyncedPoints")) || 0) +
+            unsyncedPoints
+        );
+        setUnsyncedPoints((prev) => prev + unsyncedPoints);
       }
-    }, 2000),
-    [userID, setPoints]
+    }, 2000), // Sync after 2 seconds of inactivity
+    [unsyncedPoints, userID]
   );
   const handleTap = useCallback(
     (e) => {
@@ -339,97 +354,70 @@ function HomePage() {
         return;
       }
   
-      // Get the touch or click coordinates from the event
-      const tapX = e.touches ? e.touches[0].clientX : e.clientX;
-      const tapY = e.touches ? e.touches[0].clientY : e.clientY;
+      const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }];
+      const pointsToAdd = touches.length > 4 ? 4 : touches.length; // Limit to 4 touches (fingers)
   
-      // Get boundaries of the CurvedBorderContainer and BottomContainer
-      const topBoundaryElement = curvedBorderRef.current; // Ref for the CurvedBorderContainer
-      const bottomBoundaryElement = bottomMenuRef.current; // Ref for the BottomContainer
+      const topBoundaryElement = curvedBorderRef.current;
+      const bottomBoundaryElement = bottomMenuRef.current;
   
       if (topBoundaryElement && bottomBoundaryElement) {
         const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
-        const bottomBoundary =
-          bottomBoundaryElement.getBoundingClientRect().top;
+        const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
   
-        // Check if the tap is within the designated boundaries
-        if (tapY < topBoundary || tapY > bottomBoundary) {
-          return; // Ignore taps outside the valid region
-        }
+        touches.forEach((touch, index) => {
+          const tapX = touch.clientX;
+          const tapY = touch.clientY;
   
-        const eagleElement = document.querySelector(".eagle-image");
-        const eagleRect = eagleElement.getBoundingClientRect();
+          // Ensure the tap is within the boundaries
+          if (tapY < topBoundary || tapY > bottomBoundary) {
+            return; // Ignore taps outside the valid region
+          }
   
-        // Calculate the center of the eagle image for the sparkle slap effect
-        const eagleCenterX = eagleRect.left + eagleRect.width / 2;
-        const eagleCenterY = eagleRect.top + eagleRect.height / 2;
+          // Display flying numbers separately for each finger, adjusting position slightly
+          const animateFlyingPoints = () => {
+            const id = Date.now() + index; // Unique ID for each flying point
+            const offset = (index % 2 === 0 ? -10 : 10) * (index + 1); // Adjust position based on finger index
   
-        // Remove the shift-up animation
-        // No 'shift-up' class is added anymore
+            setFlyingNumbers((prevNumbers) => [
+              ...prevNumbers,
+              { id, x: tapX + offset, y: tapY - 30 + offset, value: 1 }, // Adjusted position for each touch
+            ]);
   
-        const isValidTap = e.touches ? e.touches.length <= 2 : true; // Allow up to 2 fingers or 1 click
+            setTimeout(() => {
+              setFlyingNumbers((prevNumbers) =>
+                prevNumbers.filter((num) => num.id !== id)
+              );
+            }, 750);
+          };
   
-        if (!isValidTap) {
-          return; // Ignore if more than 2 fingers are used
-        }
+          animateFlyingPoints();
+        });
   
-        // Points should be equal to the number of fingers used (i.e., 1 point per finger)
-        const pointsToAdd = e.touches ? e.touches.length : 1; // Add 1 point for each finger
-  
+        // Update points and local storage
         setPoints((prevPoints) => {
           const newPoints = prevPoints + pointsToAdd;
           localStorage.setItem(`points_${userID}`, newPoints);
           return newPoints;
         });
   
-        setTapCount((prevTapCount) => prevTapCount + pointsToAdd); // Increment tap count by the number of touches
+        setTapCount((prevTapCount) => prevTapCount + pointsToAdd);
   
-        // Create flying points at the exact touch location
-        const animateFlyingPoints = () => {
-          const id = Date.now();
-          setFlyingNumbers((prevNumbers) => [
-            ...prevNumbers,
-            { id, x: tapX, y: tapY - 30, value: pointsToAdd }, // Use tapX and tapY
-          ]);
+        // Add unsynced points to local storage and state
+        setUnsyncedPoints((prevUnsynced) => {
+          const newUnsyncedPoints = prevUnsynced + pointsToAdd;
+          localStorage.setItem("unsyncedPoints", newUnsyncedPoints);
+          return newUnsyncedPoints;
+        });
   
-          setTimeout(() => {
-            setFlyingNumbers((prevNumbers) =>
-              prevNumbers.filter((num) => num.id !== id)
-            );
-          }, 750);
-        };
+        // Clear the previous sync timer and set a new one
+        clearTimeout(syncTimerRef.current);
+        syncTimerRef.current = setTimeout(syncPointsWithServer, 2000);
   
-        animateFlyingPoints();
-  
-        // Add slap emoji effect centered at the eagle image
-        setSlapEmojis((prevEmojis) => [
-          ...prevEmojis,
-          { id: Date.now(), x: eagleCenterX, y: eagleCenterY },
-        ]);
-  
-        setOfflinePoints(
-          (prevOfflinePoints) => prevOfflinePoints + pointsToAdd
-        );
-        setUnsyncedPoints(
-          (prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd
-        );
-  
-        decreaseEnergy(pointsToAdd); // Decrease energy based on the number of fingers
-  
-        if (navigator.onLine) {
-          syncPointsWithServer(unsyncedPoints + pointsToAdd);
-        }
+        // Decrease energy based on the number of touches
+        decreaseEnergy(pointsToAdd);
       }
     },
-    [
-      syncPointsWithServer,
-      setPoints,
-      unsyncedPoints,
-      offlinePoints,
-      energy,
-      decreaseEnergy,
-      userID,
-    ]
+    [syncPointsWithServer, setPoints, energy, decreaseEnergy, userID]
   );
   
 
@@ -481,6 +469,7 @@ function HomePage() {
     return () => {
       window.removeEventListener("beforeunload", syncBeforeUnload);
     };
+
   }, [unsyncedPoints, syncPointsWithServer]);
 
   return (
