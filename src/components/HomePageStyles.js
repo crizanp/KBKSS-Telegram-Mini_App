@@ -30,7 +30,7 @@ const pointFlyingAnimation = keyframes`
 
 
 
-const slapEffectAnimation = keyframes`
+export const slapEffectAnimation = keyframes`
   0% {
     transform: scale(1) translateY(0) translateX(0);
     opacity: 1;
@@ -236,7 +236,7 @@ export const SlapEmojiImage = styled.img`
 
   @keyframes fadeOut {
     0% {
-      opacity: 0.5; /* Reduced opacity for more transparency */
+      opacity: 0.55; /* Reduced opacity for more transparency */
     }
     100% {
       opacity: 0;

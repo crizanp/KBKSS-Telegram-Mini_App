@@ -185,6 +185,7 @@ function HomePage() {
   const bottomMenuRef = useRef(null);
   const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
   const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
+  const [slapEmoji, setSlapEmoji] = useState(null); // State to hold slap emoji position
 
   // Accumulate unsynced points to avoid sending too many server requests
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
@@ -318,19 +319,33 @@ function HomePage() {
   };
 
   const syncPointsWithServer = useCallback(
-    debounce(async (totalPointsToAdd) => {
-      try {
-        const response = await axios.put(
-          `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-          { pointsToAdd: totalPointsToAdd }
-        );
-        setPoints(response.data.points);
-        localStorage.setItem(`points_${userID}`, response.data.points);
-        setUnsyncedPoints(0); // Reset unsynced points after successful sync
-      } catch (error) {
-        console.error("Error syncing points with server:", error);
+    async () => {
+      const pointsToSync = parseInt(localStorage.getItem(`unsyncedPoints_${userID}`) || 0);
+  
+      if (pointsToSync > 0) {
+        try {
+          // Optimistically clear localStorage before API call
+          localStorage.removeItem(`unsyncedPoints_${userID}`);
+  
+          // Send points to server
+          const response = await axios.put(
+            `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
+            { pointsToAdd: pointsToSync }
+          );
+  
+          // Update points in state and localStorage with the server's response
+          setPoints(response.data.points);
+          localStorage.setItem(`points_${userID}`, response.data.points);
+          setUnsyncedPoints(0); // Reset unsynced points
+  
+        } catch (error) {
+          // If the request fails, add the points back to localStorage
+          const existingUnsyncedPoints = parseInt(localStorage.getItem(`unsyncedPoints_${userID}`) || 0);
+          localStorage.setItem(`unsyncedPoints_${userID}`, existingUnsyncedPoints + pointsToSync);
+          console.error("Error syncing points with server:", error);
+        }
       }
-    }, 2000),
+    },
     [userID, setPoints]
   );
 
@@ -338,17 +353,38 @@ function HomePage() {
     (e) => {
       if (energy <= 0) return; // Prevent tapping if there's no energy
   
-      // Get the touch or click event data (support both mobile and desktop)
+      // Get the eagle's position and size
+      const eagleElement = document.querySelector(".eagle-image");
+      if (!eagleElement) return;
+  
+      const eagleRect = eagleElement.getBoundingClientRect();
+      const eagleCenterX = eagleRect.left + eagleRect.width / 2;
+      const eagleCenterY = eagleRect.top + eagleRect.height / 2;
+  
+      // Set the slap emoji at the center of the eagle
+      setSlapEmojis((prevEmojis) => [
+        ...prevEmojis,
+        {
+          id: Date.now(), // Unique ID for the slap emoji
+          x: eagleCenterX,
+          y: eagleCenterY,
+        },
+      ]);
+  
+      // Clear the slap emoji after 750ms (animation duration)
+      setTimeout(() => {
+        setSlapEmojis((prevEmojis) => prevEmojis.filter((emoji) => emoji.id !== Date.now()));
+      }, 750);
+  
+      // Points and energy logic remains the same as before
       const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }];
-      
-      // Limit to a maximum of 4 simultaneous finger taps
-      const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4); 
+  
+      const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4);
   
       validTouches.forEach((touch, index) => {
-        const tapX = touch.clientX; // X coordinate of tap
-        const tapY = touch.clientY; // Y coordinate of tap
-        
-        // Get the boundaries of the interactive area to ensure valid taps
+        const tapX = touch.clientX;
+        const tapY = touch.clientY;
+  
         const topBoundaryElement = curvedBorderRef.current;
         const bottomBoundaryElement = bottomMenuRef.current;
   
@@ -356,68 +392,63 @@ function HomePage() {
           const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
           const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
   
-          // Ensure tap is within the interactive area (between top and bottom sections)
           if (tapY < topBoundary || tapY > bottomBoundary) {
             return;
           }
   
-          // Points to add per tap (assuming 1 point per tap for simplicity)
           const pointsToAdd = 1;
-  
-          // Update points optimistically (before syncing with server)
           setPoints((prevPoints) => {
             const newPoints = prevPoints + pointsToAdd;
             localStorage.setItem(`points_${userID}`, newPoints); // Save updated points locally
-            return newPoints; // Update state with new points
+            return newPoints;
           });
   
-          // Increase tap count (for UI feedback messages)
           setTapCount((prevTapCount) => prevTapCount + 1);
   
-          // Add flying number animation for tap feedback
           const animateFlyingPoints = () => {
-            const id = Date.now() + index; // Unique ID for flying number (per finger tap)
+            const id = Date.now() + index;
             setFlyingNumbers((prevNumbers) => [
               ...prevNumbers,
-              { id, x: tapX + index * 10, y: tapY - 30 + index * 10, value: pointsToAdd }, // Offset each flying number slightly
+              { id, x: tapX + index * 10, y: tapY - 30 + index * 10, value: pointsToAdd },
             ]);
   
-            // Remove flying number after animation completes
             setTimeout(() => {
               setFlyingNumbers((prevNumbers) =>
                 prevNumbers.filter((num) => num.id !== id)
               );
-            }, 750); // Animation duration: 750ms
+            }, 750);
           };
   
-          animateFlyingPoints(); // Trigger flying number animation
+          animateFlyingPoints();
   
-          // Offline points accumulation for syncing later
           setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
           setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
-  
-          // Deduct energy for each tap (1 energy per tap)
           decreaseEnergy(1);
   
-          // If online, sync the points with the server
-          if (navigator.onLine) {
-            syncPointsWithServer(unsyncedPoints + pointsToAdd); // Sync with the server, adding the unsynced points
-          }
+          const currentUnsyncedPoints = parseInt(localStorage.getItem(`unsyncedPoints_${userID}`) || 0);
+          localStorage.setItem(`unsyncedPoints_${userID}`, currentUnsyncedPoints + pointsToAdd);
+  
+          clearTimeout(window.syncTimeout);
+          window.syncTimeout = setTimeout(() => {
+            if (navigator.onLine) {
+              syncPointsWithServer();
+            }
+          }, 5000); 
         }
       });
     },
     [
-      syncPointsWithServer, // Debounced function to sync points with the server
-      setPoints, // Function to update points state
-      unsyncedPoints, // Local state of unsynced points
-      offlinePoints, // Local state of offline points
-      energy, // Current energy state
-      decreaseEnergy, // Function to decrease energy
-      userID, // Unique user ID
+      syncPointsWithServer,
+      setPoints,
+      unsyncedPoints,
+      offlinePoints,
+      energy,
+      decreaseEnergy,
+      userID,
     ]
   );
   
-
+  
   const claimDailyReward = async () => {
     try {
       setShowModal(false); // Close the modal immediately after the claim button is clicked
@@ -566,14 +597,15 @@ function HomePage() {
         </FlyingNumber>
       ))}
       {slapEmojis.map((emoji) => (
-        <SlapEmojiImage
-          key={emoji.id}
-          x={emoji.x}
-          y={emoji.y}
-          src="https://clipart.info/images/ccovers/1516938336sparkle-png-transparent.png"
-          alt="Slap"
-        />
-      ))}
+  <SlapEmojiImage
+    key={emoji.id}
+    x={emoji.x}
+    y={emoji.y}
+    src="https://clipart-library.com/2023/white-sparkle-png-transparent-29.png"
+    alt="Slap"
+  />
+))}
+
     </HomeContainer>
   );
 }
