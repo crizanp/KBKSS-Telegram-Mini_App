@@ -185,7 +185,6 @@ function HomePage() {
   const bottomMenuRef = useRef(null);
   const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
   const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
-  const [slapEmoji, setSlapEmoji] = useState(null); // State to hold slap emoji position
 
   // Accumulate unsynced points to avoid sending too many server requests
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
@@ -353,38 +352,17 @@ function HomePage() {
     (e) => {
       if (energy <= 0) return; // Prevent tapping if there's no energy
   
-      // Get the eagle's position and size
-      const eagleElement = document.querySelector(".eagle-image");
-      if (!eagleElement) return;
-  
-      const eagleRect = eagleElement.getBoundingClientRect();
-      const eagleCenterX = eagleRect.left + eagleRect.width / 2;
-      const eagleCenterY = eagleRect.top + eagleRect.height / 2;
-  
-      // Set the slap emoji at the center of the eagle
-      setSlapEmojis((prevEmojis) => [
-        ...prevEmojis,
-        {
-          id: Date.now(), // Unique ID for the slap emoji
-          x: eagleCenterX,
-          y: eagleCenterY,
-        },
-      ]);
-  
-      // Clear the slap emoji after 750ms (animation duration)
-      setTimeout(() => {
-        setSlapEmojis((prevEmojis) => prevEmojis.filter((emoji) => emoji.id !== Date.now()));
-      }, 750);
-  
-      // Points and energy logic remains the same as before
+      // Get the touch or click event data (support both mobile and desktop)
       const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }];
-  
-      const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4);
+      
+      // Limit to a maximum of 4 simultaneous finger taps
+      const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4); 
   
       validTouches.forEach((touch, index) => {
-        const tapX = touch.clientX;
-        const tapY = touch.clientY;
-  
+        const tapX = touch.clientX; // X coordinate of tap
+        const tapY = touch.clientY; // Y coordinate of tap
+        
+        // Get the boundaries of the interactive area to ensure valid taps
         const topBoundaryElement = curvedBorderRef.current;
         const bottomBoundaryElement = bottomMenuRef.current;
   
@@ -392,62 +370,73 @@ function HomePage() {
           const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
           const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
   
+          // Ensure tap is within the interactive area (between top and bottom sections)
           if (tapY < topBoundary || tapY > bottomBoundary) {
             return;
           }
   
+          // Points to add per tap (assuming 1 point per tap for simplicity)
           const pointsToAdd = 1;
+  
+          // Update points optimistically (before syncing with server)
           setPoints((prevPoints) => {
             const newPoints = prevPoints + pointsToAdd;
             localStorage.setItem(`points_${userID}`, newPoints); // Save updated points locally
-            return newPoints;
+            return newPoints; // Update state with new points
           });
   
+          // Increase tap count (for UI feedback messages)
           setTapCount((prevTapCount) => prevTapCount + 1);
   
+          // Add flying number animation for tap feedback
           const animateFlyingPoints = () => {
-            const id = Date.now() + index;
+            const id = Date.now() + index; // Unique ID for flying number (per finger tap)
             setFlyingNumbers((prevNumbers) => [
               ...prevNumbers,
-              { id, x: tapX + index * 10, y: tapY - 30 + index * 10, value: pointsToAdd },
+              { id, x: tapX + index * 10, y: tapY - 30 + index * 10, value: pointsToAdd }, // Offset each flying number slightly
             ]);
   
+            // Remove flying number after animation completes
             setTimeout(() => {
               setFlyingNumbers((prevNumbers) =>
                 prevNumbers.filter((num) => num.id !== id)
               );
-            }, 750);
+            }, 750); // Animation duration: 750ms
           };
   
-          animateFlyingPoints();
+          animateFlyingPoints(); // Trigger flying number animation
   
+          // Offline points accumulation for syncing later
           setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
           setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
+  
+          // Deduct energy for each tap (1 energy per tap)
           decreaseEnergy(1);
   
+          // Save unsynced points to localStorage
           const currentUnsyncedPoints = parseInt(localStorage.getItem(`unsyncedPoints_${userID}`) || 0);
           localStorage.setItem(`unsyncedPoints_${userID}`, currentUnsyncedPoints + pointsToAdd);
   
+          // Trigger the sync after a timeout (if no other taps happen within the interval)
           clearTimeout(window.syncTimeout);
           window.syncTimeout = setTimeout(() => {
             if (navigator.onLine) {
-              syncPointsWithServer();
+              syncPointsWithServer(); // Sync points if online
             }
-          }, 5000); 
+          }, 5000); // Sync after 5 seconds of inactivity
         }
       });
     },
     [
-      syncPointsWithServer,
-      setPoints,
-      unsyncedPoints,
-      offlinePoints,
-      energy,
-      decreaseEnergy,
-      userID,
+      syncPointsWithServer, // Debounced function to sync points with the server
+      setPoints, // Function to update points state
+      unsyncedPoints, // Local state of unsynced points
+      offlinePoints, // Local state of offline points
+      energy, // Current energy state
+      decreaseEnergy, // Function to decrease energy
+      userID, // Unique user ID
     ]
   );
-  
   
   const claimDailyReward = async () => {
     try {
@@ -597,15 +586,14 @@ function HomePage() {
         </FlyingNumber>
       ))}
       {slapEmojis.map((emoji) => (
-  <SlapEmojiImage
-    key={emoji.id}
-    x={emoji.x}
-    y={emoji.y}
-    src="https://clipart-library.com/2023/white-sparkle-png-transparent-29.png"
-    alt="Slap"
-  />
-))}
-
+        <SlapEmojiImage
+          key={emoji.id}
+          x={emoji.x}
+          y={emoji.y}
+          src="https://clipart.info/images/ccovers/1516938336sparkle-png-transparent.png"
+          alt="Slap"
+        />
+      ))}
     </HomeContainer>
   );
 }
