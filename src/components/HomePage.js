@@ -336,19 +336,19 @@ function HomePage() {
 
   const handleTap = useCallback(
     (e) => {
-      if (energy <= 0) {
-        return;
-      }
+      if (energy <= 0) return; // Prevent tapping if there's no energy
   
-      // Handle both touch and click events by always ensuring it's an array
-      const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }]; 
-      const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4); // Limit to 4 fingers
+      // Get the touch or click event data (support both mobile and desktop)
+      const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }];
+      
+      // Limit to a maximum of 4 simultaneous finger taps
+      const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4); 
   
       validTouches.forEach((touch, index) => {
-        const tapX = touch.clientX;
-        const tapY = touch.clientY;
-  
-        // Get boundaries of the CurvedBorderContainer and BottomContainer
+        const tapX = touch.clientX; // X coordinate of tap
+        const tapY = touch.clientY; // Y coordinate of tap
+        
+        // Get the boundaries of the interactive area to ensure valid taps
         const topBoundaryElement = curvedBorderRef.current;
         const bottomBoundaryElement = bottomMenuRef.current;
   
@@ -356,56 +356,64 @@ function HomePage() {
           const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
           const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
   
+          // Ensure tap is within the interactive area (between top and bottom sections)
           if (tapY < topBoundary || tapY > bottomBoundary) {
             return;
           }
   
-          const pointsToAdd = 1; // Always add 1 point for each finger
+          // Points to add per tap (assuming 1 point per tap for simplicity)
+          const pointsToAdd = 1;
   
+          // Update points optimistically (before syncing with server)
           setPoints((prevPoints) => {
             const newPoints = prevPoints + pointsToAdd;
-            localStorage.setItem(`points_${userID}`, newPoints);
-            return newPoints;
+            localStorage.setItem(`points_${userID}`, newPoints); // Save updated points locally
+            return newPoints; // Update state with new points
           });
   
+          // Increase tap count (for UI feedback messages)
           setTapCount((prevTapCount) => prevTapCount + 1);
   
-          // Add flying number slightly offset for each finger to prevent overlapping
+          // Add flying number animation for tap feedback
           const animateFlyingPoints = () => {
-            const id = Date.now() + index; // Unique ID per touch
+            const id = Date.now() + index; // Unique ID for flying number (per finger tap)
             setFlyingNumbers((prevNumbers) => [
               ...prevNumbers,
-              { id, x: tapX + index * 10, y: tapY - 30 + index * 10, value: pointsToAdd }, // Offset each flying number
+              { id, x: tapX + index * 10, y: tapY - 30 + index * 10, value: pointsToAdd }, // Offset each flying number slightly
             ]);
   
+            // Remove flying number after animation completes
             setTimeout(() => {
               setFlyingNumbers((prevNumbers) =>
                 prevNumbers.filter((num) => num.id !== id)
               );
-            }, 750);
+            }, 750); // Animation duration: 750ms
           };
   
-          animateFlyingPoints();
+          animateFlyingPoints(); // Trigger flying number animation
   
+          // Offline points accumulation for syncing later
           setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
           setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
   
-          decreaseEnergy(1); // Deduct 1 energy per tap
+          // Deduct energy for each tap (1 energy per tap)
+          decreaseEnergy(1);
   
+          // If online, sync the points with the server
           if (navigator.onLine) {
-            syncPointsWithServer(unsyncedPoints + pointsToAdd);
+            syncPointsWithServer(unsyncedPoints + pointsToAdd); // Sync with the server, adding the unsynced points
           }
         }
       });
     },
     [
-      syncPointsWithServer,
-      setPoints,
-      unsyncedPoints,
-      offlinePoints,
-      energy,
-      decreaseEnergy,
-      userID,
+      syncPointsWithServer, // Debounced function to sync points with the server
+      setPoints, // Function to update points state
+      unsyncedPoints, // Local state of unsynced points
+      offlinePoints, // Local state of offline points
+      energy, // Current energy state
+      decreaseEnergy, // Function to decrease energy
+      userID, // Unique user ID
     ]
   );
   
