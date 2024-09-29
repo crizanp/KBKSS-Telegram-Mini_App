@@ -82,6 +82,8 @@ const LevelIcon = styled(FaLevelUpAlt)`
   color: #ffac00;
   font-size: 1rem;
   margin-right: 4px;
+  text-decoration:none;
+
 `;
 
 // Bell icon styled smaller for mobile notification
