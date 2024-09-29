@@ -317,37 +317,39 @@ function HomePage() {
     return 1;
   };
 
-  const syncPointsWithServer = useCallback(
-    async () => {
-      const pointsToSync = parseInt(localStorage.getItem(`unsyncedPoints_${userID}`) || 0);
-  
-      if (pointsToSync > 0) {
-        try {
-          // Optimistically clear localStorage before API call
-          localStorage.removeItem(`unsyncedPoints_${userID}`);
-  
-          // Send points to server
-          const response = await axios.put(
-            `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-            { pointsToAdd: pointsToSync }
-          );
-  
-          // Update points in state and localStorage with the server's response
-          setPoints(response.data.points);
-          localStorage.setItem(`points_${userID}`, response.data.points);
-          setUnsyncedPoints(0); // Reset unsynced points
-  
-        } catch (error) {
-          // If the request fails, add the points back to localStorage
-          const existingUnsyncedPoints = parseInt(localStorage.getItem(`unsyncedPoints_${userID}`) || 0);
-          localStorage.setItem(`unsyncedPoints_${userID}`, existingUnsyncedPoints + pointsToSync);
-          console.error("Error syncing points with server:", error);
-        }
-      }
-    },
-    [userID, setPoints]
-  );
+  const syncPointsWithServer = useCallback(async () => {
+    const pointsToSync = parseInt(
+      localStorage.getItem(`unsyncedPoints_${userID}`) || 0
+    );
 
+    if (pointsToSync > 0) {
+      try {
+        // Optimistically clear localStorage before API call
+        localStorage.removeItem(`unsyncedPoints_${userID}`);
+
+        // Send points to server
+        const response = await axios.put(
+          `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
+          { pointsToAdd: pointsToSync }
+        );
+
+        // Update points in state and localStorage with the server's response
+        setPoints(response.data.points);
+        localStorage.setItem(`points_${userID}`, response.data.points);
+        setUnsyncedPoints(0); // Reset unsynced points
+      } catch (error) {
+        // If the request fails, add the points back to localStorage
+        const existingUnsyncedPoints = parseInt(
+          localStorage.getItem(`unsyncedPoints_${userID}`) || 0
+        );
+        localStorage.setItem(
+          `unsyncedPoints_${userID}`,
+          existingUnsyncedPoints + pointsToSync
+        );
+        console.error("Error syncing points with server:", error);
+      }
+    }
+  }, [userID, setPoints]);
   const handleTap = useCallback(
     (e) => {
       if (energy <= 0) return; // Prevent tapping if there's no energy
@@ -364,7 +366,9 @@ function HomePage() {
       }
   
       // Get the touch or click event data (support both mobile and desktop)
-      const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }];
+      const touches = e.touches
+        ? Array.from(e.touches)
+        : [{ clientX: e.clientX, clientY: e.clientY }];
   
       // Limit to a maximum of 4 simultaneous finger taps
       const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4);
@@ -379,7 +383,8 @@ function HomePage() {
   
         if (topBoundaryElement && bottomBoundaryElement) {
           const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
-          const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
+          const bottomBoundary =
+            bottomBoundaryElement.getBoundingClientRect().top;
   
           // Ensure tap is within the interactive area (between top and bottom sections)
           if (tapY < topBoundary || tapY > bottomBoundary) {
@@ -404,27 +409,43 @@ function HomePage() {
             const id = Date.now() + index; // Unique ID for flying number (per finger tap)
             setFlyingNumbers((prevNumbers) => [
               ...prevNumbers,
-              { id, x: tapX + index * 10, y: tapY - 30 + index * 10, value: pointsToAdd }, // Offset each flying number slightly
+              {
+                id,
+                x: tapX + index * 10,
+                y: tapY - 30 + index * 10,
+                value: pointsToAdd,
+              }, // Offset each flying number slightly
             ]);
   
             // Remove flying number after animation completes
             setTimeout(() => {
-              setFlyingNumbers((prevNumbers) => prevNumbers.filter((num) => num.id !== id));
+              setFlyingNumbers((prevNumbers) =>
+                prevNumbers.filter((num) => num.id !== id)
+              );
             }, 750); // Animation duration: 750ms
           };
   
           animateFlyingPoints(); // Trigger flying number animation
   
           // Offline points accumulation for syncing later
-          setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
-          setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
+          setOfflinePoints(
+            (prevOfflinePoints) => prevOfflinePoints + pointsToAdd
+          );
+          setUnsyncedPoints(
+            (prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd
+          );
   
           // Deduct energy for each tap (1 energy per tap)
           decreaseEnergy(1);
   
           // Save unsynced points to localStorage
-          const currentUnsyncedPoints = parseInt(localStorage.getItem(`unsyncedPoints_${userID}`) || 0);
-          localStorage.setItem(`unsyncedPoints_${userID}`, currentUnsyncedPoints + pointsToAdd);
+          const currentUnsyncedPoints = parseInt(
+            localStorage.getItem(`unsyncedPoints_${userID}`) || 0
+          );
+          localStorage.setItem(
+            `unsyncedPoints_${userID}`,
+            currentUnsyncedPoints + pointsToAdd
+          );
   
           // Trigger the sync after a timeout (if no other taps happen within the interval)
           clearTimeout(window.syncTimeout);
@@ -435,18 +456,19 @@ function HomePage() {
           }, 5000); // Sync after 5 seconds of inactivity
         }
       });
-    },
-    [
-      syncPointsWithServer, // Debounced function to sync points with the server
-      setPoints, // Function to update points state
-      unsyncedPoints, // Local state of unsynced points
-      offlinePoints, // Local state of offline points
-      energy, // Current energy state
-      decreaseEnergy, // Function to decrease energy
-      userID, // Unique user ID
-    ]
-  );
   
+      // Haptic feedback when the user taps
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          // Trigger light haptic feedback on tap
+          window.Telegram.WebApp.HapticFeedback.impactOccurred("light");
+        } catch (error) {
+          console.error("Haptic feedback not supported:", error);
+        }
+      }
+    },
+    [energy, setPoints, setTapCount, setFlyingNumbers, setOfflinePoints, setUnsyncedPoints, decreaseEnergy, syncPointsWithServer, userID]
+  );
   const claimDailyReward = async () => {
     try {
       setShowModal(false); // Close the modal immediately after the claim button is clicked
