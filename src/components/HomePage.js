@@ -340,7 +340,8 @@ function HomePage() {
         return;
       }
   
-      const touches = e.touches ? e.touches : [{ clientX: e.clientX, clientY: e.clientY }]; // Handle both click and touch events
+      // Handle both touch and click events by always ensuring it's an array
+      const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }]; 
       const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4); // Limit to 4 fingers
   
       validTouches.forEach((touch, index) => {
