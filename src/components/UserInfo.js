@@ -6,21 +6,19 @@ import { usePoints } from '../context/PointsContext';
 // Main container with dark theme and compact mobile-first size
 const UserInfoContainer = styled.div`
   color: white;
-  background-color: #1a1a1a;  // Dark background
+  background-color: #000000;  // Dark background
   padding: 10px 10px;
   border-radius: 20px;
-  width: 90%;  
+  width: 85%;  
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: bold;
   position: fixed;
-  top: 10px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
-  border: 1px solid #444; 
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   font-family: 'Orbitron', sans-serif;
   animation: fadeIn 0.6s ease-in-out;  /* Wake-up animation */
@@ -37,7 +35,7 @@ const Username = styled.div`
   display: flex;
   align-items: center;
   color: #fff;
-  font-size: 12px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-right: 8px;  // Space between username and level
@@ -55,7 +53,7 @@ const PointsContainer = styled.div`
   background: rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: 4px 8px;
-  font-size: 12px;
+  font-size: 17px;
   display: flex;
   align-items: center;
   color: white;
@@ -67,8 +65,9 @@ const LevelContainer = styled.div`
   align-items: center;
   background-color: #222;
   border-radius: 10px;
-  padding: 3px 8px;
-  font-size: 11px;
+  padding: 6px 10px;
+  margin-right:5px;
+  font-size: 13px;
   color: #ffac00;
   font-weight: bold;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);  // Add shadow for depth
