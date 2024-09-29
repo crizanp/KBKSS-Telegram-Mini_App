@@ -186,9 +186,8 @@ function HomePage() {
   const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
   const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
 
+  // Accumulate unsynced points to avoid sending too many server requests
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
-
-  const syncTimerRef = useRef(null); // Timer to debounce sync requests
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
@@ -318,103 +317,129 @@ function HomePage() {
     return 1;
   };
 
-  const syncPointsWithServer = useCallback(async () => {
-    try {
-      const pointsToSync = unsyncedPoints; // Get the accumulated unsynced points
-  
-      if (pointsToSync > 0) {
-        // Send the accumulated points to the server
+  const syncPointsWithServer = useCallback(
+    debounce(async (totalPointsToAdd) => {
+      try {
         const response = await axios.put(
           `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-          { pointsToAdd: pointsToSync }
+          { pointsToAdd: totalPointsToAdd }
         );
-  
-        // Update the points in state with the response
-        const newPoints = response.data.points;
-  
-        // Update both the points in state and localStorage
-        setPoints(newPoints);
-        localStorage.setItem(`points_${userID}`, newPoints); // Save updated points
-  
-        // Reset unsynced points after syncing successfully
-        setUnsyncedPoints(0);
+        setPoints(response.data.points);
+        localStorage.setItem(`points_${userID}`, response.data.points);
+        setUnsyncedPoints(0); // Reset unsynced points after successful sync
+      } catch (error) {
+        console.error("Error syncing points with server:", error);
       }
-    } catch (error) {
-      console.error("Error syncing points with server:", error);
-      // Handle error logic here (retry, alert the user, etc.)
-    }
-  }, [userID, unsyncedPoints, setPoints]);
-  
+    }, 2000),
+    [userID, setPoints]
+  );
+
   const handleTap = useCallback(
     (e) => {
       if (energy <= 0) {
         return;
       }
-  
-      const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY }];
-      const pointsToAdd = touches.length > 4 ? 4 : touches.length; // Limit to 4 touches (fingers)
-  
-      const topBoundaryElement = curvedBorderRef.current;
-      const bottomBoundaryElement = bottomMenuRef.current;
-  
+
+      // Get the touch or click coordinates from the event
+      const tapX = e.touches ? e.touches[0].clientX : e.clientX;
+      const tapY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      // Get boundaries of the CurvedBorderContainer and BottomContainer
+      const topBoundaryElement = curvedBorderRef.current; // Ref for the CurvedBorderContainer
+      const bottomBoundaryElement = bottomMenuRef.current; // Ref for the BottomContainer
+
       if (topBoundaryElement && bottomBoundaryElement) {
         const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
-        const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
-  
-        touches.forEach((touch, index) => {
-          const tapX = touch.clientX;
-          const tapY = touch.clientY;
-  
-          // Ensure the tap is within the boundaries
-          if (tapY < topBoundary || tapY > bottomBoundary) {
-            return; // Ignore taps outside the valid region
-          }
-  
-          // Display flying numbers separately for each finger, adjusting position slightly
-          const animateFlyingPoints = () => {
-            const id = Date.now() + index; // Unique ID for each flying point
-            const offset = (index % 2 === 0 ? -10 : 10) * (index + 1); // Adjust position based on finger index
-  
-            setFlyingNumbers((prevNumbers) => [
-              ...prevNumbers,
-              { id, x: tapX + offset, y: tapY - 30 + offset, value: 1 }, // Adjusted position for each touch
-            ]);
-  
-            setTimeout(() => {
-              setFlyingNumbers((prevNumbers) =>
-                prevNumbers.filter((num) => num.id !== id)
-              );
-            }, 750);
-          };
-  
-          animateFlyingPoints();
+        const bottomBoundary =
+          bottomBoundaryElement.getBoundingClientRect().top;
+
+        // Check if the tap is within the designated boundaries
+        if (tapY < topBoundary || tapY > bottomBoundary) {
+          return; // Ignore taps outside the valid region
+        }
+
+        const eagleElement = document.querySelector(".eagle-image");
+        const eagleRect = eagleElement.getBoundingClientRect();
+
+        // Calculate the center of the eagle image for the sparkle slap effect
+        const eagleCenterX = eagleRect.left + eagleRect.width / 2;
+        const eagleCenterY = eagleRect.top + eagleRect.height / 2;
+
+        // Add the 'shift-up' class to trigger the motion
+        eagleElement.classList.add("shift-up");
+
+        // Use requestAnimationFrame to ensure the animation runs smoothly on rapid taps
+        requestAnimationFrame(() => {
+          // Remove the class after the animation is completed (0.2s)
+          setTimeout(() => {
+            eagleElement.classList.remove("shift-up");
+          }, 200); // Match the duration of the animation
         });
-  
-        // Accumulate points and local storage
-        setUnsyncedPoints((prevUnsyncedPoints) => {
-          const newTotalUnsyncedPoints = prevUnsyncedPoints + pointsToAdd;
-          localStorage.setItem(`points_${userID}`, points + newTotalUnsyncedPoints); // Update local storage
-          return newTotalUnsyncedPoints;
+
+        const isDoubleTap = e.touches && e.touches.length === 2;
+        const isValidTap = e.touches.length <= 2; // Allow only up to 2 fingers
+
+        if (!isValidTap) {
+          return; // Ignore if more than 2 fingers are used
+        }
+
+        const pointsToAdd = calculatePoints() * (isDoubleTap ? 2 : 1);
+
+        setPoints((prevPoints) => {
+          const newPoints = prevPoints + pointsToAdd;
+          localStorage.setItem(`points_${userID}`, newPoints);
+          return newPoints;
         });
-  
-        setPoints((prevPoints) => prevPoints + pointsToAdd);
-        setTapCount((prevTapCount) => prevTapCount + pointsToAdd);
-  
-        // Clear the previous sync timer and set a new one for syncing points to the server
-        clearTimeout(syncTimerRef.current);
-        syncTimerRef.current = setTimeout(() => {
-          syncPointsWithServer(); // Sync all accumulated points
-        }, 2000);
-  
-        // Decrease energy based on the number of touches
-        decreaseEnergy(pointsToAdd);
+
+        setTapCount((prevTapCount) => prevTapCount + 1);
+
+        // Create flying points at the exact touch location
+        const animateFlyingPoints = () => {
+          const id = Date.now();
+          setFlyingNumbers((prevNumbers) => [
+            ...prevNumbers,
+            { id, x: tapX, y: tapY - 30, value: pointsToAdd }, // Use tapX and tapY
+          ]);
+
+          setTimeout(() => {
+            setFlyingNumbers((prevNumbers) =>
+              prevNumbers.filter((num) => num.id !== id)
+            );
+          }, 750);
+        };
+
+        animateFlyingPoints();
+
+        // Add slap emoji effect centered at the eagle image
+        setSlapEmojis((prevEmojis) => [
+          ...prevEmojis,
+          { id: Date.now(), x: eagleCenterX, y: eagleCenterY },
+        ]);
+
+        setOfflinePoints(
+          (prevOfflinePoints) => prevOfflinePoints + pointsToAdd
+        );
+        setUnsyncedPoints(
+          (prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd
+        );
+
+        decreaseEnergy(isDoubleTap ? 2 : 1);
+
+        if (navigator.onLine) {
+          syncPointsWithServer(unsyncedPoints + pointsToAdd);
+        }
       }
     },
-    [syncPointsWithServer, setPoints, energy, decreaseEnergy, userID]
+    [
+      syncPointsWithServer,
+      setPoints,
+      unsyncedPoints,
+      offlinePoints,
+      energy,
+      decreaseEnergy,
+      userID,
+    ]
   );
-   
-  
-  
 
   const claimDailyReward = async () => {
     try {
@@ -464,7 +489,6 @@ function HomePage() {
     return () => {
       window.removeEventListener("beforeunload", syncBeforeUnload);
     };
-
   }, [unsyncedPoints, syncPointsWithServer]);
 
   return (
