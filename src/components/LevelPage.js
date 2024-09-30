@@ -143,10 +143,10 @@ const ProgressFill = styled.div`
 // Gem icon for progress
 const GemIcon = styled(FaGem)`
   position: absolute;
-  top: 1px;
-  left: ${(props) => props.position || "0%"};
+  top: 0px;
+  left: ${(props) => props.position  || "0%"};
   transform: translateX(-50%);
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   color: #fff;
 `;
 
@@ -373,7 +373,7 @@ const LevelPage = () => {
               width={`${currentLevel.progress}%`}
               color={currentLevel.color}
             />
-            <GemIcon position={`${currentLevel.progress}%`} />
+            <GemIcon position={`${currentLevel.progress -3}%`} />
           </ProgressBarContainer>
         </ProgressBarWrapper>
       </LevelContent>
