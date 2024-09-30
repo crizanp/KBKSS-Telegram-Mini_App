@@ -14,6 +14,7 @@ import LoadingPage from "./components/LoadingPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LeaderboardPage from "./components/LeaderboardPage";
 import LevelPage from "./components/LevelPage";
+import BoostsPage from "./components/BoostsPage";
 
 function App() {
   return (
@@ -93,6 +94,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <LevelPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/boosts"
+                element={
+                  <ProtectedRoute>
+                    <BoostsPage />
                   </ProtectedRoute>
                 }
               />

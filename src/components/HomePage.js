@@ -10,7 +10,7 @@ import { usePoints } from "../context/PointsContext";
 import { useEnergy } from "../context/EnergyContext";
 import { debounce } from "lodash";
 import { Link } from "react-router-dom";
-import { FaTasks, FaRegGem, FaFire } from "react-icons/fa";
+import { FaTasks, FaRegGem, FaFire,FaCog  } from "react-icons/fa";
 import Confetti from "react-confetti";
 import celebrationSound from "../assets/celebration.mp3";
 import styled from "styled-components";
@@ -42,6 +42,15 @@ const GemIcon = styled(FaRegGem)`
   margin-left: 8px;
   margin-right: 8px;
   font-size: 1.9rem;
+`;
+const SettingsIcon = styled(FaCog)`
+ position: absolute;
+    bottom: 8px;
+    padding-left: 16px;
+    /* right: 22px; */
+    font-size: 1.5rem;
+    color: #fff;
+    cursor: pointer;
 `;
 
 // Styled Modal
@@ -577,6 +586,9 @@ function HomePage() {
             Daily Reward
           </EnergyContainer>
         </Link>
+        <Link to="/boosts">
+  <SettingsIcon />
+</Link>
       </BottomContainer>
 
       {showModal && (

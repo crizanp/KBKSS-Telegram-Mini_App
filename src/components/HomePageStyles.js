@@ -50,7 +50,7 @@ export const HomeContainer = styled.div`
   align-items: center;
   justify-content: flex-start;
   text-align: center;
-  min-height: 87vh;
+  min-height: 88vh;
   overflow: hidden;
   user-select: none;
   padding: 20px 20px;
@@ -140,13 +140,16 @@ export const EagleImage = styled.img`
 
 export const BottomContainer = styled.div`
   display: flex;
-  justify-content: center; // Centers horizontally
-  align-items: center; // Centers vertically
-  width: 100%;
-  padding: 0 20px;
-  box-sizing: border-box;
-  align-items: flex-end;
+  justify-content: center; /* Centers the content horizontally */
+  align-items: center; /* Centers the content vertically */
+  left: 50%;
+  transform: translateX(-7%); /* Center it horizontally */
+  width: auto; /* Let the content define the width */
+  max-width: 400px;
+  gap: 0; /* No gap between items */
+  z-index: 1000;
 `;
+
 
 export const EarnMoreBox = styled.div`
   display: flex;
