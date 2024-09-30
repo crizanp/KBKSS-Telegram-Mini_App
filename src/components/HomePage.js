@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import { usePoints } from "../context/PointsContext";
-import { useEnergy } from "../context/EnergyContext"; // Import your Energy context
+import { useEnergy } from "../context/EnergyContext";
 import { debounce } from "lodash";
 import { Link } from "react-router-dom";
 import { FaTasks, FaRegGem, FaFire,FaCog  } from "react-icons/fa";
@@ -177,8 +177,8 @@ const SmallTimerText = styled.span`
   margin-bottom: 5px; /* Add space between timer and claim button */
 `;
 function HomePage() {
-  const { points, setPoints, pointsPerTap, userID, setUserID } = usePoints();
-  const { energy, maxEnergy, decreaseEnergy } = useEnergy(); // Access maxEnergy dynamically
+  const { points, setPoints, userID, setUserID } = usePoints();
+  const { energy, decreaseEnergy } = useEnergy();
   const [tapCount, setTapCount] = useState(0);
   const [flyingNumbers, setFlyingNumbers] = useState([]);
   const [slapEmojis, setSlapEmojis] = useState([]);
@@ -401,7 +401,7 @@ function HomePage() {
           }
   
           // Points to add per tap (assuming 1 point per tap for simplicity)
-          const pointsToAdd = pointsPerTap || 1; // Use the dynamic points per tap
+          const pointsToAdd = 1;
   
           // Update points optimistically (before syncing with server)
           setPoints((prevPoints) => {
@@ -476,7 +476,7 @@ function HomePage() {
         }
       }
     },
-    [energy,pointsPerTap, setPoints, setTapCount, setFlyingNumbers, setOfflinePoints, setUnsyncedPoints, decreaseEnergy, syncPointsWithServer, userID]
+    [energy, setPoints, setTapCount, setFlyingNumbers, setOfflinePoints, setUnsyncedPoints, decreaseEnergy, syncPointsWithServer, userID]
   );
   const claimDailyReward = async () => {
     try {
@@ -563,7 +563,7 @@ function HomePage() {
 
         <EnergyContainer>
           <EnergyIcon energy={energy} />
-          <EnergyCounter>{Math.floor(energy)}/{maxEnergy}</EnergyCounter>
+          <EnergyCounter>{Math.floor(energy)}/1000</EnergyCounter>
         </EnergyContainer>
 
         <Link
