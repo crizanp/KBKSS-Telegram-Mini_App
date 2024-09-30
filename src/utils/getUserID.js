@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const getUserID = async (setUserID, setUsername) => {
+export const getUserID = async (setUserID = () => {}, setUsername = () => {}) => {
   const isLocalhost = window.location.hostname === "localhost";
 
   // Check if the app is running inside Telegram
@@ -42,12 +42,12 @@ export const getUserID = async (setUserID, setUsername) => {
   // If Telegram user ID is available
   if (tgUserID) {
     tgUserID = tgUserID.toString();
-    setUserID(tgUserID);
+    setUserID(tgUserID); // Ensure this line doesn't break if no setUserID function is passed
 
     // If username is available, set it; otherwise, fallback to a clean first name
-    if (tgUsername && setUsername) {
+    if (tgUsername) {
       setUsername(tgUsername);
-    } else if (setUsername) {
+    } else {
       const cleanedFirstName = cleanFirstName(tgFirstName);
       setUsername(cleanedFirstName); // Use the cleaned first name
     }
