@@ -4,18 +4,21 @@ export const getUserID = async () => {
   const isLocalhost = window.location.hostname === "localhost";
 
   // Check if the app is running inside Telegram
-  const isTelegramAvailable = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const isTelegramAvailable = window.Telegram?.WebApp;
+
+  // Initialize Telegram WebApp if available
+  if (isTelegramAvailable) {
+    try {
+      window.Telegram.WebApp.ready();  // Ensure the Telegram WebApp is initialized
+    } catch (error) {
+      console.error("Error initializing Telegram WebApp:", error);
+    }
+  }
 
   // If Telegram Web App is available, get the user ID, username, and first name
-  let tgUserID = isTelegramAvailable
-    ? window.Telegram.WebApp.initDataUnsafe.user.id
-    : null;
-  let tgUsername = isTelegramAvailable
-    ? window.Telegram.WebApp.initDataUnsafe.user.username
-    : null;
-  let tgFirstName = isTelegramAvailable
-    ? window.Telegram.WebApp.initDataUnsafe.user.first_name
-    : null;
+  let tgUserID = isTelegramAvailable?.initDataUnsafe?.user?.id || null;
+  let tgUsername = isTelegramAvailable?.initDataUnsafe?.user?.username || null;
+  let tgFirstName = isTelegramAvailable?.initDataUnsafe?.user?.first_name || null;
 
   // For localhost testing
   if (isLocalhost) {
