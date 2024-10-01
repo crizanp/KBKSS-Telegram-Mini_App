@@ -123,8 +123,12 @@ const BoostsPage = () => {
         const userID = await getUserID();
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
         const userData = response.data;
+        const Levelresponse = await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`);
+        const data = Levelresponse.data;
 
-        setUserLevel(4); // Example level
+        // Set the user's level and first name, default to 0 if level is missing
+        setUserLevel(data.currentLevel ?? 0);
+
         setUserBoosts({
           maxEnergy: userData.maxEnergy,
           pointsPerTap: userData.pointsPerTap,
