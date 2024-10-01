@@ -11,6 +11,7 @@ export const EnergyProvider = ({ children }) => {
   const [maxEnergy, setMaxEnergy] = useState(null); // Default max energy to null, wait for dynamic value
   const [USER_ID, setUSER_ID] = useState(null); // User ID state
   const [isEnergyReady, setIsEnergyReady] = useState(false); // State to ensure maxEnergy is fetched before regenerating energy
+  const [isEnergyLoading, setIsEnergyLoading] = useState(true); // State to track if energy is still loading
 
   const ENERGY_REGEN_RATE = 1; // 1 energy point per interval
   const ENERGY_REGEN_INTERVAL = 1000; // Regenerate every 1 second
@@ -36,10 +37,12 @@ export const EnergyProvider = ({ children }) => {
       const dynamicMaxEnergy = response.data.maxEnergy || 1000;
       setMaxEnergy(dynamicMaxEnergy); // Set the fetched max energy
       setIsEnergyReady(true); // Indicate energy is ready to be regenerated
+      setIsEnergyLoading(false); // Mark energy loading as false
     } catch (error) {
       console.error('Error fetching max energy:', error);
       setMaxEnergy(1000); // Default to 1000 on error
       setIsEnergyReady(true); // Allow energy regeneration even on error
+      setIsEnergyLoading(false); // Mark energy loading as false
     }
   };
 
@@ -106,7 +109,7 @@ export const EnergyProvider = ({ children }) => {
   };
 
   return (
-    <EnergyContext.Provider value={{ energy, maxEnergy, decreaseEnergy }}>
+    <EnergyContext.Provider value={{ energy, maxEnergy, decreaseEnergy, isEnergyLoading }}>
       {children}
     </EnergyContext.Provider>
   );

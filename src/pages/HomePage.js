@@ -53,7 +53,7 @@ import eagleImage from "../assets/eagle.png";
 
 function HomePage() {
   const { points, setPoints, pointsPerTap, userID, setUserID } = usePoints();
-  const { energy, maxEnergy, decreaseEnergy } = useEnergy(); // Access maxEnergy dynamically
+  const { energy, maxEnergy, decreaseEnergy, isEnergyLoading } = useEnergy(); // Access energy loading state
   const [tapCount, setTapCount] = useState(0);
   const [flyingNumbers, setFlyingNumbers] = useState([]);
   const [slapEmojis, setSlapEmojis] = useState([]);
@@ -78,6 +78,7 @@ function HomePage() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
+  
   const fetchActiveBackground = useCallback(async () => {
     try {
       const cachedBackground = localStorage.getItem("activeBackground");
@@ -496,11 +497,20 @@ function HomePage() {
 
       {/* Bottom container with only Energy and Claim */}
       <BottomContainer ref={bottomMenuRef} className="bottom-menu">
-        <EnergyContainer>
-          <EnergyIcon energy={energy} />
-          <EnergyCounter>
-            {Math.floor(energy)}/{maxEnergy}
-          </EnergyCounter>
+      <EnergyContainer>
+          {/* Conditionally render based on isEnergyLoading */}
+          {isEnergyLoading ? (
+            <div style={{ textAlign: "center", padding: "10px" }}>
+              <p>Analyzing Energy...</p>
+            </div>
+          ) : (
+            <>
+              <EnergyIcon energy={energy} />
+              <EnergyCounter>
+                {Math.floor(energy)}/{maxEnergy}
+              </EnergyCounter>
+            </>
+          )}
         </EnergyContainer>
 
         <Link
