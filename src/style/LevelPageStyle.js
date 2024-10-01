@@ -1,5 +1,5 @@
 import styled, { keyframes } from 'styled-components';
-import { FaArrowAltCircleLeft, FaGem, FaTrophy } from 'react-icons/fa';
+import { FaArrowAltCircleLeft, FaGem } from 'react-icons/fa';
 import avatar1 from '../assets/avatar/1.png';
 import avatar2 from '../assets/avatar/2.png';
 import avatar3 from '../assets/avatar/3.png';

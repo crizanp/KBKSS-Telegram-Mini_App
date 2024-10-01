@@ -39,6 +39,13 @@ import {
   ModalOverlay,
   SettingsIcon,
   GemIcon,
+  RightCenterLeaderboardImage,
+  IconLabel,
+  BoostIcon,
+  RightSideMenuContainer,
+  BoostContainer,
+  LeaderboardContainer,
+  IconContainer
 } from "../style/HomePageStyles";
 import UserInfo from "../components/UserInfo";
 import { getUserID } from "../utils/getUserID";
@@ -422,24 +429,45 @@ function HomePage() {
           {Math.floor(points)}
         </PointsDisplay>
       </PointsDisplayContainer>
+
       <MiddleSection>
-        <Message>{getMessage}</Message>{" "}
-        {/* Use getMessage directly as a value, not a function */}
+        {/* <Message>{getMessage}</Message>{" "} */}
         <EagleContainer>
           <EagleImage
             src={eagleImage}
             alt="Eagle"
             className="eagle-image"
-            onContextMenu={(e) => e.preventDefault()} // Prevent default context menu
+            onContextMenu={(e) => e.preventDefault()}
           />
         </EagleContainer>
       </MiddleSection>
 
-      <BottomContainer ref={bottomMenuRef} className="bottom-menu">
-        <Link to="/leaderboard" style={{ textDecoration: "none" }}>
-          <LeaderboardImage src={leaderboardImage} alt="Leaderboard" />
+      {/* Right-side menu container to handle Boost and Leaderboard */}
+      <RightSideMenuContainer>
+        {/* Boost with hover, floating and gradient background */}
+        <Link to="/boosts" style={{ marginBottom: "15px" }}>
+          {" "}
+          <BoostContainer>
+            <BoostIcon />{" "}
+          </BoostContainer>
+          <IconLabel>Boost</IconLabel>
         </Link>
 
+        {/* Leaderboard with hover, floating and gradient background */}
+        <Link to="/leaderboard">
+          <LeaderboardContainer>
+            <RightCenterLeaderboardImage
+              src={leaderboardImage}
+              alt="Leaderboard"
+            />
+          </LeaderboardContainer>
+
+          <IconLabel>Leaderboard</IconLabel>
+        </Link>
+      </RightSideMenuContainer>
+
+      {/* Bottom container with only Energy and Claim */}
+      <BottomContainer ref={bottomMenuRef} className="bottom-menu">
         <EnergyContainer>
           <EnergyIcon energy={energy} />
           <EnergyCounter>
@@ -456,7 +484,6 @@ function HomePage() {
             opacity: isRewardAvailable ? 1 : 0.5,
           }}
         >
-          {/* Show timer immediately above the claim button */}
           {!isRewardAvailable && remainingTime > 0 && (
             <SmallTimerText>
               {formatRemainingTime(remainingTime)}
@@ -464,11 +491,8 @@ function HomePage() {
           )}
           <EnergyContainer>
             <FireIcon $available={isRewardAvailable} />
-            Daily Reward
+            Claim
           </EnergyContainer>
-        </Link>
-        <Link to="/boosts">
-          <SettingsIcon />
         </Link>
       </BottomContainer>
 
@@ -476,12 +500,12 @@ function HomePage() {
         <ModalOverlay onClick={closeModal}>
           <RewardModalContainer
             onClick={(e) => {
-              e.stopPropagation(); // Prevent the click event from propagating to the HomeContainer
+              e.stopPropagation();
             }}
             onTouchStart={(e) => {
-              e.stopPropagation(); // Prevent the touch event from propagating to the HomeContainer
+              e.stopPropagation();
             }}
-            isClosing={isClosing} // Pass the closing state as a prop
+            isClosing={isClosing}
           >
             <CloseButton onClick={closeModal}>×</CloseButton>
             <ModalHeader>Claim Your Daily Reward!</ModalHeader>
@@ -497,7 +521,6 @@ function HomePage() {
         </ModalOverlay>
       )}
 
-      {/* Confetti */}
       {showConfetti && (
         <Confetti width={windowSize.width} height={windowSize.height} />
       )}

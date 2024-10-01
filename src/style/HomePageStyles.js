@@ -1,18 +1,7 @@
 import styled, { keyframes } from "styled-components";
 import { FaBolt } from "react-icons/fa";
 import {  FaRegGem, FaFire,FaCog  } from "react-icons/fa";
-
-// const eagleShiftUp = keyframes`
-//   0% {
-//     transform: translateY(0);
-//   }
-//   50% {
-//     transform: translateY(-10px); /* Slight upward movement */
-//   }
-//   100% {
-//     transform: translateY(0); /* Return to original position */
-//   }
-// `;
+import { FaRocket } from "react-icons/fa"; // Import a rocket icon for boost
 
 const pointFlyingAnimation = keyframes`
   0% {
@@ -88,7 +77,7 @@ export const MiddleSection = styled.div`
   display: flex;
   flex-grow: 1;
   position: relative;
-  justify-content: space-around;
+  justify-content: flex-end;
   align-content: space-around;
   flex-direction: column;
   margin-top: 5px;
@@ -106,21 +95,18 @@ export const Message = styled.div`
 export const EagleContainer = styled.div`
   border-radius: 50%;
   display: flex;
-  justify-content: center;
   align-items: center;
   margin-bottom: 15px;
+  justify-content: center;
 `;
 
 export const EagleImage = styled.img`
-  width: 95%;
-  height: auto;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  width: 110%;
+  height: 110%;
   margin-top: 10px;
   user-select: none;
-  pointer-events: none;
-  -webkit-user-drag: none;
-  z-index: 1000;
+  pointer-events: auto;
+  z-index: 500; // Lower z-index than the right-side menu
 
   // Apply subtle animation on tap
   &.tapped {
@@ -140,16 +126,18 @@ export const EagleImage = styled.img`
   }
 `;
 
+
 export const BottomContainer = styled.div`
   display: flex;
   justify-content: center; /* Centers the content horizontally */
-  align-items: center; /* Centers the content vertically */
+  align-items: flex-end; /* Centers the content vertically */
   left: 50%;
   transform: translateX(-7%); /* Center it horizontally */
   width: auto; /* Let the content define the width */
   max-width: 400px;
   gap: 0; /* No gap between items */
   z-index: 1000;
+  padding-bottom: 20px;
 `;
 
 
@@ -422,4 +410,79 @@ export const SmallTimerText = styled.span`
   color: #ccc;
   text-align: center;
   margin-bottom: 5px; /* Add space between timer and claim button */
+`;
+// Right-side menu container with centered layout and high z-index
+export const RightSideMenuContainer = styled.div`
+  position: absolute;
+  right: 20px;
+  top: 35%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+  z-index: 1000;
+  pointer-events: auto;
+
+  @keyframes floatEffect {
+    0% {
+      transform: translateY(-50%) translateX(0);
+    }
+    50% {
+      transform: translateY(calc(-50% - 5px)) translateX(0); /* Float slightly up */
+    }
+    100% {
+      transform: translateY(-50%) translateX(0);
+    }
+  }
+
+  animation: floatEffect 3s ease-in-out infinite;  // Infinite float animation
+`;
+
+// Common styles for both Boost and Leaderboard icons
+const IconContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px; // Set consistent padding for both containers
+  border-radius: 36%;
+  background: linear-gradient(135deg, #f82959eb, #6f32b1);  // Gradient background
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);  // Shadow for floating effect
+  transition: transform 0.3s ease, box-shadow 0.3s ease;  // Smooth hover transition
+
+  &:hover {
+    transform: translateY(-10px);  // Lift on hover
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);  // Increase shadow on hover
+  }
+`;
+// Boost Icon styled component with gradient background and animation
+export const BoostIcon = styled(FaRocket)`
+  font-size: 2.5rem; // Uniform size
+  color: white;
+`;
+// Leaderboard Icon styled component with same gradient style
+export const RightCenterLeaderboardImage = styled.img`
+  width: 2.5rem; // Set the same width as BoostIcon for consistency
+  height: 2.5rem; // Set the same height as BoostIcon for consistency
+`;
+
+// Styled Icon Label with some spacing and color adjustments
+export const IconLabel = styled.div`
+  color: white;
+  font-size: 12px;
+  margin-top: 5px;
+  text-align: center;
+`;
+
+// Wrapping Boost Icon inside a styled container for floating and effects
+export const BoostContainer = styled(IconContainer)`
+  background: linear-gradient(135deg, #f82959eb, #f37129);  // Gradient specific to Boost
+  height:30px;
+  width:30px;
+`;
+
+// Wrapping Leaderboard Icon inside a styled container for floating and effects
+export const LeaderboardContainer = styled(IconContainer)`
+  background: linear-gradient(135deg, #3aafff, #32b1e2);  // Gradient specific to Leaderboard
+  height:30px;
+  width:30px;
 `;
