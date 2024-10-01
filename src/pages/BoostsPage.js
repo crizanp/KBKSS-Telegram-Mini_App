@@ -127,8 +127,7 @@ const BoostsPage = () => {
         const data = Levelresponse.data;
 
         // Set the user's level and first name, default to 0 if level is missing
-        // setUserLevel(data.currentLevel ?? 0);
-        setUserLevel(3);
+        setUserLevel(data.currentLevel ?? 0);
 
         setUserBoosts({
           maxEnergy: userData.maxEnergy,
