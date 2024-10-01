@@ -52,7 +52,7 @@ const BoostButton = styled.button`
   }
 
   &:disabled {
-    background-color: rgb(5 255 5 / 28%);
+    background-color: rgb(165 245 165);
     cursor: not-allowed;
     color: white;
   }
@@ -74,22 +74,22 @@ const MaxEnergyIcon = styled(FaArrowUp)`
 `;
 
 const BoostOption = styled.button`
-  background-color: ${(props) => (props.selected ? "rgba(0, 128, 0, 0.5)" : props.loading ? "#ccc" : "#fff")};
-  color: ${(props) => (props.selected ? "#fff" : "#000")};
+  background-color: ${(props) => (props.selected ? "rgb(165 245 165)" : props.loading ? "#ccc" : "#fff")};
+  color: ${(props) => (props.selected ? "#000" : "#000")};
   border: ${(props) => (props.selected ? "none" : "1px solid #ccc")};
   border-radius: 8px;
   padding: 10px;
-  margin: 5px;
+  margin: 5px 0px;
   width: 100%;
   cursor: pointer;
   position: relative;
   &:hover {
-    background-color: ${(props) => (props.selected ? "rgba(0, 128, 0, 0.5)" : "#eee")};
+    background-color: ${(props) => (props.selected ? "rgb(165 245 165)" : "#eee")};
   }
   &:disabled {
-    background-color: rgb(5 255 5 / 28%);
+    background-color: rgb(165 245 165);
     cursor: not-allowed;
-    color: white;
+    color: #000000;
   }
 `;
 
