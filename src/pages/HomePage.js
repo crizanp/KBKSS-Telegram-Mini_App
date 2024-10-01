@@ -519,7 +519,7 @@ function HomePage() {
           )}
           <EnergyContainer>
             <FireIcon $available={isRewardAvailable} />
-            Claim
+            Daily Reward
           </EnergyContainer>
         </Link>
       </BottomContainer>
