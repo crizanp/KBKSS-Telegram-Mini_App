@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import Confetti from "react-confetti"; // Import react-confetti
+import Confetti from "react-confetti";
 import { usePoints } from "../context/PointsContext";
-import { showToast } from "./ToastNotification"; // Use toast messages
-import ToastNotification from "./ToastNotification"; // For displaying toast notifications globally
-import celebrationSound from "../assets/celebration.mp3"; // Import the celebration sound
-import UserInfo from "./UserInfo";
-import Modal from "./Modal"; // Modal for showing correct answer
-import { FaRegGem } from "react-icons/fa"; // For the gem icon
+import { showToast } from "../components/ToastNotification";
+import ToastNotification from "../components/ToastNotification";
+import celebrationSound from "../assets/celebration.mp3";
+import UserInfo from "../components/UserInfo";
+import Modal from "../components/Modal";
+import { FaRegGem } from "react-icons/fa";
 import wrongAnswerSound from "../assets/wrong-answer.mp3";
-import SkeletonLoaderEcosystemPage from "./SkeletonLoaderEcosystemPage"; // Import the skeleton loader
-
+import SkeletonLoaderEcosystemPage from "../components/skeleton/SkeletonLoaderEcosystemPage";
 import {
   QuizContainer,
   ScrollableContent,
@@ -25,55 +24,11 @@ import {
   NoQuestionsMessage,
   CompletionImage,
   CompletionContainer,
-  PointsContainer, // New container for quiz points
-} from "./EcosystemStyles";
-import styled from "styled-components";
-
-// Styled button for correct answer
-const CorrectAnswerButton = styled.button`
-  color: #505050;
-  padding: 8px 20px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s;
-
-  &:hover {
-    background-color: #00aced;
-  }
-`;
-
-// Styled text for showing the correct answer
-const CorrectAnswerText = styled.p`
-  color: #4caf50;
-  margin-top: 20px;
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  background-color: #e8f5e914;
-  padding: 10px 20px;
-  border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  height: 89px;
-  flex-direction: row;
-  justify-content: space-between;
-`;
-
-// Container for showing quiz points (gems)
-const QuizPoints = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 18px;
-  color: #36a8e5;
-  margin-bottom: 10px;
-`;
-
+  PointsContainer,
+  CorrectAnswerText,
+  CorrectAnswerButton,
+  QuizPoints,
+} from "../style/EcosystemStyles";
 function EcosystemPage() {
   const { points, setPoints, userID } = usePoints();
   const [categories, setCategories] = useState([]);
@@ -88,14 +43,12 @@ function EcosystemPage() {
   const [noMoreQuizzes, setNoMoreQuizzes] = useState(false);
   const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   const [showCorrectAnswerModal, setShowCorrectAnswerModal] = useState(false);
-
   const [showConfetti, setShowConfetti] = useState(false);
   const audioRef = useRef(null);
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
-
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({
@@ -103,11 +56,9 @@ function EcosystemPage() {
         height: window.innerHeight,
       });
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
   const handleOptionSelect = (index) => {
     if (!disableSubmit) {
       setSelectedOption(index);
@@ -154,7 +105,6 @@ function EcosystemPage() {
           setCurrentQuiz(response.data[0]);
           setNoMoreQuizzes(false);
         }
-
         setLoading(false);
         setSelectedOption(null);
         setDisableSubmit(false);
@@ -165,16 +115,14 @@ function EcosystemPage() {
         showToast("Error fetching quizzes", "error");
       }
     };
-
     fetchRemainingQuizzes();
   }, [userID, selectedCategory]);
 
   // Handle submitting the selected answer
   const handleSubmit = async () => {
-    if (selectedOption === null || submitting) return; // Prevent further clicks if already submitting
+    if (selectedOption === null || submitting) return; 
 
-    setSubmitting(true); // Set submitting flag to true
-
+    setSubmitting(true);
     const isCorrect = currentQuiz.options[selectedOption].isCorrect;
     const pointsEarned = isCorrect ? currentQuiz.points : 0;
 
@@ -201,7 +149,7 @@ function EcosystemPage() {
         setCorrectOption(selectedOption);
         setShowFeedback(true);
         setShowConfetti(true);
-        audioRef.current.play(); // Play the celebration sound
+        audioRef.current.play(); 
 
         setTimeout(() => {
           setShowConfetti(false);
@@ -400,9 +348,12 @@ function EcosystemPage() {
                 ))}
                 <SubmitButton
                   onClick={handleSubmit}
-                  disabled={submitting || selectedOption === null || disableSubmit} // Disable button during submission
+                  disabled={
+                    submitting || selectedOption === null || disableSubmit
+                  } // Disable button during submission
                 >
-                  {submitting ? "Submitting..." : "Submit"} {/* Show submitting text */}
+                  {submitting ? "Submitting..." : "Submit"}{" "}
+                  {/* Show submitting text */}
                 </SubmitButton>
               </QuizBox>
             </>

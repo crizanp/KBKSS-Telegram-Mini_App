@@ -7,13 +7,10 @@ import React, {
 } from "react";
 import axios from "axios";
 import { usePoints } from "../context/PointsContext";
-import { useEnergy } from "../context/EnergyContext"; // Import your Energy context
-import { debounce } from "lodash";
+import { useEnergy } from "../context/EnergyContext";
 import { Link } from "react-router-dom";
-import { FaTasks, FaRegGem, FaFire,FaCog  } from "react-icons/fa";
 import Confetti from "react-confetti";
 import celebrationSound from "../assets/celebration.mp3";
-import styled from "styled-components";
 import leaderboardImage from "../assets/leaderboard.png";
 
 import {
@@ -31,151 +28,22 @@ import {
   EnergyCounter,
   EnergyIcon,
   BottomContainer,
-} from "./HomePageStyles";
-import UserInfo from "./UserInfo";
+  SmallTimerText,
+  LeaderboardImage,
+  CloseButton,
+  PointsDisplayModal,
+  ClaimButton,
+  ModalHeader,
+  RewardModalContainer,
+  FireIcon,
+  ModalOverlay,
+  SettingsIcon,
+  GemIcon,
+} from "../style/HomePageStyles";
+import UserInfo from "../components/UserInfo";
 import { getUserID } from "../utils/getUserID";
 import eagleImage from "../assets/eagle.png";
 
-// Styled Gem Icon
-const GemIcon = styled(FaRegGem)`
-  color: #36a8e5;
-  margin-left: 8px;
-  margin-right: 8px;
-  font-size: 1.9rem;
-`;
-const SettingsIcon = styled(FaCog)`
- position: absolute;
-    bottom: 8px;
-    padding-left: 16px;
-    /* right: 22px; */
-    font-size: 1.5rem;
-    color: #fff;
-    cursor: pointer;
-`;
-
-// Styled Modal
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 1000;
-`;
-const FireIcon = styled(FaFire)`
-  font-size: 1rem;
-  margin-right: 0px;
-  color: ${(props) =>
-    props.$available
-      ? "#f39c12"
-      : "#a0a0a0"}; // Yellow if available, grey if not
-`;
-
-const RewardModalContainer = styled.div`
-  width: 100%;
-  max-width: 400px;
-  background-color: white;
-  padding: 20px;
-  border-radius: 20px 20px 0 0;
-  position: relative;
-  animation: ${(props) => (props.isClosing ? "slideDown" : "slideUp")} 0.5s
-    ease-in-out;
-
-  @keyframes slideUp {
-    0% {
-      transform: translateY(100%);
-    }
-    100% {
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slideDown {
-    0% {
-      transform: translateY(0);
-    }
-    100% {
-      transform: translateY(100%);
-    }
-  }
-`;
-
-const ModalHeader = styled.h2`
-  text-align: center;
-  color: #333;
-`;
-
-const ClaimButton = styled.button`
-  background-color: #36a8e5;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 15px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  width: 100%;
-  margin-top: 20px;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #298dc8;
-  }
-`;
-
-const PointsDisplayModal = styled.div`
-  font-size: 1.5rem;
-  text-align: center;
-  color: #36a8e5;
-  margin: 20px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 20px;
-  color: #333;
-  background: none;
-  border: none;
-  cursor: pointer;
-`;
-const LeaderboardImage = styled.img`
-  width: 40px;
-  height: 36px;
-  animation: tiltEffect 5s ease-in-out infinite; // Slower and smoother tilting animation
-
-  @keyframes tiltEffect {
-    0% {
-      transform: rotate(0deg);
-    }
-    25% {
-      transform: rotate(10deg); // Tilts 5 degrees to the right
-    }
-    50% {
-      transform: rotate(-10deg); // Tilts 5 degrees to the left
-    }
-    75% {
-      transform: rotate(7deg); // Tilts back slightly to the right
-    }
-    100% {
-      transform: rotate(0deg); // Returns to original position
-    }
-  }
-`;
-
-const SmallTimerText = styled.span`
-  font-size: 12px;
-  color: #ccc;
-  text-align: center;
-  margin-bottom: 5px; /* Add space between timer and claim button */
-`;
 function HomePage() {
   const { points, setPoints, pointsPerTap, userID, setUserID } = usePoints();
   const { energy, maxEnergy, decreaseEnergy } = useEnergy(); // Access maxEnergy dynamically
@@ -362,57 +230,57 @@ function HomePage() {
   const handleTap = useCallback(
     (e) => {
       if (energy <= 0) return; // Prevent tapping if there's no energy
-  
+
       // Trigger the bounce animation on the eagle image
       const eagleElement = document.querySelector(".eagle-image");
       if (eagleElement) {
         eagleElement.classList.add("tapped");
-  
+
         // Remove the class after animation completes to allow re-triggering
         setTimeout(() => {
           eagleElement.classList.remove("tapped");
         }, 300); // Match the duration of the animation (0.3s)
       }
-  
+
       // Get the touch or click event data (support both mobile and desktop)
       const touches = e.touches
         ? Array.from(e.touches)
         : [{ clientX: e.clientX, clientY: e.clientY }];
-  
+
       // Limit to a maximum of 4 simultaneous finger taps
       const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4);
-  
+
       validTouches.forEach((touch, index) => {
         const tapX = touch.clientX; // X coordinate of tap
         const tapY = touch.clientY; // Y coordinate of tap
-  
+
         // Get the boundaries of the interactive area to ensure valid taps
         const topBoundaryElement = curvedBorderRef.current;
         const bottomBoundaryElement = bottomMenuRef.current;
-  
+
         if (topBoundaryElement && bottomBoundaryElement) {
           const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
           const bottomBoundary =
             bottomBoundaryElement.getBoundingClientRect().top;
-  
+
           // Ensure tap is within the interactive area (between top and bottom sections)
           if (tapY < topBoundary || tapY > bottomBoundary) {
             return;
           }
-  
+
           // Points to add per tap (assuming 1 point per tap for simplicity)
           const pointsToAdd = pointsPerTap || 1; // Use the dynamic points per tap
-  
+
           // Update points optimistically (before syncing with server)
           setPoints((prevPoints) => {
             const newPoints = prevPoints + pointsToAdd;
             localStorage.setItem(`points_${userID}`, newPoints); // Save updated points locally
             return newPoints; // Update state with new points
           });
-  
+
           // Increase tap count (for UI feedback messages)
           setTapCount((prevTapCount) => prevTapCount + 1);
-  
+
           // Add flying number animation for tap feedback
           const animateFlyingPoints = () => {
             const id = Date.now() + index; // Unique ID for flying number (per finger tap)
@@ -425,7 +293,7 @@ function HomePage() {
                 value: pointsToAdd,
               }, // Offset each flying number slightly
             ]);
-  
+
             // Remove flying number after animation completes
             setTimeout(() => {
               setFlyingNumbers((prevNumbers) =>
@@ -433,9 +301,9 @@ function HomePage() {
               );
             }, 750); // Animation duration: 750ms
           };
-  
+
           animateFlyingPoints(); // Trigger flying number animation
-  
+
           // Offline points accumulation for syncing later
           setOfflinePoints(
             (prevOfflinePoints) => prevOfflinePoints + pointsToAdd
@@ -443,10 +311,10 @@ function HomePage() {
           setUnsyncedPoints(
             (prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd
           );
-  
+
           // Deduct energy for each tap (1 energy per tap)
           decreaseEnergy(1);
-  
+
           // Save unsynced points to localStorage
           const currentUnsyncedPoints = parseInt(
             localStorage.getItem(`unsyncedPoints_${userID}`) || 0
@@ -455,7 +323,7 @@ function HomePage() {
             `unsyncedPoints_${userID}`,
             currentUnsyncedPoints + pointsToAdd
           );
-  
+
           // Trigger the sync after a timeout (if no other taps happen within the interval)
           clearTimeout(window.syncTimeout);
           window.syncTimeout = setTimeout(() => {
@@ -465,7 +333,7 @@ function HomePage() {
           }, 5000); // Sync after 5 seconds of inactivity
         }
       });
-  
+
       // Haptic feedback when the user taps
       if (window.Telegram && window.Telegram.WebApp) {
         try {
@@ -476,7 +344,18 @@ function HomePage() {
         }
       }
     },
-    [energy,pointsPerTap, setPoints, setTapCount, setFlyingNumbers, setOfflinePoints, setUnsyncedPoints, decreaseEnergy, syncPointsWithServer, userID]
+    [
+      energy,
+      pointsPerTap,
+      setPoints,
+      setTapCount,
+      setFlyingNumbers,
+      setOfflinePoints,
+      setUnsyncedPoints,
+      decreaseEnergy,
+      syncPointsWithServer,
+      userID,
+    ]
   );
   const claimDailyReward = async () => {
     try {
@@ -563,7 +442,9 @@ function HomePage() {
 
         <EnergyContainer>
           <EnergyIcon energy={energy} />
-          <EnergyCounter>{Math.floor(energy)}/{maxEnergy}</EnergyCounter>
+          <EnergyCounter>
+            {Math.floor(energy)}/{maxEnergy}
+          </EnergyCounter>
         </EnergyContainer>
 
         <Link
@@ -587,8 +468,8 @@ function HomePage() {
           </EnergyContainer>
         </Link>
         <Link to="/boosts">
-  <SettingsIcon />
-</Link>
+          <SettingsIcon />
+        </Link>
       </BottomContainer>
 
       {showModal && (

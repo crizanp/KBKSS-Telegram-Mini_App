@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styled, { keyframes } from "styled-components";
-import AirdropSkeletonLoadingPage from "./AirdropSkeletonLoadingPage"; // Import SkeletonLoadingPage
+import AirdropSkeletonLoadingPage from "../components/skeleton/AirdropSkeletonLoadingPage"; // Import SkeletonLoadingPage
 import { Link } from "react-router-dom";
 
 const AirdropContainer = styled.div`

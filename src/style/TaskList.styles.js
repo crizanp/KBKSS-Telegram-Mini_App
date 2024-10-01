@@ -1,6 +1,8 @@
 import styled, { keyframes, css } from "styled-components";
 import { GiClockwork } from "react-icons/gi";
-import { FaTimes } from "react-icons/fa"; // Importing the close button icon
+import { FaTimes } from "react-icons/fa"; 
+import { FaRegGem } from "react-icons/fa";
+
 // Telegram colors and styling
 const telegramBlue = "#0088cc";
 const telegramLightBlue = "#36A8E5";
@@ -546,4 +548,103 @@ const pointsAnimation = keyframes`
   100% {
     transform: scale(1) rotate(0deg);
   }
+`;
+
+// Styled component for the crown icon
+export const GemIcon = styled(FaRegGem)`
+  color: #ffffff;
+  font-size: 1.3rem;
+  margin-top: -3px;
+`;
+
+//from here
+export const GemIconModal = styled(FaRegGem)`
+  color: #36a8e5; // Similar color to UserInfo component
+  margin-left: 8px;
+  margin-right: 8px;
+  font-size: 1.9rem;
+`;
+export const TaskItemContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: ${(props) =>
+    props.$completed ? "#d4ffc32e" : "#d8d0d02b"};
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  min-height: 80px;
+  box-sizing: border-box;
+`;
+
+export const TaskDetailsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-grow: 1;
+`;
+
+export const TaskLogo = styled.img`
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  user-select: none; /* Disable text/image selection */
+  pointer-events: none; /* Disable all pointer events */
+  -webkit-user-drag: none; /* Disable drag on image in Webkit-based browsers */
+`;
+
+export const ModalTaskLogo = styled(TaskLogo)`
+  width: 117px;
+  height: 99px;
+  margin: 20px auto;
+  object-fit: contain;
+  display: block;
+  border-radius: 8px;
+  user-select: none;      /* Disable text/image selection */
+  pointer-events: none;   /* Disable all pointer events */
+  -webkit-user-drag: none; /* Disable drag on image in Webkit-based browsers */
+`;
+
+export const TaskTextContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+`;
+
+export const TaskTitleRow = styled.div`
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 5px;
+`;
+
+export const TaskPointsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  color: #fff;
+  background-color: #24a1de;
+  padding: 5px 10px;
+  border-radius: 8px;
+  width: fit-content;
+  box-sizing: border-box;
+`;
+export const PerformAgainButton = styled(ClaimButton)`
+  background-color: #f39c12;
+  margin-left: 0px;
+  width: 95%;
+`;
+export const AirdropDescription = styled.p`
+  color: #aaaaaa;
+  margin-bottom: 20px;
+  margin-left: 18px;
+    margin-right: 18px;
+  
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.5;
 `;

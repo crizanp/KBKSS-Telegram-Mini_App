@@ -1,16 +1,18 @@
-import styled, { keyframes, css } from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { FaBolt } from "react-icons/fa";
-const eagleShiftUp = keyframes`
-  0% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px); /* Slight upward movement */
-  }
-  100% {
-    transform: translateY(0); /* Return to original position */
-  }
-`;
+import {  FaRegGem, FaFire,FaCog  } from "react-icons/fa";
+
+// const eagleShiftUp = keyframes`
+//   0% {
+//     transform: translateY(0);
+//   }
+//   50% {
+//     transform: translateY(-10px); /* Slight upward movement */
+//   }
+//   100% {
+//     transform: translateY(0); /* Return to original position */
+//   }
+// `;
 
 const pointFlyingAnimation = keyframes`
   0% {
@@ -280,4 +282,144 @@ export const BackgroundWrapper = styled.div`
   justify-content: center;
   align-items: center;
   position: relative;
+`;
+// Styled Gem Icon
+export const GemIcon = styled(FaRegGem)`
+  color: #36a8e5;
+  margin-left: 8px;
+  margin-right: 8px;
+  font-size: 1.9rem;
+`;
+export const SettingsIcon = styled(FaCog)`
+ position: absolute;
+    bottom: 8px;
+    padding-left: 16px;
+    /* right: 22px; */
+    font-size: 1.5rem;
+    color: #fff;
+    cursor: pointer;
+`;
+
+// Styled Modal
+export const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1000;
+`;
+export const FireIcon = styled(FaFire)`
+  font-size: 1rem;
+  margin-right: 0px;
+  color: ${(props) =>
+    props.$available
+      ? "#f39c12"
+      : "#a0a0a0"}; // Yellow if available, grey if not
+`;
+
+export const RewardModalContainer = styled.div`
+  width: 100%;
+  max-width: 400px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 20px 20px 0 0;
+  position: relative;
+  animation: ${(props) => (props.isClosing ? "slideDown" : "slideUp")} 0.5s
+    ease-in-out;
+
+  @keyframes slideUp {
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
+`;
+
+export const ModalHeader = styled.h2`
+  text-align: center;
+  color: #333;
+`;
+
+export const ClaimButton = styled.button`
+  background-color: #36a8e5;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 15px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #298dc8;
+  }
+`;
+
+export const PointsDisplayModal = styled.div`
+  font-size: 1.5rem;
+  text-align: center;
+  color: #36a8e5;
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+export const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 20px;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+`;
+export const LeaderboardImage = styled.img`
+  width: 40px;
+  height: 36px;
+  animation: tiltEffect 5s ease-in-out infinite; // Slower and smoother tilting animation
+
+  @keyframes tiltEffect {
+    0% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(10deg); // Tilts 5 degrees to the right
+    }
+    50% {
+      transform: rotate(-10deg); // Tilts 5 degrees to the left
+    }
+    75% {
+      transform: rotate(7deg); // Tilts back slightly to the right
+    }
+    100% {
+      transform: rotate(0deg); // Returns to original position
+    }
+  }
+`;
+
+export const SmallTimerText = styled.span`
+  font-size: 12px;
+  color: #ccc;
+  text-align: center;
+  margin-bottom: 5px; /* Add space between timer and claim button */
 `;

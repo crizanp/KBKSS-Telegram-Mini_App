@@ -12,17 +12,21 @@ export const QuizContainer = styled.div`
     padding-top: 40px;
     position: relative;
 `;
-// For the Correct Answer text
 export const CorrectAnswerText = styled.p`
-  color: #4caf50; /* Green color for correct answer */
+  color: #4caf50;
   margin-top: 20px;
   font-size: 18px;
   font-weight: bold;
   text-align: center;
-  background-color: #e8f5e9; /* Soft green background */
+  display: flex;
+  align-items: center;
+  background-color: #e8f5e914;
   padding: 10px 20px;
   border-radius: 8px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for professionalism */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  height: 89px;
+  flex-direction: row;
+  justify-content: space-between;
 `;
 
 // For the "You are all done" message
@@ -222,4 +226,28 @@ export const NoQuestionsMessage = styled.div`
   font-size: 18px;
   text-align: center;
   margin-top: 20px;
+`;
+export const CorrectAnswerButton = styled.button`
+  color: #505050;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #00aced;
+  }
+`;
+
+export const QuizPoints = styled.div`
+display: flex;
+align-items: center;
+justify-content: center;
+
+font-size: 18px;
+color: #36a8e5;
+margin-bottom: 10px;
 `;

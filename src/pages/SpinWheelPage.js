@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { usePoints } from "../context/PointsContext";
-import UserInfo from "./UserInfo";
+import UserInfo from "../components/UserInfo";
 import axios from "axios";
 import dollarImage from "../assets/dollar-homepage.png"; // Import the dollar image
 import { FaLock } from 'react-icons/fa';

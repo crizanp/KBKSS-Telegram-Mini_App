@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import UserInfo from './UserInfo';
-import GameUnlockModal from "./GameUnlockModal";
+import UserInfo from '../components/UserInfo';
+import GameUnlockModal from "../components/GameUnlockModal";
 import { usePoints } from "../context/PointsContext";
-import { showToast } from './ToastNotification'; // Import showToast function
+import { showToast } from '../components/ToastNotification'; // Import showToast function
 import { ToastContainer } from 'react-toastify'; // Import ToastContainer
 import 'react-toastify/dist/ReactToastify.css'; // Import toastify styles
 
@@ -20,7 +20,7 @@ import {
   GameDescription,
   GameIcon,
   GameItemTitle
-} from './GamesPageStyles'; // Import styled components
+} from '../style/GamesPageStyles'; 
 
 function GamesPage() {
   const [isModalOpen, setModalOpen] = useState(false);

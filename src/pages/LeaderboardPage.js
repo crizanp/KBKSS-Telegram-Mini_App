@@ -9,7 +9,7 @@ import {
   FaRegGem,
 } from "react-icons/fa";
 import { Link } from "react-router-dom"; // Import Link for navigation
-import SkeletonLoader from "./SkeletonLoader"; // Import the SkeletonLoader component
+import SkeletonLoader from "../components/skeleton/SkeletonLoader"; // Import the SkeletonLoader component
 
 const telegramColor = "#0088cc"; // Telegram color (blue)
 

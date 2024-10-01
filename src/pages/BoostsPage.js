@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { FaFire, FaGem, FaArrowUp } from "react-icons/fa";
-import UserInfo from "./UserInfo";
-import { showToast } from "./ToastNotification";
-import ToastNotification from "./ToastNotification";
+import UserInfo from "../components/UserInfo";
+import { showToast } from "../components/ToastNotification";
+import ToastNotification from "../components/ToastNotification";
 import axios from "axios";
 import { getUserID } from "../utils/getUserID";
-import GameUnlockModal from "./GameUnlockModal";
+import GameUnlockModal from "../components/GameUnlockModal";
 
 const BoostPageContainer = styled.div`
   background-color: #090c12;
