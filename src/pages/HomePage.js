@@ -426,11 +426,20 @@ function HomePage() {
 
   return (
     <HomeContainer
-      style={{
-        backgroundImage: `url(${backgroundImage})`,
-      }}
-      onTouchStart={handleTap}
-    >
+  style={{
+    backgroundImage: `url(${backgroundImage})`,
+  }}
+  onTouchStart={(e) => {
+    // Check if the target is one of the elements that should not trigger a tap
+    if (
+      e.target.closest('.leaderboard-container') ||
+      e.target.closest('.boost-container')
+    ) {
+      return; // Don't trigger the handleTap function
+    }
+    handleTap(e); // Trigger the handleTap function for other areas
+  }}
+>
       <UserInfo />
       <CurvedBorderContainer ref={curvedBorderRef} className="curved-border" />
       <PointsDisplayContainer>
@@ -455,23 +464,33 @@ function HomePage() {
       {/* Right-side menu container to handle Boost and Leaderboard */}
 <RightSideMenuContainer>
   {/* Boost with hover, floating and gradient background */}
-  <Link to="/boosts" style={{ marginBottom: "15px", textDecoration: "none", color: "white", display: "flex", flexDirection: "column", alignItems: "center" }}>
-    <BoostContainer>
-      <BoostIcon />
-    </BoostContainer>
-    <IconLabel>Boost</IconLabel>
-  </Link>
+  {/* Boost with hover, floating and gradient background */}
+<Link 
+  to="/boosts"
+  onClick={(e) => e.stopPropagation()} // Prevent tap propagation
+  style={{ marginBottom: "15px", textDecoration: "none", color: "white", display: "flex", flexDirection: "column", alignItems: "center" }}
+>
+  <BoostContainer className="boost-container">
+    <BoostIcon />
+  </BoostContainer>
+  <IconLabel>Boost</IconLabel>
+</Link>
 
-  {/* Leaderboard with hover, floating and gradient background */}
-  <Link to="/leaderboard" style={{ textDecoration: "none", color: "white", display: "flex", flexDirection: "column", alignItems: "center" }}>
-    <LeaderboardContainer>
-      <RightCenterLeaderboardImage
-        src={leaderboardImage}
-        alt="Leaderboard"
-      />
-    </LeaderboardContainer>
-    <IconLabel>Leaderboard</IconLabel>
-  </Link>
+{/* Leaderboard with hover, floating and gradient background */}
+<Link 
+  to="/leaderboard"
+  onClick={(e) => e.stopPropagation()} // Prevent tap propagation
+  style={{ textDecoration: "none", color: "white", display: "flex", flexDirection: "column", alignItems: "center" }}
+>
+  <LeaderboardContainer className="leaderboard-container">
+    <RightCenterLeaderboardImage
+      src={leaderboardImage}
+      alt="Leaderboard"
+    />
+  </LeaderboardContainer>
+  <IconLabel>Leaderboard</IconLabel>
+</Link>
+
 </RightSideMenuContainer>
 
 
