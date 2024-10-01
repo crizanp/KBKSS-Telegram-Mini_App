@@ -419,7 +419,7 @@ export const RightSideMenuContainer = styled.div`
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  align-items: baseline;
+  align-items: center;
   z-index: 1000;
   pointer-events: auto;
 

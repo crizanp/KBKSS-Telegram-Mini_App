@@ -443,28 +443,27 @@ function HomePage() {
       </MiddleSection>
 
       {/* Right-side menu container to handle Boost and Leaderboard */}
-      <RightSideMenuContainer>
-        {/* Boost with hover, floating and gradient background */}
-        <Link to="/boosts" style={{ marginBottom: "15px" }}>
-          {" "}
-          <BoostContainer>
-            <BoostIcon />{" "}
-          </BoostContainer>
-          <IconLabel>Boost</IconLabel>
-        </Link>
+<RightSideMenuContainer>
+  {/* Boost with hover, floating and gradient background */}
+  <Link to="/boosts" style={{ marginBottom: "15px", textDecoration: "none", color: "white", display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <BoostContainer>
+      <BoostIcon />
+    </BoostContainer>
+    <IconLabel>Boost</IconLabel>
+  </Link>
 
-        {/* Leaderboard with hover, floating and gradient background */}
-        <Link to="/leaderboard">
-          <LeaderboardContainer>
-            <RightCenterLeaderboardImage
-              src={leaderboardImage}
-              alt="Leaderboard"
-            />
-          </LeaderboardContainer>
+  {/* Leaderboard with hover, floating and gradient background */}
+  <Link to="/leaderboard" style={{ textDecoration: "none", color: "white", display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <LeaderboardContainer>
+      <RightCenterLeaderboardImage
+        src={leaderboardImage}
+        alt="Leaderboard"
+      />
+    </LeaderboardContainer>
+    <IconLabel>Leaderboard</IconLabel>
+  </Link>
+</RightSideMenuContainer>
 
-          <IconLabel>Leaderboard</IconLabel>
-        </Link>
-      </RightSideMenuContainer>
 
       {/* Bottom container with only Energy and Claim */}
       <BottomContainer ref={bottomMenuRef} className="bottom-menu">
