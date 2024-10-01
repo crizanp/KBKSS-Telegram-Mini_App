@@ -81,6 +81,7 @@ const BoostOption = styled.button`
   padding: 10px;
   margin: 5px 0px;
   width: 100%;
+  display: flex;
   cursor: pointer;
   position: relative;
   &:hover {
