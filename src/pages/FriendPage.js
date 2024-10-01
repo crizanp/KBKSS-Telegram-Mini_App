@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { debounce } from "lodash";
 import { FaTelegramPlane } from "react-icons/fa";
+import { useQuery } from '@tanstack/react-query';
+import axios from "axios";
 import UserInfo from "../components/UserInfo";
 import SkeletonLoader from "../components/skeleton/SkeletonLoader";
 
@@ -32,67 +32,54 @@ import {
   GemIcon,
 } from "../style/FriendPageStyles";
 
+// Fetch user info using axios
+const fetchUserInfo = async (userID) => {
+  const { data } = await axios.get(
+    `${process.env.REACT_APP_API_URL}/user-info/${userID}`
+  );
+  return data;
+};
+
+// Fetch referral stats using axios
+const fetchReferralStats = async (userID) => {
+  const { data } = await axios.get(
+    `${process.env.REACT_APP_API_URL}/referrals/stats/${userID}`
+  );
+  return data;
+};
+
 const FriendPage = () => {
   const [userID, setUserID] = useState(null);
-  const [points, setPoints] = useState(0);
   const [referralLink, setReferralLink] = useState("");
   const [copySuccess, setCopySuccess] = useState("");
-  const [referralCount, setReferralCount] = useState(0);
-  const [referrals, setReferrals] = useState([]);
-  const [loading, setLoading] = useState(true); 
 
   useEffect(() => {
+    // Fetch userID from Telegram WebApp
     const getUserID = async () => {
       const tgUserID = window.Telegram.WebApp?.initDataUnsafe?.user?.id;
       if (tgUserID) {
         setUserID(tgUserID);
+        setReferralLink(`https://t.me/Gemhuntersclub_bot?start=${tgUserID}`);
       } else {
         console.error("User ID not available from Telegram.");
       }
     };
-
     getUserID();
   }, []);
 
-  const fetchUserInfo = useCallback(
-    debounce(async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/user-info/${userID}`
-        );
-        const userData = response.data;
-        setPoints(userData.points);
-        setReferralLink(`https://t.me/Gemhuntersclub_bot?start=${userID}`);
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    }, 1000),
-    [userID]
-  );
+  // Use React Query to fetch user info
+  const { data: userInfo, isLoading: userLoading, isError: userError } = useQuery({
+    queryKey: ['userInfo', userID],
+    queryFn: () => fetchUserInfo(userID),
+    enabled: !!userID, // Only run query if userID is available
+  });
 
-  const fetchReferralStats = useCallback(
-    debounce(async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/referrals/stats/${userID}`
-        );
-        setReferralCount(response.data.referralCount);
-        setReferrals(response.data.referrals);
-      } catch (error) {
-        console.error("Error fetching referral stats:", error);
-      } finally {
-        setLoading(false); // Stop loading after data fetch
-      }
-    }, 1000),
-    [userID]
-  );
-
-  useEffect(() => {
-    if (userID) {
-      fetchUserInfo();
-      fetchReferralStats();
-    }
-  }, [userID, fetchUserInfo, fetchReferralStats]);
+  // Use React Query to fetch referral stats
+  const { data: referralStats, isLoading: referralsLoading, isError: referralsError } = useQuery({
+    queryKey: ['referralStats', userID],
+    queryFn: () => fetchReferralStats(userID),
+    enabled: !!userID, // Only run query if userID is available
+  });
 
   const handleCopyLink = () => {
     navigator.clipboard
@@ -113,13 +100,21 @@ const FriendPage = () => {
     )}&text=🚀 Tap, Play, and Earn!%0A%0A🚀 Join the Gem Hunters Club and start your journey to becoming crypto-rich!%0A🌟 I'm already a proud club member, and trust me, it's an absolute game-changer!%0A💎 Come and be part of the Gem Hunters Club today!`;
     window.Telegram.WebApp?.openTelegramLink(inviteLink);
   };
-  
+
+  // Handle loading and error states
+  if (userLoading || referralsLoading) {
+    return <SkeletonLoader />;
+  }
+
+  if (userError || referralsError) {
+    return <div>Error loading data</div>;
+  }
 
   return (
     <MainContainer>
       {/* User Info Section */}
       <UserInfoContainer>
-        <UserInfo userID={userID} points={points} />
+        <UserInfo userID={userID} points={userInfo?.points || 0} />
       </UserInfoContainer>
 
       {/* Invite Friend Section */}
@@ -148,9 +143,6 @@ const FriendPage = () => {
               </CrownText>
             </BonusText>
           </BonusContent>
-          {/* <BonusArrow>
-            <FaArrowRight />
-          </BonusArrow> */}
         </BonusBox>
 
         <BonusBox>
@@ -166,9 +158,6 @@ const FriendPage = () => {
               </CrownText>
             </BonusText>
           </BonusContent>
-          {/* <BonusArrow>
-            <FaArrowRight />
-          </BonusArrow> */}
         </BonusBox>
 
         {/* Buttons for Telegram and Copy Link */}
@@ -186,16 +175,14 @@ const FriendPage = () => {
       <ReferralStatsContainer>
         <ReferralStatsHeading>Referral Stats</ReferralStatsHeading>
 
-        {/* Show total referrals with loading state */}
-        <p>Total Referrals: {loading ? "Loading..." : referralCount}</p>
+        {/* Show total referrals */}
+        <p>Total Referrals: {referralStats?.referralCount || 0}</p>
 
-        {loading ? (
-          <SkeletonLoader /> // Display skeleton loader while loading
-        ) : referralCount === 0 ? (
+        {referralStats?.referralCount === 0 ? (
           <NoReferralsMessage>You have no referrals yet</NoReferralsMessage>
         ) : (
           <div>
-            {referrals.map((referral) => (
+            {referralStats?.referrals.map((referral) => (
               <ReferralItem key={referral.id}>
                 <ReferralUsername>{referral.username}</ReferralUsername>
                 <ReferralPoints>
