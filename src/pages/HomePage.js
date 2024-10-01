@@ -104,7 +104,17 @@ function HomePage() {
     // Fetch the active background when the component mounts
     fetchActiveBackground();
   }, [fetchActiveBackground]); // Add fetchActiveBackground as a dependency
-
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem("activeBackground"); // Clear the background on page reload/close
+    };
+  
+    window.addEventListener("beforeunload", handleBeforeUnload);
+  
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({
