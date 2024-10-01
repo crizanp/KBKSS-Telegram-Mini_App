@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { FaRegGem, FaBell, FaLevelUpAlt } from 'react-icons/fa'; // Import necessary icons
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { usePoints } from '../context/PointsContext';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import { getUserID } from '../utils/getUserID'; // Assuming the file is named getUserID.js
 
 // Main container with dark theme and compact mobile-first size
@@ -98,39 +99,53 @@ const StyledLink = styled(Link)`
   text-decoration: none;  // Remove the underline
 `;
 
+const fetchUserLevel = async (userID) => {
+  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`);
+  return data;
+};
+
 const UserInfo = () => {
-  const [userLevel, setUserLevel] = useState(0);  // Default to 0
   const [firstName, setFirstName] = useState('User');
   const { points } = usePoints();  // Points context
 
+  // Fetch userID and handle firstName from Telegram WebApp
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userID = await getUserID(() => {}, () => {});
-
-        // Fetch the user's level from the API
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`);
-        const data = response.data;
-
-        // Set the user's level and first name, default to 0 if level is missing
-        setUserLevel(data.currentLevel ?? 0);
+        const userID = await getUserID();
 
         // Get the first name from Telegram WebApp or fallback to 'User'
         let firstNameFromTelegram = window.Telegram.WebApp?.initDataUnsafe?.user?.first_name || 'User';
-
-        // Trim the first name to the first 10 alphanumeric characters
-        firstNameFromTelegram = firstNameFromTelegram.split(/[^\w]+/)[0].slice(0, 10);
+        firstNameFromTelegram = firstNameFromTelegram.split(/[^\w]+/)[0].slice(0, 10); // Trim first name
 
         setFirstName(firstNameFromTelegram);
       } catch (error) {
         console.error('Error fetching user data:', error);
-        setUserLevel(0);  // Default to level 0 on error
         setFirstName('User');  // Default to 'User' on error
       }
     };
 
     fetchUserData();
   }, []);
+
+  // Fetch user level using React Query v5 object syntax
+  const { data: userLevelData, isLoading, isError } = useQuery({
+    queryKey: ['userLevel'],
+    queryFn: async () => {
+      const userID = await getUserID();
+      return fetchUserLevel(userID);
+    },
+  });
+
+  if (isLoading) {
+    return <UserInfoContainer>Loading...</UserInfoContainer>;
+  }
+
+  if (isError) {
+    return <UserInfoContainer>Error loading user info</UserInfoContainer>;
+  }
+
+  const userLevel = userLevelData?.currentLevel ?? 0;  // Default to 0 if no level is found
 
   return (
     <UserInfoContainer>
@@ -147,7 +162,7 @@ const UserInfo = () => {
 
       {/* Display points and bell icon */}
       <PointsContainer>
-        <GemIcon /> {Math.floor(points)} GEMS  {/* Keep points functionality as in the previous version */}
+        <GemIcon /> {Math.floor(points)} GEMS  {/* Keep points functionality */}
         {/* Link to Telegram for notifications */}
         <a href="https://t.me/gemhuntersclub" target="_blank" rel="noopener noreferrer">
           <BellIcon />

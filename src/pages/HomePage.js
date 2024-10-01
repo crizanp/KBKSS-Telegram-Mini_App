@@ -45,7 +45,7 @@ import {
   RightSideMenuContainer,
   BoostContainer,
   LeaderboardContainer,
-  IconContainer
+  IconContainer,
 } from "../style/HomePageStyles";
 import UserInfo from "../components/UserInfo";
 import { getUserID } from "../utils/getUserID";
@@ -78,7 +78,7 @@ function HomePage() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
-  
+
   const fetchActiveBackground = useCallback(async () => {
     try {
       const cachedBackground = localStorage.getItem("activeBackground");
@@ -109,9 +109,9 @@ function HomePage() {
     const handleBeforeUnload = () => {
       localStorage.removeItem("activeBackground"); // Clear the background on page reload/close
     };
-  
+
     window.addEventListener("beforeunload", handleBeforeUnload);
-  
+
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
@@ -427,20 +427,20 @@ function HomePage() {
 
   return (
     <HomeContainer
-  style={{
-    backgroundImage: `url(${backgroundImage})`,
-  }}
-  onTouchStart={(e) => {
-    // Check if the target is one of the elements that should not trigger a tap
-    if (
-      e.target.closest('.leaderboard-container') ||
-      e.target.closest('.boost-container')
-    ) {
-      return; // Don't trigger the handleTap function
-    }
-    handleTap(e); // Trigger the handleTap function for other areas
-  }}
->
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+      }}
+      onTouchStart={(e) => {
+        // Check if the target is one of the elements that should not trigger a tap
+        if (
+          e.target.closest(".leaderboard-container") ||
+          e.target.closest(".boost-container")
+        ) {
+          return; // Don't trigger the handleTap function
+        }
+        handleTap(e); // Trigger the handleTap function for other areas
+      }}
+    >
       <UserInfo />
       <CurvedBorderContainer ref={curvedBorderRef} className="curved-border" />
       <PointsDisplayContainer>
@@ -463,41 +463,52 @@ function HomePage() {
       </MiddleSection>
 
       {/* Right-side menu container to handle Boost and Leaderboard */}
-<RightSideMenuContainer>
-  {/* Boost with hover, floating and gradient background */}
-  {/* Boost with hover, floating and gradient background */}
-<Link 
-  to="/boosts"
-  onClick={(e) => e.stopPropagation()} // Prevent tap propagation
-  style={{ marginBottom: "15px", textDecoration: "none", color: "white", display: "flex", flexDirection: "column", alignItems: "center" }}
->
-  <BoostContainer className="boost-container">
-    <BoostIcon />
-  </BoostContainer>
-  <IconLabel>Boost</IconLabel>
-</Link>
+      <RightSideMenuContainer>
+        {/* Boost with hover, floating and gradient background */}
+        {/* Boost with hover, floating and gradient background */}
+        <Link
+          to="/boosts"
+          onClick={(e) => e.stopPropagation()} // Prevent tap propagation
+          style={{
+            marginBottom: "15px",
+            textDecoration: "none",
+            color: "white",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <BoostContainer className="boost-container">
+            <BoostIcon />
+          </BoostContainer>
+          <IconLabel>Boost</IconLabel>
+        </Link>
 
-{/* Leaderboard with hover, floating and gradient background */}
-<Link 
-  to="/leaderboard"
-  onClick={(e) => e.stopPropagation()} // Prevent tap propagation
-  style={{ textDecoration: "none", color: "white", display: "flex", flexDirection: "column", alignItems: "center" }}
->
-  <LeaderboardContainer className="leaderboard-container">
-    <RightCenterLeaderboardImage
-      src={leaderboardImage}
-      alt="Leaderboard"
-    />
-  </LeaderboardContainer>
-  <IconLabel>Leaderboard</IconLabel>
-</Link>
-
-</RightSideMenuContainer>
-
+        {/* Leaderboard with hover, floating and gradient background */}
+        <Link
+          to="/leaderboard"
+          onClick={(e) => e.stopPropagation()} // Prevent tap propagation
+          style={{
+            textDecoration: "none",
+            color: "white",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <LeaderboardContainer className="leaderboard-container">
+            <RightCenterLeaderboardImage
+              src={leaderboardImage}
+              alt="Leaderboard"
+            />
+          </LeaderboardContainer>
+          <IconLabel>Leaderboard</IconLabel>
+        </Link>
+      </RightSideMenuContainer>
 
       {/* Bottom container with only Energy and Claim */}
       <BottomContainer ref={bottomMenuRef} className="bottom-menu">
-      <EnergyContainer>
+        <EnergyContainer>
           {/* Conditionally render based on isEnergyLoading */}
           {isEnergyLoading ? (
             <div style={{ textAlign: "center", padding: "10px" }}>
