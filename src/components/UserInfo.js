@@ -10,10 +10,10 @@ import { getUserID } from '../utils/getUserID'; // Assuming the file is named ge
 const UserInfoContainer = styled.div`
   color: white;
   background-color: #000000;  // Dark background
-  padding: 10px 10px;
+  padding: 7px 10px;
   border-radius: 20px;
-  border: #867c7c 1px solid;
-  top: 2%;
+  border: #3baeef 1px solid;
+  top: 2.75%;
   width: 85%;  
   display: flex;
   justify-content: space-between;
