@@ -59,7 +59,7 @@ export const EnergyProvider = ({ children }) => {
   useEffect(() => {
     if (USER_ID && maxEnergy && isEnergyReady) {
       // Retrieve stored energy and calculate regenerated energy
-      const savedEnergy = parseFloat(localStorage.getItem(`energy_${USER_ID}`)) || 0;
+      const savedEnergy = parseFloat(localStorage.getItem(`energy_${USER_ID}`)) || 1000;
       const lastUpdate = parseInt(localStorage.getItem(`lastUpdate_${USER_ID}`), 10) || Date.now();
 
       const initialEnergy = regenerateEnergy(savedEnergy, lastUpdate, maxEnergy);
