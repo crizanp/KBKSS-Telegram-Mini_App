@@ -105,23 +105,15 @@ const fetchUserLevel = async (userID) => {
 };
 
 const UserInfo = () => {
-  const [firstName, setFirstName] = useState('User');
   const { points } = usePoints();  // Points context
+  const [firstName, setFirstName] = useState(null);
 
   // Fetch userID and handle firstName from Telegram WebApp
   useEffect(() => {
     const fetchUserData = async () => {
-      try {
-        const userID = await getUserID();
-
-        // Get the first name from Telegram WebApp or fallback to 'User'
-        let firstNameFromTelegram = window.Telegram.WebApp?.initDataUnsafe?.user?.first_name || 'User';
-        firstNameFromTelegram = firstNameFromTelegram.split(/[^\w]+/)[0].slice(0, 10); // Trim first name
-
-        setFirstName(firstNameFromTelegram);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        setFirstName('User');  // Default to 'User' on error
+      const firstNameFromTelegram = window.Telegram.WebApp?.initDataUnsafe?.user?.first_name;
+      if (firstNameFromTelegram) {
+        setFirstName(firstNameFromTelegram.split(/[^\w]+/)[0].slice(0, 10)); // Trim the first name
       }
     };
 
@@ -151,7 +143,7 @@ const UserInfo = () => {
     <UserInfoContainer>
       {/* Display the username and level together */}
       <UserLevelContainer>
-        <Username>Hi {firstName}</Username>
+        <Username>Hi {firstName || 'User'}</Username>
         {/* Apply the styled Link here */}
         <StyledLink to="/levelpage">
           <LevelContainer>
