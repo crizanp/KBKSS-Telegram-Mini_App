@@ -136,7 +136,7 @@ export const BottomContainer = styled.div`
   width: auto; /* Let the content define the width */
   max-width: 400px;
   gap: 0; /* No gap between items */
-  z-index: 1000;
+  z-index: 501;
   padding-bottom: 20px;
 `;
 
@@ -209,7 +209,7 @@ export const FlyingNumber = styled.div`
   animation: ${pointFlyingAnimation} 0.75s ease-in-out;
   top: ${({ y }) => `${y}px`};
   left: ${({ x }) => `${x}px`};
-  z-index: 1001;
+  z-index: 502;
   pointer-events: none;
   transform: translate(-50%, -100%); /* Adjust for proper centering */
 
@@ -420,7 +420,7 @@ export const RightSideMenuContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 1000;
+  z-index: 999;
   pointer-events: auto;
 
   @keyframes floatEffect {

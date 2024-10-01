@@ -313,7 +313,7 @@ export const ModalOverlay = styled.div`
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.7); // Darker overlay
-  z-index: 100;
+  z-index: 1000;
   display: flex;
   justify-content: center; // Centers the modal horizontally
   align-items: center; // Centers the modal vertically

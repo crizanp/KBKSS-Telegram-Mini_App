@@ -23,7 +23,7 @@ const UserInfoContainer = styled.div`
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 20000;
+  z-index: 999;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   font-family: 'Orbitron', sans-serif;
   animation: fadeIn 0.6s ease-in-out;  /* Wake-up animation */

@@ -26,7 +26,7 @@ const BottomMenuContainer = styled.div`
   max-width: 460px;
   ${'' /* padding: 0px 0px 10px 0px;  */}
   margin: 0 auto;
-  z-index: 100000;
+  z-index: 999;
   ${'' /* border-top: 2px solid #c5b8b8;  */}
 
   @media (max-width: 768px) {
