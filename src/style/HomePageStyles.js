@@ -132,7 +132,7 @@ export const BottomContainer = styled.div`
   justify-content: center; /* Centers the content horizontally */
   align-items: flex-end; /* Centers the content vertically */
   left: 50%;
-  transform: translateX(-7%); /* Center it horizontally */
+  transform: translateX(-1%); /* Center it horizontally */
   width: auto; /* Let the content define the width */
   max-width: 400px;
   gap: 0; /* No gap between items */
