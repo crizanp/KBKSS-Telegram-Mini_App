@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import styled from "styled-components";
 import { FaTelegramPlane } from "react-icons/fa";
 import { useQuery } from '@tanstack/react-query';
 import axios from "axios";
@@ -80,13 +81,6 @@ const FriendPage = () => {
     enabled: !!userID, // Only run query if userID is available
   });
 
-  // Log referralStats for debugging
-  useEffect(() => {
-    if (referralStats) {
-      console.log('Referral Stats:', referralStats);
-    }
-  }, [referralStats]);
-
   const handleCopyLink = () => {
     navigator.clipboard
       .writeText(referralLink)
@@ -107,15 +101,13 @@ const FriendPage = () => {
     window.Telegram.WebApp?.openTelegramLink(inviteLink);
   };
 
-  // Fallback in case referralStats is undefined
-  const referralCount = referralStats?.totalReferrals || 0; // Fallback to 0
-  const referrals = referralStats?.referrals || []; // Fallback to empty array
-
   return (
     <MainContainer>
       {/* User Info Section */}
       <UserInfoContainer>
-        <UserInfo userID={userID} points={userInfo?.points || 0} />
+        
+          <UserInfo userID={userID} points={userInfo?.points || 0} />
+       
       </UserInfoContainer>
 
       {/* Invite Friend Section */}
@@ -176,24 +168,27 @@ const FriendPage = () => {
       <ReferralStatsContainer>
         <ReferralStatsHeading>Referral Stats</ReferralStatsHeading>
 
-        {/* Show total referrals with loading state */}
-        <p>Total Referrals: {referralsLoading ? "Loading..." : referralCount}</p>
-
-        {userLoading || referralsLoading ? (
-          <SkeletonLoader /> // Display skeleton loader while loading
-        ) : referralCount === 0 ? (
-          <NoReferralsMessage>You have no referrals yet</NoReferralsMessage>
+        {/* Handle loading, error, or display referral stats */}
+        {referralsLoading ? (
+          <SkeletonLoader /> // Show loader for referral stats
+        ) : referralsError ? (
+          <p>Error fetching referral stats</p> // Show error if stats fail to load
         ) : (
-          <div>
-            {referrals.map((referral) => (
-              <ReferralItem key={referral.id}>
-                <ReferralUsername>{referral.username}</ReferralUsername>
-                <ReferralPoints>
-                  <GemIcon /> {referral.pointsAwarded}
-                </ReferralPoints>
-              </ReferralItem>
-            ))}
-          </div>
+          <>
+            <p>Total Referrals: {referralStats?.referralCount || 0}</p>
+            {referralStats?.referralCount === 0 ? (
+              <NoReferralsMessage>You have no referrals yet</NoReferralsMessage>
+            ) : (
+              referralStats?.referrals.map((referral) => (
+                <ReferralItem key={referral.id}>
+                  <ReferralUsername>{referral.username}</ReferralUsername>
+                  <ReferralPoints>
+                    <GemIcon /> {referral.pointsAwarded}
+                  </ReferralPoints>
+                </ReferralItem>
+              ))
+            )}
+          </>
         )}
       </ReferralStatsContainer>
     </MainContainer>
