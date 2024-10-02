@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { FaRegGem, FaBell, FaLevelUpAlt } from 'react-icons/fa'; // Import necessary icons
+import { FaRegGem, FaBell, FaLevelUpAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { usePoints } from '../context/PointsContext';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { getUserID } from '../utils/getUserID'; // Assuming the file is named getUserID.js
+import { getUserID } from '../utils/getUserID';
+import SkeletonLoader from './skeleton/UserinfoSkeleton'; // Correct the import here
 
 // Main container with dark theme and compact mobile-first size
 const UserInfoContainer = styled.div`
   color: white;
-  background-color: #000000;  // Dark background
+  background-color: #000000;
   padding: 7px 10px;
   border-radius: 20px;
   border: #3baeef 1px solid;
   top: 2.75%;
-  width: 85%;  
+  width: 85%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,7 +28,7 @@ const UserInfoContainer = styled.div`
   z-index: 999;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   font-family: 'Orbitron', sans-serif;
-  animation: fadeIn 0.6s ease-in-out;  /* Wake-up animation */
+  animation: fadeIn 0.6s ease-in-out;
 `;
 
 // Username and Level container
@@ -44,7 +45,7 @@ const Username = styled.div`
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-right: 8px;  // Space between username and level
+  margin-right: 8px;
 `;
 
 // Icon for gems
@@ -77,7 +78,7 @@ const LevelContainer = styled.div`
   font-size: 13px;
   color: #ffac00;
   font-weight: bold;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);  // Add shadow for depth
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 `;
 
 // Level icon styled for mobile
@@ -96,7 +97,7 @@ const BellIcon = styled(FaBell)`
 
 // Styled Link to remove underline
 const StyledLink = styled(Link)`
-  text-decoration: none;  // Remove the underline
+  text-decoration: none;
 `;
 
 const fetchUserLevel = async (userID) => {
@@ -120,7 +121,7 @@ const UserInfo = () => {
     fetchUserData();
   }, []);
 
-  // Fetch user level using React Query v5 object syntax
+  // Fetch user level using React Query
   const { data: userLevelData, isLoading, isError } = useQuery({
     queryKey: ['userLevel'],
     queryFn: async () => {
@@ -130,7 +131,7 @@ const UserInfo = () => {
   });
 
   if (isLoading) {
-    return <UserInfoContainer>Loading...</UserInfoContainer>;
+    return <SkeletonLoader />; // Correctly using SkeletonLoader here
   }
 
   if (isError) {
