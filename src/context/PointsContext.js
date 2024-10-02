@@ -30,33 +30,15 @@ export const PointsProvider = ({ children }) => {
           setUsername(response.data.username);  
         }
       } catch (error) {
-        if (error.response && error.response.status === 404) {
-          try {
-            // Create new user if not found
-            const newUserResponse = await axios.post(`${process.env.REACT_APP_API_URL}/user-info/`, {
-              userID: tgUserID,
-              username: username || 'default_username',
-              points: 0,
-              tasksCompleted: [],
-              taskHistory: [],
-              pointsPerTap: 1 // Default value for new users
-            });
-            setPoints(Math.round(newUserResponse.data.points)); 
-            setPointsPerTap(newUserResponse.data.pointsPerTap || 1); // Set default points per tap
-          } catch (postError) {
-            console.error('Error creating new user:', postError);
-          }
-        } else {
-          console.error('Error fetching user points:', error);
-        }
+        console.error('Error fetching user points:', error);
       }
     };
 
     fetchPoints();
-  }, [setUserID, setPoints, setUsername]);
+  }, []);
 
   return (
-    <PointsContext.Provider value={{ points, setPoints, pointsPerTap, setPointsPerTap, userID, username, setUserID }}>
+    <PointsContext.Provider value={{ points, setPoints, pointsPerTap, setPointsPerTap, userID, username }}>
       {children}
     </PointsContext.Provider>
   );

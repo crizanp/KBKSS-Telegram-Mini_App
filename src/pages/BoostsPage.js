@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaFire, FaGem, FaArrowUp } from "react-icons/fa";
+import { FaGem, FaArrowUp,FaFire } from "react-icons/fa";
 import UserInfo from "../components/UserInfo";
 import { showToast } from "../components/ToastNotification";
 import ToastNotification from "../components/ToastNotification";
+import { usePoints } from "../context/PointsContext"; // Updated PointsContext
+import { useEnergy } from "../context/EnergyContext"; // Updated EnergyContext
 import axios from "axios";
-import { useQuery, useMutation } from "@tanstack/react-query";
 import { getUserID } from "../utils/getUserID";
 import GameUnlockModal from "../components/GameUnlockModal";
-import SkeletonLoader from "../components/skeleton/SkeletonLoader"; // Loader for boosts
 
 const BoostPageContainer = styled.div`
   background-color: #090c12;
@@ -37,9 +37,47 @@ const SectionTitle = styled.h2`
   margin-bottom: 15px;
 `;
 
+const BoostButton = styled.button`
+  background-color: #36a8e5;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 15px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #298dc8;
+  }
+
+  &:disabled {
+    background-color: rgb(165 245 165);
+    cursor: not-allowed;
+    color: white;
+  }
+`;
+
+const EnergyIcon = styled(FaFire)`
+  color: #f39c12;
+  font-size: 2rem;
+`;
+
+const TapIcon = styled(FaGem)`
+  color: #36a8e5;
+  font-size: 2rem;
+`;
+
+const MaxEnergyIcon = styled(FaArrowUp)`
+  color: #e67e22;
+  font-size: 2rem;
+`;
+
 const BoostOption = styled.button`
   background-color: ${(props) =>
-    props.selected ? "rgb(165 245 165)" : props.eligible ? "#fff" : "#ccc"};
+    props.selected ? "rgb(165 245 165)" : props.loading ? "#ccc" : "#fff"};
   color: ${(props) => (props.selected ? "#000" : "#000")};
   border: ${(props) => (props.selected ? "none" : "1px solid #ccc")};
   border-radius: 8px;
@@ -47,12 +85,16 @@ const BoostOption = styled.button`
   margin: 5px 0px;
   width: 100%;
   display: flex;
-  cursor: ${(props) => (props.selected ? "not-allowed" : "pointer")};
+  cursor: pointer;
   position: relative;
-  pointer-events: ${(props) => (props.selected ? "none" : "auto")};
   &:hover {
     background-color: ${(props) =>
-      props.selected ? "rgb(165 245 165)" : props.eligible ? "#eee" : "#ccc"};
+      props.selected ? "rgb(165 245 165)" : "#eee"};
+  }
+  &:disabled {
+    background-color: rgb(165 245 165);
+    cursor: not-allowed;
+    color: #000000;
   }
 `;
 
@@ -72,61 +114,72 @@ const Spacer = styled.div`
 `;
 
 const BoostsPage = () => {
-  const [modalData, setModalData] = useState(null); // Modal for unlock confirmations
+  const { pointsPerTap, setPointsPerTap } = usePoints(); // Accessing and setting pointsPerTap
+  const { maxEnergy, setMaxEnergy } = useEnergy(); // Accessing and setting maxEnergy
+  const [selectedTapBoost, setSelectedTapBoost] = useState(pointsPerTap);
+  const [selectedEnergyBoost, setSelectedEnergyBoost] = useState(maxEnergy);
+  const [userLevel, setUserLevel] = useState(0);
+  const [modalData, setModalData] = useState(null);
+  const [loading, setLoading] = useState(true); // Loading state
 
-  // Fetch user boosts and level data using React Query
-  const { data: userBoosts, isLoading: isBoostLoading } = useQuery(
-    ["userBoosts"],
-    async () => {
-      const userID = await getUserID();
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/user-info/${userID}`
-      );
-      return response.data;
-    }
-  );
+  useEffect(() => {
+    const fetchUserLevelAndBoosts = async () => {
+      try {
+        const userID = await getUserID();
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/user-info/${userID}`
+        );
+        const userData = response.data;
+        const levelResponse = await axios.get(
+          `${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`
+        );
+        const levelData = levelResponse.data;
 
-  const { data: userLevelData, isLoading: isLevelLoading } = useQuery(
-    ["userLevel"],
-    async () => {
-      const userID = await getUserID();
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`
-      );
-      return response.data;
-    }
-  );
+        setUserLevel(levelData.currentLevel ?? 0);
+        setSelectedEnergyBoost(userData.maxEnergy);
+        setSelectedTapBoost(userData.pointsPerTap);
+        setLoading(false); // Disable loading after data fetch
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setLoading(false); // Disable loading in case of error
+      }
+    };
 
-  const claimBoostMutation = useMutation(
-    async ({ boostType, boostValue }) => {
+    fetchUserLevelAndBoosts();
+  }, []);
+
+  const handleClaimBoost = async (boostType, boostValue) => {
+    try {
       const userID = await getUserID();
-      const response = await axios.put(
+      await axios.put(
         `${process.env.REACT_APP_API_URL}/user-info/update-boost/${userID}`,
-        { boostType, boostValue }
+        {
+          boostType,
+          boostValue,
+        }
       );
-      return response.data;
-    },
-    {
-      onSuccess: (data) => {
-        showToast(data.message, "success");
-      },
-      onError: () => {
-        showToast("Error claiming boost", "error");
-      },
-    }
-  );
+      showToast("Boost applied successfully!", "success");
 
-  const handleClaimBoost = (boostType, boostValue) => {
-    claimBoostMutation.mutate({ boostType, boostValue });
+      // Update pointsPerTap and maxEnergy based on the boost type
+      if (boostType === "maxEnergy") {
+        setSelectedEnergyBoost(boostValue);
+        setMaxEnergy(boostValue); // Update in EnergyContext
+      } else if (boostType === "pointsPerTap") {
+        setSelectedTapBoost(boostValue);
+        setPointsPerTap(boostValue); // Update in PointsContext
+      }
+    } catch (error) {
+      showToast("Error claiming boost", "error");
+      console.error("Error claiming boost:", error);
+    }
   };
 
-  const handleOptionClick = (boostType, boostValue, requiredLevel, toastMessage) => {
-    if (userLevelData?.currentLevel >= requiredLevel) {
+  const handleOptionClick = (boostType, boostValue, requiredLevel) => {
+    if (userLevel >= requiredLevel) {
       setModalData({
         boostType,
         boostValue,
-        requiredLevel,
-        message: toastMessage,
+        message: `Are you sure you want to claim this boost?`,
       });
     } else {
       showToast(
@@ -139,32 +192,9 @@ const BoostsPage = () => {
   const handleConfirmBoost = () => {
     if (modalData) {
       handleClaimBoost(modalData.boostType, modalData.boostValue);
+      setModalData(null); // Close modal after confirmation
     }
-    setModalData(null);
   };
-
-  // Determine available boosts based on user level
-  const getMaxAvailableTapBoost = () => {
-    if (userLevelData?.currentLevel >= 5) return 5;
-    if (userLevelData?.currentLevel >= 4) return 3;
-    if (userLevelData?.currentLevel >= 3) return 2;
-    return 1;
-  };
-
-  const getMaxAvailableEnergyBoost = () => {
-    if (userLevelData?.currentLevel >= 5) return 7000;
-    if (userLevelData?.currentLevel >= 4) return 4000;
-    if (userLevelData?.currentLevel >= 3) return 2500;
-    if (userLevelData?.currentLevel >= 2) return 1500;
-    return 1000;
-  };
-
-  const maxTapBoost = getMaxAvailableTapBoost();
-  const maxEnergyBoost = getMaxAvailableEnergyBoost();
-
-  if (isBoostLoading || isLevelLoading) {
-    return <SkeletonLoader />; // Unified loading state
-  }
 
   return (
     <BoostPageContainer>
@@ -174,9 +204,10 @@ const BoostsPage = () => {
       {/* Increase Max Energy Section */}
       <Section>
         <SectionTitle>Increase Max Energy</SectionTitle>
+        <MaxEnergyIcon />
         <BoostOption
-          selected={userBoosts.maxEnergy === 1000}
-          eligible={userLevelData.currentLevel >= 0 && userBoosts.maxEnergy < 1000}
+          selected={selectedEnergyBoost === 1000}
+          loading={loading}
           onClick={() =>
             handleOptionClick(
               "maxEnergy",
@@ -187,11 +218,12 @@ const BoostsPage = () => {
           }
         >
           Max 1000 Energy (Level 0 or 1)
-          {userBoosts.maxEnergy < 1000 && <EligibleTag>Eligible</EligibleTag>}
+          <EligibleTag>Eligible</EligibleTag>
         </BoostOption>
         <BoostOption
-          selected={userBoosts.maxEnergy === 1500}
-          eligible={userLevelData.currentLevel >= 2 && userBoosts.maxEnergy < 1500}
+          selected={selectedEnergyBoost === 1500}
+          loading={loading}
+          disabled={selectedEnergyBoost === 1500}
           onClick={() =>
             handleOptionClick(
               "maxEnergy",
@@ -202,13 +234,12 @@ const BoostsPage = () => {
           }
         >
           Max 1500 Energy (Level 2)
-          {userLevelData.currentLevel >= 2 && userBoosts.maxEnergy < 1500 && (
-            <EligibleTag>Eligible</EligibleTag>
-          )}
+          {userLevel >= 2 && <EligibleTag>Eligible</EligibleTag>}
         </BoostOption>
         <BoostOption
-          selected={userBoosts.maxEnergy === 2500}
-          eligible={userLevelData.currentLevel >= 3 && userBoosts.maxEnergy < 2500}
+          selected={selectedEnergyBoost === 2500}
+          loading={loading}
+          disabled={selectedEnergyBoost === 2500}
           onClick={() =>
             handleOptionClick(
               "maxEnergy",
@@ -219,13 +250,12 @@ const BoostsPage = () => {
           }
         >
           Max 2500 Energy (Level 3)
-          {userLevelData.currentLevel >= 3 && userBoosts.maxEnergy < 2500 && (
-            <EligibleTag>Eligible</EligibleTag>
-          )}
+          {userLevel >= 3 && <EligibleTag>Eligible</EligibleTag>}
         </BoostOption>
         <BoostOption
-          selected={userBoosts.maxEnergy === 4000}
-          eligible={userLevelData.currentLevel >= 4 && userBoosts.maxEnergy < 4000}
+          selected={selectedEnergyBoost === 4000}
+          loading={loading}
+          disabled={selectedEnergyBoost === 4000}
           onClick={() =>
             handleOptionClick(
               "maxEnergy",
@@ -236,13 +266,12 @@ const BoostsPage = () => {
           }
         >
           Max 4000 Energy (Level 4)
-          {userLevelData.currentLevel >= 4 && userBoosts.maxEnergy < 4000 && (
-            <EligibleTag>Eligible</EligibleTag>
-          )}
+          {userLevel >= 4 && <EligibleTag>Eligible</EligibleTag>}
         </BoostOption>
         <BoostOption
-          selected={userBoosts.maxEnergy === 7000}
-          eligible={userLevelData.currentLevel >= 5 && userBoosts.maxEnergy < 7000}
+          selected={selectedEnergyBoost === 7000}
+          loading={loading}
+          disabled={selectedEnergyBoost === 7000}
           onClick={() =>
             handleOptionClick(
               "maxEnergy",
@@ -253,18 +282,17 @@ const BoostsPage = () => {
           }
         >
           Max 7000 Energy (Level 5)
-          {userLevelData.currentLevel >= 5 && userBoosts.maxEnergy < 7000 && (
-            <EligibleTag>Eligible</EligibleTag>
-          )}
+          {userLevel >= 5 && <EligibleTag>Eligible</EligibleTag>}
         </BoostOption>
       </Section>
 
       {/* Increase Points Per Tap Section */}
       <Section>
         <SectionTitle>Increase Points Per Tap</SectionTitle>
+        <TapIcon />
         <BoostOption
-          selected={userBoosts.pointsPerTap === 1}
-          eligible={userLevelData.currentLevel >= 0 && userBoosts.pointsPerTap < 1}
+          selected={selectedTapBoost === 1}
+          loading={loading}
           onClick={() =>
             handleOptionClick(
               "pointsPerTap",
@@ -275,11 +303,12 @@ const BoostsPage = () => {
           }
         >
           1 Point Per Tap (Level 0-1-2)
-          {userBoosts.pointsPerTap < 1 && <EligibleTag>Eligible</EligibleTag>}
+          <EligibleTag>Eligible</EligibleTag>
         </BoostOption>
         <BoostOption
-          selected={userBoosts.pointsPerTap === 2}
-          eligible={userLevelData.currentLevel >= 3 && userBoosts.pointsPerTap < 2}
+          selected={selectedTapBoost === 2}
+          loading={loading}
+          disabled={selectedTapBoost === 2}
           onClick={() =>
             handleOptionClick(
               "pointsPerTap",
@@ -290,13 +319,12 @@ const BoostsPage = () => {
           }
         >
           2 Points Per Tap (Level 3)
-          {userLevelData.currentLevel >= 3 && userBoosts.pointsPerTap < 2 && (
-            <EligibleTag>Eligible</EligibleTag>
-          )}
+          {userLevel >= 3 && <EligibleTag>Eligible</EligibleTag>}
         </BoostOption>
         <BoostOption
-          selected={userBoosts.pointsPerTap === 3}
-          eligible={userLevelData.currentLevel >= 4 && userBoosts.pointsPerTap < 3}
+          selected={selectedTapBoost === 3}
+          loading={loading}
+          disabled={selectedTapBoost === 3}
           onClick={() =>
             handleOptionClick(
               "pointsPerTap",
@@ -307,13 +335,12 @@ const BoostsPage = () => {
           }
         >
           3 Points Per Tap (Level 4)
-          {userLevelData.currentLevel >= 4 && userBoosts.pointsPerTap < 3 && (
-            <EligibleTag>Eligible</EligibleTag>
-          )}
+          {userLevel >= 4 && <EligibleTag>Eligible</EligibleTag>}
         </BoostOption>
         <BoostOption
-          selected={userBoosts.pointsPerTap === 5}
-          eligible={userLevelData.currentLevel >= 5 && userBoosts.pointsPerTap < 5}
+          selected={selectedTapBoost === 5}
+          loading={loading}
+          disabled={selectedTapBoost === 5}
           onClick={() =>
             handleOptionClick(
               "pointsPerTap",
@@ -324,9 +351,7 @@ const BoostsPage = () => {
           }
         >
           5 Points Per Tap (Level 5)
-          {userLevelData.currentLevel >= 5 && userBoosts.pointsPerTap < 5 && (
-            <EligibleTag>Eligible</EligibleTag>
-          )}
+          {userLevel >= 5 && <EligibleTag>Eligible</EligibleTag>}
         </BoostOption>
       </Section>
 
@@ -338,7 +363,7 @@ const BoostsPage = () => {
           title="Please Confirm"
           onConfirm={handleConfirmBoost}
           onCancel={() => setModalData(null)}
-          loading={claimBoostMutation.isLoading}
+          loading={loading}
           iconUrl="https://cdn-icons-png.flaticon.com/512/6106/6106288.png"
         />
       )}

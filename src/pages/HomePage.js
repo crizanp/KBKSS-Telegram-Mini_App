@@ -248,109 +248,133 @@ function HomePage() {
   const handleTap = useCallback(
     (e) => {
       if (energy <= 0) return; // Prevent tapping if there's no energy
-  
+
       // Trigger the bounce animation on the eagle image
       const eagleElement = document.querySelector(".eagle-image");
       if (eagleElement) {
         eagleElement.classList.add("tapped");
-  
+
         // Remove the class after animation completes to allow re-triggering
         setTimeout(() => {
           eagleElement.classList.remove("tapped");
         }, 300); // Match the duration of the animation (0.3s)
       }
-  
+
       // Get the touch or click event data (support both mobile and desktop)
       const touches = e.touches
         ? Array.from(e.touches)
         : [{ clientX: e.clientX, clientY: e.clientY }];
-  
+
       // Limit to a maximum of 4 simultaneous finger taps
       const validTouches = touches.length <= 4 ? touches : touches.slice(0, 4);
-  
-      // Cache the current unsynced points to avoid multiple reads from localStorage
-      let currentUnsyncedPoints = parseInt(
-        localStorage.getItem(`unsyncedPoints_${userID}`) || 0
-      );
-  
+
       validTouches.forEach((touch, index) => {
         const tapX = touch.clientX; // X coordinate of tap
         const tapY = touch.clientY; // Y coordinate of tap
-  
+
         // Get the boundaries of the interactive area to ensure valid taps
         const topBoundaryElement = curvedBorderRef.current;
         const bottomBoundaryElement = bottomMenuRef.current;
-  
+
         if (topBoundaryElement && bottomBoundaryElement) {
           const topBoundary = topBoundaryElement.getBoundingClientRect().bottom;
-          const bottomBoundary = bottomBoundaryElement.getBoundingClientRect().top;
-  
+          const bottomBoundary =
+            bottomBoundaryElement.getBoundingClientRect().top;
+
           // Ensure tap is within the interactive area (between top and bottom sections)
-          if (tapY < topBoundary || tapY > bottomBoundary) return;
-  
-          const pointsToAdd = pointsPerTap || 1; // Dynamically use points per tap
-  
+          if (tapY < topBoundary || tapY > bottomBoundary) {
+            return;
+          }
+
+          // Points to add per tap (assuming 1 point per tap for simplicity)
+          const pointsToAdd = pointsPerTap || 1; // Use the dynamic points per tap
+
           // Update points optimistically (before syncing with server)
           setPoints((prevPoints) => {
             const newPoints = prevPoints + pointsToAdd;
             localStorage.setItem(`points_${userID}`, newPoints); // Save updated points locally
             return newPoints; // Update state with new points
           });
-  
-          // Increase tap count for UI feedback
+
+          // Increase tap count (for UI feedback messages)
           setTapCount((prevTapCount) => prevTapCount + 1);
-  
+
           // Add flying number animation for tap feedback
           const animateFlyingPoints = () => {
-            const id = Date.now() + index;
+            const id = Date.now() + index; // Unique ID for flying number (per finger tap)
             setFlyingNumbers((prevNumbers) => [
               ...prevNumbers,
-              { id, x: tapX + index * 10, y: tapY - 30 + index * 10, value: pointsToAdd },
+              {
+                id,
+                x: tapX + index * 10,
+                y: tapY - 30 + index * 10,
+                value: pointsToAdd,
+              }, // Offset each flying number slightly
             ]);
-  
+
             // Remove flying number after animation completes
             setTimeout(() => {
-              setFlyingNumbers((prevNumbers) => prevNumbers.filter((num) => num.id !== id));
+              setFlyingNumbers((prevNumbers) =>
+                prevNumbers.filter((num) => num.id !== id)
+              );
             }, 750); // Animation duration: 750ms
           };
-  
+
           animateFlyingPoints(); // Trigger flying number animation
-  
+
           // Offline points accumulation for syncing later
-          setOfflinePoints((prevOfflinePoints) => prevOfflinePoints + pointsToAdd);
-          setUnsyncedPoints((prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd);
-  
-          // Deduct energy for each tap
+          setOfflinePoints(
+            (prevOfflinePoints) => prevOfflinePoints + pointsToAdd
+          );
+          setUnsyncedPoints(
+            (prevUnsyncedPoints) => prevUnsyncedPoints + pointsToAdd
+          );
+
+          // Deduct energy for each tap (1 energy per tap)
           decreaseEnergy(1);
-  
-          // Update unsynced points in the cache and later in localStorage
-          currentUnsyncedPoints += pointsToAdd;
+
+          // Save unsynced points to localStorage
+          const currentUnsyncedPoints = parseInt(
+            localStorage.getItem(`unsyncedPoints_${userID}`) || 0
+          );
+          localStorage.setItem(
+            `unsyncedPoints_${userID}`,
+            currentUnsyncedPoints + pointsToAdd
+          );
+
+          // Trigger the sync after a timeout (if no other taps happen within the interval)
+          clearTimeout(window.syncTimeout);
+          window.syncTimeout = setTimeout(() => {
+            if (navigator.onLine) {
+              syncPointsWithServer(); // Sync points if online
+            }
+          }, 5000); // Sync after 5 seconds of inactivity
         }
       });
-  
-      // Save the unsynced points to localStorage after the loop
-      localStorage.setItem(`unsyncedPoints_${userID}`, currentUnsyncedPoints);
-  
-      // Haptic feedback for the tap
+
+      // Haptic feedback when the user taps
       if (window.Telegram && window.Telegram.WebApp) {
         try {
+          // Trigger light haptic feedback on tap
           window.Telegram.WebApp.HapticFeedback.impactOccurred("light");
         } catch (error) {
           console.error("Haptic feedback not supported:", error);
         }
       }
-  
-      // Trigger the sync after a timeout if no other taps happen within 5 seconds
-      clearTimeout(window.syncTimeout);
-      window.syncTimeout = setTimeout(() => {
-        if (navigator.onLine) {
-          syncPointsWithServer(); // Sync points if online
-        }
-      }, 5000);
     },
-    [energy, pointsPerTap, setPoints, setTapCount, setFlyingNumbers, setOfflinePoints, decreaseEnergy, syncPointsWithServer, userID] // Ensure dependencies are properly set
+    [
+      energy,
+      pointsPerTap,
+      setPoints,
+      setTapCount,
+      setFlyingNumbers,
+      setOfflinePoints,
+      setUnsyncedPoints,
+      decreaseEnergy,
+      syncPointsWithServer,
+      userID,
+    ]
   );
-  
   const claimDailyReward = async () => {
     try {
       setShowModal(false); // Close the modal immediately after the claim button is clicked

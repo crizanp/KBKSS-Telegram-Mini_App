@@ -7,46 +7,44 @@ const EnergyContext = createContext();
 export const useEnergy = () => useContext(EnergyContext);
 
 export const EnergyProvider = ({ children }) => {
-  const [energy, setEnergy] = useState(0); // Initial energy
-  const [maxEnergy, setMaxEnergy] = useState(null); // Default max energy to null, wait for dynamic value
-  const [USER_ID, setUSER_ID] = useState(null); // User ID state
-  const [isEnergyReady, setIsEnergyReady] = useState(false); // State to ensure maxEnergy is fetched before regenerating energy
-  const [isEnergyLoading, setIsEnergyLoading] = useState(true); // State to track if energy is still loading
+  const [energy, setEnergy] = useState(0);
+  const [maxEnergy, setMaxEnergy] = useState(null);
+  const [USER_ID, setUSER_ID] = useState(null);
+  const [isEnergyReady, setIsEnergyReady] = useState(false); // Track when energy is ready
+  const [isEnergyLoading, setIsEnergyLoading] = useState(true); // Track energy loading state
 
-  const ENERGY_REGEN_RATE = 1; // 1 energy point per interval
-  const ENERGY_REGEN_INTERVAL = 1000; // Regenerate every 1 second
+  const ENERGY_REGEN_RATE = 1; // Energy regenerated per interval
+  const ENERGY_REGEN_INTERVAL = 1000; // Interval for energy regeneration (1 second)
 
-  // Fetch user ID dynamically
   useEffect(() => {
     const fetchUserID = async () => {
       try {
         const id = await getUserID();
-        setUSER_ID(id); // Set the user ID
+        setUSER_ID(id);
       } catch (error) {
         console.error('Error fetching user ID:', error);
       }
     };
-
     fetchUserID();
   }, []);
 
-  // Fetch dynamic max energy based on user level or API call
+  // Function to fetch max energy and set it
   const fetchMaxEnergy = async (userID) => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
       const dynamicMaxEnergy = response.data.maxEnergy || 1000;
-      setMaxEnergy(dynamicMaxEnergy); // Set the fetched max energy
-      setIsEnergyReady(true); // Indicate energy is ready to be regenerated
-      setIsEnergyLoading(false); // Mark energy loading as false
+      setMaxEnergy(dynamicMaxEnergy);
+      setIsEnergyReady(true); // Energy is ready to regenerate
+      setIsEnergyLoading(false); // Stop loading once max energy is fetched
     } catch (error) {
       console.error('Error fetching max energy:', error);
       setMaxEnergy(1000); // Default to 1000 on error
-      setIsEnergyReady(true); // Allow energy regeneration even on error
-      setIsEnergyLoading(false); // Mark energy loading as false
+      setIsEnergyReady(true); // Allow energy regeneration even if there's an error
+      setIsEnergyLoading(false); // Stop loading even in case of an error
     }
   };
 
-  // Regenerate energy based on elapsed time since the last update
+  // Regenerate energy based on the time elapsed since last update
   const regenerateEnergy = (savedEnergy, lastUpdate, maxEnergy) => {
     const timeElapsed = (Date.now() - lastUpdate) / ENERGY_REGEN_INTERVAL;
     return Math.min(maxEnergy, savedEnergy + timeElapsed * ENERGY_REGEN_RATE);
@@ -54,29 +52,28 @@ export const EnergyProvider = ({ children }) => {
 
   useEffect(() => {
     if (USER_ID) {
-      // Fetch the dynamic max energy once USER_ID is available
-      fetchMaxEnergy(USER_ID);
+      fetchMaxEnergy(USER_ID); // Fetch max energy after we have the user ID
     }
   }, [USER_ID]);
 
   useEffect(() => {
     if (USER_ID && maxEnergy && isEnergyReady) {
-      // Retrieve stored energy and calculate regenerated energy
+      // Get stored energy and calculate the regenerated energy
       const savedEnergy = parseFloat(localStorage.getItem(`energy_${USER_ID}`)) || 1000;
       const lastUpdate = parseInt(localStorage.getItem(`lastUpdate_${USER_ID}`), 10) || Date.now();
 
       const initialEnergy = regenerateEnergy(savedEnergy, lastUpdate, maxEnergy);
-      setEnergy(initialEnergy); // Update the energy state
+      setEnergy(initialEnergy); // Set the initial energy state
 
-      // Save the updated energy and last update time
+      // Save updated energy and last update time
       localStorage.setItem(`energy_${USER_ID}`, initialEnergy.toFixed(2));
       localStorage.setItem(`lastUpdate_${USER_ID}`, Date.now().toString());
     }
-  }, [USER_ID, maxEnergy, isEnergyReady]); // Recalculate energy when USER_ID or maxEnergy changes
+  }, [USER_ID, maxEnergy, isEnergyReady]);
 
-  // Regenerate energy every second (without relying on user action)
+  // Regenerate energy every second without user action
   useEffect(() => {
-    if (!isEnergyReady) return; // Do not start regeneration if energy is not ready
+    if (!isEnergyReady) return; // Ensure energy is ready before regenerating
 
     const regenInterval = setInterval(() => {
       if (USER_ID && maxEnergy !== null) {
@@ -84,32 +81,32 @@ export const EnergyProvider = ({ children }) => {
           const lastUpdate = parseInt(localStorage.getItem(`lastUpdate_${USER_ID}`), 10) || Date.now();
           const regeneratedEnergy = regenerateEnergy(prevEnergy, lastUpdate, maxEnergy);
 
-          // Save the regenerated energy and update the time
+          // Save regenerated energy and update time
           localStorage.setItem(`energy_${USER_ID}`, regeneratedEnergy.toFixed(2));
           localStorage.setItem(`lastUpdate_${USER_ID}`, Date.now().toString());
 
-          return regeneratedEnergy; // Update state with regenerated energy
+          return regeneratedEnergy; // Update state with the regenerated energy
         });
       }
     }, ENERGY_REGEN_INTERVAL); // Regenerate energy every second
 
-    return () => clearInterval(regenInterval); // Clean up on component unmount
-  }, [USER_ID, maxEnergy, isEnergyReady]); // Only run when USER_ID, maxEnergy, and energy are available
+    return () => clearInterval(regenInterval); // Clean up interval on component unmount
+  }, [USER_ID, maxEnergy, isEnergyReady]);
 
-  // Function to decrease energy (called from other parts of the app)
+  // Decrease energy function (can be used from other parts of the app)
   const decreaseEnergy = (amount) => {
-    if (!USER_ID) return; // Ensure USER_ID is available
+    if (!USER_ID) return;
 
     setEnergy((prevEnergy) => {
-      const newEnergy = Math.max(prevEnergy - amount, 0); // Ensure energy doesn't go below 0
+      const newEnergy = Math.max(prevEnergy - amount, 0); // Prevent energy from going below 0
       localStorage.setItem(`energy_${USER_ID}`, newEnergy.toFixed(2));
       localStorage.setItem(`lastUpdate_${USER_ID}`, Date.now().toString());
-      return newEnergy; // Update state with new energy
+      return newEnergy;
     });
   };
 
   return (
-    <EnergyContext.Provider value={{ energy, maxEnergy, decreaseEnergy, isEnergyLoading }}>
+    <EnergyContext.Provider value={{ energy, maxEnergy, decreaseEnergy, isEnergyLoading, setMaxEnergy }}>
       {children}
     </EnergyContext.Provider>
   );
