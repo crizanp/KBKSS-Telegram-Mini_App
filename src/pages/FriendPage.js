@@ -80,6 +80,13 @@ const FriendPage = () => {
     enabled: !!userID, // Only run query if userID is available
   });
 
+  // Log referralStats for debugging
+  useEffect(() => {
+    if (referralStats) {
+      console.log('Referral Stats:', referralStats);
+    }
+  }, [referralStats]);
+
   const handleCopyLink = () => {
     navigator.clipboard
       .writeText(referralLink)
@@ -100,8 +107,9 @@ const FriendPage = () => {
     window.Telegram.WebApp?.openTelegramLink(inviteLink);
   };
 
-  const referralCount = referralStats?.totalReferrals || 0; // Get total referrals
-  const referrals = referralStats?.referrals || []; // Get the list of referrals
+  // Fallback in case referralStats is undefined
+  const referralCount = referralStats?.totalReferrals || 0; // Fallback to 0
+  const referrals = referralStats?.referrals || []; // Fallback to empty array
 
   return (
     <MainContainer>
