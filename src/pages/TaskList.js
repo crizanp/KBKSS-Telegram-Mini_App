@@ -138,44 +138,55 @@ const TaskList = () => {
   });
 
   // Claim Reward Mutation
-  const claimRewardMutation = useMutation(
-    async ({ task }) => {
-      await axios.put(
-        `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-        {
-          pointsToAdd: task.points,
-          username: window.Telegram.WebApp?.initDataUnsafe?.user?.username,
-        }
-      );
+  // Claim Reward Mutation
+const claimRewardMutation = useMutation(
+  async ({ task }) => {
+    await axios.put(
+      `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
+      {
+        pointsToAdd: task.points,
+        username: window.Telegram.WebApp?.initDataUnsafe?.user?.username,
+      }
+    );
 
-      await axios.post(`${process.env.REACT_APP_API_URL}/user-info`, {
-        userID,
-        tasksCompleted: [task._id],
-        taskHistory: [
-          {
-            taskId: task._id,
-            pointsEarned: task.points,
-            completedAt: new Date(),
-          },
-        ],
+    await axios.post(`${process.env.REACT_APP_API_URL}/user-info`, {
+      userID,
+      tasksCompleted: [task._id],
+      taskHistory: [
+        {
+          taskId: task._id,
+          pointsEarned: task.points,
+          completedAt: new Date(),
+        },
+      ],
+    });
+  },
+  {
+    onSuccess: async (data, variables) => {
+      // Invalidate user info query to refetch user points and task data
+      queryClient.invalidateQueries(["userInfo", userID]);
+      
+      // Update points in state
+      setPoints((prevPoints) => {
+        const updatedPoints = prevPoints + variables.task.points;
+        // Store updated points in local storage
+        localStorage.setItem(`points_${userID}`, updatedPoints);
+        return updatedPoints;
       });
+
+      showToast("Points awarded!", "success");
+      setShowConfetti(true);
+      audioRef.current.play();
+      setTimeout(() => setShowConfetti(false), 5000);
+      setSelectedTask(null); // Clear the selected task
     },
-    {
-      onSuccess: async () => {
-        // Invalidate user info query to refetch user points and task data
-        queryClient.invalidateQueries(["userInfo", userID]);
-        showToast("Points awarded!", "success");
-        setShowConfetti(true);
-        audioRef.current.play();
-        setTimeout(() => setShowConfetti(false), 5000);
-        setSelectedTask(null); // Clear the selected task
-      },
-      onError: () => {
-        showToast("Error claiming the reward.", "error");
-      },
-      onSettled: () => setUnderModeration(false),
-    }
-  );
+    onError: () => {
+      showToast("Error claiming the reward.", "error");
+    },
+    onSettled: () => setUnderModeration(false),
+  }
+);
+
 
   // Start countdown timer
   useEffect(() => {
