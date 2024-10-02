@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import styled from "styled-components";
 import { FaTelegramPlane } from "react-icons/fa";
 import { useQuery } from '@tanstack/react-query';
 import axios from "axios";
@@ -101,14 +100,8 @@ const FriendPage = () => {
     window.Telegram.WebApp?.openTelegramLink(inviteLink);
   };
 
-  // Handle loading and error states
-  if (userLoading || referralsLoading) {
-    return <SkeletonLoader />;
-  }
-
-  if (userError || referralsError) {
-    return <div>Error loading data</div>;
-  }
+  const referralCount = referralStats?.totalReferrals || 0; // Get total referrals
+  const referrals = referralStats?.referrals || []; // Get the list of referrals
 
   return (
     <MainContainer>
@@ -175,14 +168,16 @@ const FriendPage = () => {
       <ReferralStatsContainer>
         <ReferralStatsHeading>Referral Stats</ReferralStatsHeading>
 
-        {/* Show total referrals */}
-        <p>Total Referrals: {referralStats?.referralCount || 0}</p>
+        {/* Show total referrals with loading state */}
+        <p>Total Referrals: {referralsLoading ? "Loading..." : referralCount}</p>
 
-        {referralStats?.referralCount === 0 ? (
+        {userLoading || referralsLoading ? (
+          <SkeletonLoader /> // Display skeleton loader while loading
+        ) : referralCount === 0 ? (
           <NoReferralsMessage>You have no referrals yet</NoReferralsMessage>
         ) : (
           <div>
-            {referralStats?.referrals.map((referral) => (
+            {referrals.map((referral) => (
               <ReferralItem key={referral.id}>
                 <ReferralUsername>{referral.username}</ReferralUsername>
                 <ReferralPoints>
