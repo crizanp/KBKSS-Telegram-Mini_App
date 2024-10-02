@@ -257,8 +257,7 @@ const TaskList = () => {
                     onClick={() => handleTaskClick(task)}
                     style={{
                       cursor: isCompletedTasksLoading || completedTasks[task._id] ? "not-allowed" : "pointer", // Make unclickable initially and for completed tasks
-                      pointerEvents: isCompletedTasksLoading || completedTasks[task._id] ? "none" : "auto", // Disable interaction initially and for completed tasks
-                      opacity: completedTasks[task._id] ? 0.5 : 1, // Reduce opacity for completed tasks
+                      pointerEvents: isCompletedTasksLoading || completedTasks[task._id] ? "none" : "auto" // Disable interaction initially and for completed tasks
                     }}
                   >
                     <TaskDetailsContainer>
