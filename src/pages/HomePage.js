@@ -78,7 +78,9 @@ function HomePage() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
-
+  const memoizedEagleImage = useMemo(() => {
+    return <EagleImage src={eagleImage} alt="Eagle" className="eagle-image" loading="lazy" />;
+  }, []);
   const fetchActiveBackground = useCallback(async () => {
     try {
       const cachedBackground = localStorage.getItem("activeBackground");
@@ -452,14 +454,8 @@ function HomePage() {
 
       <MiddleSection>
         {/* <Message>{getMessage}</Message>{" "} */}
-        <EagleContainer>
-          <EagleImage
-            src={eagleImage}
-            alt="Eagle"
-            className="eagle-image"
-            onContextMenu={(e) => e.preventDefault()}
-          />
-        </EagleContainer>
+        <EagleContainer>{memoizedEagleImage}</EagleContainer>
+
       </MiddleSection>
 
       {/* Right-side menu container to handle Boost and Leaderboard */}

@@ -1,166 +1,161 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FaGem, FaArrowUp,FaFire } from "react-icons/fa";
 import UserInfo from "../components/UserInfo";
 import { showToast } from "../components/ToastNotification";
 import ToastNotification from "../components/ToastNotification";
-import { usePoints } from "../context/PointsContext"; // Updated PointsContext
-import { useEnergy } from "../context/EnergyContext"; // Updated EnergyContext
+import { usePoints } from "../context/PointsContext";
+import { useEnergy } from "../context/EnergyContext";
 import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 import { getUserID } from "../utils/getUserID";
 import GameUnlockModal from "../components/GameUnlockModal";
+import {
+  BoostPageContainer,
+  Section,
+  SectionTitle,
+  BoostOption,
+  EligibleTag,
+  Spacer,
+  MaxEnergyIcon,
+  TapIcon,
+} from "../style/LevelPageStyle";
 
-const BoostPageContainer = styled.div`
-  background-color: #090c12;
-  color: white;
-  min-height: 100vh;
-  padding: 20px;
-  font-family: "Orbitron", sans-serif;
+// Styled components for loading
+const LoadingContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
-`;
-
-const Section = styled.div`
-  background: rgba(255, 255, 255, 0.1);
-  padding: 20px;
-  width: 100%;
-  max-width: 400px;
-  margin: 20px 0;
-  text-align: center;
-`;
-
-const SectionTitle = styled.h2`
-  color: #e1e8eb;
-  font-size: 1.8rem;
-  margin-bottom: 15px;
-`;
-
-const BoostButton = styled.button`
-  background-color: #36a8e5;
+  justify-content: center;
+  height: 100vh;
   color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 15px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  width: 100%;
-  margin-top: 20px;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #298dc8;
-  }
-
-  &:disabled {
-    background-color: rgb(165 245 165);
-    cursor: not-allowed;
-    color: white;
-  }
 `;
 
-const EnergyIcon = styled(FaFire)`
-  color: #f39c12;
-  font-size: 2rem;
-`;
-
-const TapIcon = styled(FaGem)`
-  color: #36a8e5;
-  font-size: 2rem;
-`;
-
-const MaxEnergyIcon = styled(FaArrowUp)`
-  color: #e67e22;
-  font-size: 2rem;
-`;
-
-const BoostOption = styled.button`
-  background-color: ${(props) =>
-    props.selected ? "rgb(165 245 165)" : props.loading ? "#ccc" : "#fff"};
-  color: ${(props) => (props.selected ? "#000" : "#000")};
-  border: ${(props) => (props.selected ? "none" : "1px solid #ccc")};
-  border-radius: 8px;
-  padding: 10px;
-  margin: 5px 0px;
-  width: 100%;
+const LoadingStepContainer = styled.div`
   display: flex;
-  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+`;
+
+const DoneIcon = styled.span`
+  color: green;
+  font-size: 1.5rem;
+  margin-left: 10px;
+`;
+
+const ProgressBar = styled.div`
+  width: 100px;
+  height: 10px;
+  background-color: #ddd;
+  margin-left: 10px;
   position: relative;
-  &:hover {
-    background-color: ${(props) =>
-      props.selected ? "rgb(165 245 165)" : "#eee"};
-  }
-  &:disabled {
-    background-color: rgb(165 245 165);
-    cursor: not-allowed;
-    color: #000000;
+  overflow: hidden;
+  border-radius: 5px;
+
+  &::after {
+    content: "";
+    position: absolute;
+    width: ${({ progress }) => progress}%;
+    height: 100%;
+    background-color: #0088cc;
+    transition: width 0.5s ease;
   }
 `;
 
-const EligibleTag = styled.span`
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  background-color: #544e4e;
-  color: #fff;
-  padding: 3px 8px;
-  font-size: 0.7rem;
-  border-radius: 4px;
-`;
+// React Query function to fetch user data and level data
+const fetchUserData = async () => {
+  const userID = await getUserID();  // Await the result of getUserID()
+  
+  const [userResponse, levelResponse] = await Promise.all([
+    axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`),
+    axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`)
+  ]);
 
-const Spacer = styled.div`
-  height: 60px;
-`;
+  return {
+    userData: userResponse.data,
+    levelData: levelResponse.data,
+  };
+};
+
+const LoadingStep = ({ label, isDone, progress }) => (
+  <LoadingStepContainer>
+    {label}
+    {isDone ? (
+      <DoneIcon>✔</DoneIcon>
+    ) : (
+      <ProgressBar progress={progress} />
+    )}
+  </LoadingStepContainer>
+);
 
 const BoostsPage = () => {
-  const { pointsPerTap, setPointsPerTap } = usePoints(); // Accessing and setting pointsPerTap
-  const { maxEnergy, setMaxEnergy } = useEnergy(); // Accessing and setting maxEnergy
+  const { pointsPerTap, setPointsPerTap } = usePoints();
+  const { maxEnergy, setMaxEnergy } = useEnergy();
   const [selectedTapBoost, setSelectedTapBoost] = useState(pointsPerTap);
   const [selectedEnergyBoost, setSelectedEnergyBoost] = useState(maxEnergy);
-  const [userLevel, setUserLevel] = useState(0);
   const [modalData, setModalData] = useState(null);
-  const [loading, setLoading] = useState(true); // Loading state
 
+  // Loading step states
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [isAllLoaded, setIsAllLoaded] = useState(false);
+
+  // Use React Query to fetch user data and level data
+  const { data, isLoading, isError } = useQuery(
+    ["userData"], // Query key
+    fetchUserData,
+    {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 30, // 30 minutes cache
+      refetchOnWindowFocus: false, // No refetch on window focus
+      onSuccess: (data) => {
+        setSelectedEnergyBoost(data.userData.maxEnergy);
+        setSelectedTapBoost(data.userData.pointsPerTap);
+      },
+    }
+  );
+
+  // Simulate loading steps with timing
   useEffect(() => {
-    const fetchUserLevelAndBoosts = async () => {
-      try {
-        const userID = await getUserID();
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/user-info/${userID}`
-        );
-        const userData = response.data;
-        const levelResponse = await axios.get(
-          `${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`
-        );
-        const levelData = levelResponse.data;
+    if (isLoading) {
+      const loadSteps = () => {
+        if (loadingStep === 0) {
+          setTimeout(() => {
+            setLoadingStep(1); // Done with checking level
+          }, 1000);
+        } else if (loadingStep === 1) {
+          setTimeout(() => {
+            setLoadingStep(2); // Done with checking max energy
+          }, 1000);
+        } else if (loadingStep === 2) {
+          setTimeout(() => {
+            setLoadingStep(3); // Done with checking points per tap
+            setIsAllLoaded(true);
+          }, 1000);
+        }
+      };
 
-        setUserLevel(levelData.currentLevel ?? 0);
-        setSelectedEnergyBoost(userData.maxEnergy);
-        setSelectedTapBoost(userData.pointsPerTap);
-        setLoading(false); // Disable loading after data fetch
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        setLoading(false); // Disable loading in case of error
-      }
-    };
+      // Progress bar simulation
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => (prev < 100 ? prev + 20 : 100));
+      }, 300);
 
-    fetchUserLevelAndBoosts();
-  }, []);
+      loadSteps();
+      return () => clearInterval(progressInterval);
+    }
+  }, [isLoading, loadingStep]);
 
   const handleClaimBoost = async (boostType, boostValue) => {
     try {
-      const userID = await getUserID();
+      const userID = await getUserID();  // Make sure you await the result of getUserID here as well
+
       await axios.put(
         `${process.env.REACT_APP_API_URL}/user-info/update-boost/${userID}`,
-        {
-          boostType,
-          boostValue,
-        }
+        { boostType, boostValue }
       );
       showToast("Boost applied successfully!", "success");
 
-      // Update pointsPerTap and maxEnergy based on the boost type
       if (boostType === "maxEnergy") {
         setSelectedEnergyBoost(boostValue);
         setMaxEnergy(boostValue); // Update in EnergyContext
@@ -175,6 +170,8 @@ const BoostsPage = () => {
   };
 
   const handleOptionClick = (boostType, boostValue, requiredLevel) => {
+    const userLevel = data?.levelData.currentLevel ?? 0;
+
     if (userLevel >= requiredLevel) {
       setModalData({
         boostType,
@@ -196,6 +193,34 @@ const BoostsPage = () => {
     }
   };
 
+  if (isLoading && !isAllLoaded) {
+    return (
+      <LoadingContainer>
+        <LoadingStep
+          label="Checking your level..."
+          isDone={loadingStep >= 1}
+          progress={loadingStep === 0 ? progress : 100}
+        />
+        <LoadingStep
+          label="Checking your max energy..."
+          isDone={loadingStep >= 2}
+          progress={loadingStep === 1 ? progress : 100}
+        />
+        <LoadingStep
+          label="Checking your points per tap..."
+          isDone={loadingStep >= 3}
+          progress={loadingStep === 2 ? progress : 100}
+        />
+      </LoadingContainer>
+    );
+  }
+
+  if (isError) {
+    return <div>Error loading data, please try again later.</div>;
+  }
+
+  const userLevel = data?.levelData.currentLevel ?? 0;
+
   return (
     <BoostPageContainer>
       <UserInfo />
@@ -207,14 +232,8 @@ const BoostsPage = () => {
         <MaxEnergyIcon />
         <BoostOption
           selected={selectedEnergyBoost === 1000}
-          loading={loading}
           onClick={() =>
-            handleOptionClick(
-              "maxEnergy",
-              1000,
-              0,
-              "Are you sure you want to keep Max Energy at 1000?"
-            )
+            handleOptionClick("maxEnergy", 1000, 0)
           }
         >
           Max 1000 Energy (Level 0 or 1)
@@ -222,15 +241,9 @@ const BoostsPage = () => {
         </BoostOption>
         <BoostOption
           selected={selectedEnergyBoost === 1500}
-          loading={loading}
           disabled={selectedEnergyBoost === 1500}
           onClick={() =>
-            handleOptionClick(
-              "maxEnergy",
-              1500,
-              2,
-              "Are you sure you want to increase Max Energy to 1500?"
-            )
+            handleOptionClick("maxEnergy", 1500, 2)
           }
         >
           Max 1500 Energy (Level 2)
@@ -238,15 +251,9 @@ const BoostsPage = () => {
         </BoostOption>
         <BoostOption
           selected={selectedEnergyBoost === 2500}
-          loading={loading}
           disabled={selectedEnergyBoost === 2500}
           onClick={() =>
-            handleOptionClick(
-              "maxEnergy",
-              2500,
-              3,
-              "Are you sure you want to increase Max Energy to 2500?"
-            )
+            handleOptionClick("maxEnergy", 2500, 3)
           }
         >
           Max 2500 Energy (Level 3)
@@ -254,15 +261,9 @@ const BoostsPage = () => {
         </BoostOption>
         <BoostOption
           selected={selectedEnergyBoost === 4000}
-          loading={loading}
           disabled={selectedEnergyBoost === 4000}
           onClick={() =>
-            handleOptionClick(
-              "maxEnergy",
-              4000,
-              4,
-              "Are you sure you want to increase Max Energy to 4000?"
-            )
+            handleOptionClick("maxEnergy", 4000, 4)
           }
         >
           Max 4000 Energy (Level 4)
@@ -270,15 +271,9 @@ const BoostsPage = () => {
         </BoostOption>
         <BoostOption
           selected={selectedEnergyBoost === 7000}
-          loading={loading}
           disabled={selectedEnergyBoost === 7000}
           onClick={() =>
-            handleOptionClick(
-              "maxEnergy",
-              7000,
-              5,
-              "Are you sure you want to increase Max Energy to 7000?"
-            )
+            handleOptionClick("maxEnergy", 7000, 5)
           }
         >
           Max 7000 Energy (Level 5)
@@ -292,14 +287,8 @@ const BoostsPage = () => {
         <TapIcon />
         <BoostOption
           selected={selectedTapBoost === 1}
-          loading={loading}
           onClick={() =>
-            handleOptionClick(
-              "pointsPerTap",
-              1,
-              0,
-              "Are you sure you want to keep Points Per Tap at 1?"
-            )
+            handleOptionClick("pointsPerTap", 1, 0)
           }
         >
           1 Point Per Tap (Level 0-1-2)
@@ -307,15 +296,9 @@ const BoostsPage = () => {
         </BoostOption>
         <BoostOption
           selected={selectedTapBoost === 2}
-          loading={loading}
           disabled={selectedTapBoost === 2}
           onClick={() =>
-            handleOptionClick(
-              "pointsPerTap",
-              2,
-              3,
-              "Are you sure you want to increase Points Per Tap to 2?"
-            )
+            handleOptionClick("pointsPerTap", 2, 3)
           }
         >
           2 Points Per Tap (Level 3)
@@ -323,15 +306,9 @@ const BoostsPage = () => {
         </BoostOption>
         <BoostOption
           selected={selectedTapBoost === 3}
-          loading={loading}
           disabled={selectedTapBoost === 3}
           onClick={() =>
-            handleOptionClick(
-              "pointsPerTap",
-              3,
-              4,
-              "Are you sure you want to increase Points Per Tap to 3?"
-            )
+            handleOptionClick("pointsPerTap", 3, 4)
           }
         >
           3 Points Per Tap (Level 4)
@@ -339,15 +316,9 @@ const BoostsPage = () => {
         </BoostOption>
         <BoostOption
           selected={selectedTapBoost === 5}
-          loading={loading}
           disabled={selectedTapBoost === 5}
           onClick={() =>
-            handleOptionClick(
-              "pointsPerTap",
-              5,
-              5,
-              "Are you sure you want to increase Points Per Tap to 5?"
-            )
+            handleOptionClick("pointsPerTap", 5, 5)
           }
         >
           5 Points Per Tap (Level 5)
@@ -363,7 +334,6 @@ const BoostsPage = () => {
           title="Please Confirm"
           onConfirm={handleConfirmBoost}
           onCancel={() => setModalData(null)}
-          loading={loading}
           iconUrl="https://cdn-icons-png.flaticon.com/512/6106/6106288.png"
         />
       )}

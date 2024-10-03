@@ -5,6 +5,8 @@ import avatar2 from '../assets/avatar/2.png';
 import avatar3 from '../assets/avatar/3.png';
 import avatar4 from '../assets/avatar/4.png';
 import avatar5 from '../assets/avatar/5.png';
+import {  FaArrowUp,FaFire } from "react-icons/fa";
+
 // Styled Components
 export const LevelPageContainer = styled.div`
   background-color: #090c12;
@@ -261,3 +263,109 @@ export const getAvatarByLevel = (level) => {
       return avatar1; // Default avatar if level is out of range
   }
 };
+
+
+
+//boost page
+export const BoostPageContainer = styled.div`
+  background-color: #090c12;
+  color: white;
+  min-height: 100vh;
+  padding: 20px;
+  font-family: "Orbitron", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+`;
+
+export const Section = styled.div`
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  margin: 20px 0;
+  text-align: center;
+`;
+
+export const SectionTitle = styled.h2`
+  color: #e1e8eb;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+`;
+
+export const BoostButton = styled.button`
+  background-color: #36a8e5;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 15px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #298dc8;
+  }
+
+  &:disabled {
+    background-color: rgb(165 245 165);
+    cursor: not-allowed;
+    color: white;
+  }
+`;
+
+export const EnergyIcon = styled(FaFire)`
+  color: #f39c12;
+  font-size: 2rem;
+`;
+
+export const TapIcon = styled(FaGem)`
+  color: #36a8e5;
+  font-size: 2rem;
+`;
+
+export const MaxEnergyIcon = styled(FaArrowUp)`
+  color: #e67e22;
+  font-size: 2rem;
+`;
+
+export const BoostOption = styled.button`
+  background-color: ${(props) =>
+    props.selected ? "rgb(165 245 165)" : props.loading ? "#ccc" : "#fff"};
+  color: ${(props) => (props.selected ? "#000" : "#000")};
+  border: ${(props) => (props.selected ? "none" : "1px solid #ccc")};
+  border-radius: 8px;
+  padding: 10px;
+  margin: 5px 0px;
+  width: 100%;
+  display: flex;
+  cursor: pointer;
+  position: relative;
+  &:hover {
+    background-color: ${(props) =>
+      props.selected ? "rgb(165 245 165)" : "#eee"};
+  }
+  &:disabled {
+    background-color: rgb(165 245 165);
+    cursor: not-allowed;
+    color: #000000;
+  }
+`;
+
+export const EligibleTag = styled.span`
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  background-color: #544e4e;
+  color: #fff;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  border-radius: 4px;
+`;
+
+export const Spacer = styled.div`
+  height: 60px;
+`;
