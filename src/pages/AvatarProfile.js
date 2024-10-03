@@ -1,37 +1,29 @@
-import React, { useState } from "react";
-import styled from "styled-components";
-import Avatar1 from "../assets/avatar/1.png";
-import Avatar2 from "../assets/avatar/2.png";
-import Avatar3 from "../assets/avatar/3.png";
-import Avatar4 from "../assets/avatar/4.png";
-import Avatar5 from "../assets/avatar/5.png";
-import Avatar6 from "../assets/avatar/6.png";
-import Avatar7 from "../assets/avatar/7.png";
-import Avatar8 from "../assets/avatar/8.png";
-import Avatar9 from "../assets/avatar/9.png";
-import Avatar10 from "../assets/avatar/10.png";
-import UserInfo from "../components/UserInfo";
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
 import { FaRegGem } from 'react-icons/fa';
+import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import { usePoints } from '../context/PointsContext';
+import SkeletonLoader from '../components/skeleton/AvatarSkeleton'; // Placeholder for loading state
+import UserInfo from '../components/UserInfo'; // User Info Component
+import { getUserID } from "../utils/getUserID";
+import ToastNotification, { showToast } from '../components/ToastNotification'; // Toast Notification
+import AvatarSelectionModal from '../components/AvatarSelectionModal'; // Modal for confirmation
 
-// Styled Components for the Avatar Selection
+// Styled Components
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   max-width: 1000px;
   margin: auto;
   padding: 20px;
-  color: #f0f0f0; /* Light color for text visibility */
+  color: #f0f0f0;
   @media (max-width: 768px) {
     padding: 10px;
     margin-top: 86px;
   }
 `;
-// Icon for gems
-const GemIcon = styled(FaRegGem)`
-  color: #36a8e5;
-  margin-right: 5px;
-  font-size: 1.2rem;
-`;
+
 const TopSection = styled.div`
   display: flex;
   flex-direction: row;
@@ -42,7 +34,7 @@ const TopSection = styled.div`
 const LeftSection = styled.div`
   width: 25%;
   max-height: 496px;
-  overflow-y: auto;
+  overflow-y: auto; /* Enable scrolling for the avatar list */
   padding-right: 20px;
   @media (max-width: 768px) {
     width: 30%;
@@ -53,7 +45,6 @@ const AvatarList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin-bottom: 20px;
 `;
 
 const RightSection = styled.div`
@@ -65,8 +56,8 @@ const RightSection = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background-color: #1c1c1c;
   text-align: center;
-  background-color: #1c1c1c; /* Dark background to highlight the avatar */
   @media (max-width: 768px) {
     width: 65%;
     height: auto;
@@ -74,17 +65,17 @@ const RightSection = styled.div`
 `;
 
 const AvatarCard = styled.div`
-  border: ${(props) => (props.isLocked ? "2px solid grey" : "2px solid gold")};
+  position: relative;
+  border: ${(props) => (props.isLocked ? '2px solid grey' : '2px solid gold')};
   border-radius: 10px;
   padding: 10px;
   text-align: center;
-  cursor: ${(props) => (props.isLocked ? "not-allowed" : "pointer")};
+  cursor: ${(props) => (props.isLocked ? 'not-allowed' : 'pointer')};
   opacity: ${(props) => (props.isLocked ? 0.6 : 1)};
   transition: transform 0.3s ease;
   color: white;
-
   &:hover {
-    transform: ${(props) => (props.isLocked ? "none" : "scale(1.05)")};
+    transform: ${(props) => (props.isLocked ? 'none' : 'scale(1.05)')};
   }
 `;
 
@@ -97,9 +88,9 @@ const AvatarImage = styled.img`
 
 const CurrentAvatarImage = styled.img`
   width: 100%;
-  height: 300px; /* Make the image portrait-shaped */
+  height: 300px;
   object-fit: cover;
-  border-radius: 10px; /* Optional border radius for a cleaner look */
+  border-radius: 10px;
   margin-bottom: 10px;
 `;
 
@@ -109,9 +100,9 @@ const AvatarInfo = styled.div`
 `;
 
 const Title = styled.h3`
-  font-size: 28px; /* Bigger title */
+  font-size: 28px;
   margin: 10px 0;
-  color: #d2d2d2; /* White text for clarity */
+  color: #d2d2d2;
 `;
 
 const GemsDisplay = styled.div`
@@ -120,14 +111,14 @@ const GemsDisplay = styled.div`
   justify-content: center;
   font-size: 16px;
   font-weight: bold;
-  color: #00aaff; /* Blue color for the GEMS icon */
+  color: #00aaff;
   margin-bottom: 10px;
 `;
 
-const GemsIcon = styled.img`
-  width: 20px;
-  height: 20px;
+const GemIcon = styled(FaRegGem)`
+  color: #36a8e5;
   margin-right: 5px;
+  font-size: 1.2rem;
 `;
 
 const LevelDisplay = styled.div`
@@ -157,88 +148,208 @@ const MoreAvatarsGrid = styled.div`
   }
 `;
 
-// Mock data for avatars
-const avatars = [
-  { id: 1, name: "Eagle Warrior", level: 1, gems: 1000, image: Avatar1 },
-  { id: 2, name: "Falcon Knight", level: 2, gems: 5000, image: Avatar2 },
-  { id: 3, name: "Phoenix King", level: 5, gems: 10000, image: Avatar3 },
-  { id: 4, name: "Dragon Lord", level: 10, gems: 20000, image: Avatar4 },
-  { id: 5, name: "Tiger King", level: 3, gems: 3000, image: Avatar5 },
-  { id: 6, name: "Lion Heart", level: 4, gems: 6000, image: Avatar6 },
-  { id: 7, name: "Bear Guardian", level: 7, gems: 12000, image: Avatar7 },
-  { id: 8, name: "Wolf Slayer", level: 6, gems: 8000, image: Avatar8 },
-  { id: 9, name: "Panther Shadow", level: 8, gems: 15000, image: Avatar9 },
-  { id: 10, name: "Griffin King", level: 9, gems: 18000, image: Avatar10 },
-  // Add more avatars as needed
-];
+const TopRightGems = styled.div`
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  color: white;
+`;
+
+// Fetch user details from the `/user-avatar/:userID` endpoint
+const fetchUserDetails = async (userID) => {
+  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}`);
+  return data;
+};
+
+// Fetch all avatars from the API
+const fetchAvatars = async () => {
+  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/avatar`);
+  return data;
+};
+
+// Fetch unlocked avatars
+const fetchUnlockedAvatars = async (userID) => {
+  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlocked-avatars`);
+  return data;
+};
+
+// Fetch active avatar
+const fetchActiveAvatar = async (userID) => {
+  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/active-avatar`);
+  return data;
+};
 
 const AvatarSelection = () => {
-  const [points, setPoints] = useState(15000); // Static points (GEMS) for user
-  const [level, setLevel] = useState(5); // Static user level
-  const [selectedAvatar, setSelectedAvatar] = useState(avatars[0]); // Default to the first avatar
+  const { points } = usePoints(); // Points context
+  const [modalData, setModalData] = useState(null); // Modal data for confirmation
+  const [unlockedAvatars, setUnlockedAvatars] = useState([]); // Unlocked avatars
+  const [activeAvatar, setActiveAvatar] = useState(null); // Active avatar
 
-  // Function to handle avatar selection
-  const handleAvatarSelect = (avatar) => {
-    if (points >= avatar.gems && level >= avatar.level) {
-      setSelectedAvatar(avatar);
+  // Fetch userID
+  const { data: userDetails, isLoading: userLoading, isError: userError } = useQuery({
+    queryKey: ['userDetails'],
+    queryFn: async () => {
+      const userID = await getUserID();
+      return fetchUserDetails(userID);
+    },
+  });
+
+  // Fetch all avatars
+  const { data: avatars, isLoading: avatarsLoading, isError: avatarsError } = useQuery({
+    queryKey: ['avatars'],
+    queryFn: fetchAvatars,
+  });
+
+  // Fetch unlocked avatars
+  const { data: unlockedAvatarData, isLoading: unlockedAvatarsLoading } = useQuery({
+    queryKey: ['unlockedAvatars', userDetails?.userID],
+    queryFn: async () => {
+      const userID = await getUserID();
+      return fetchUnlockedAvatars(userID);
+    },
+    enabled: !!userDetails, // Ensure this query runs only after userDetails is fetched
+  });
+
+  // Fetch active avatar
+  const { data: activeAvatarData, isLoading: activeAvatarLoading } = useQuery({
+    queryKey: ['activeAvatar', userDetails?.userID],
+    queryFn: async () => {
+      const userID = await getUserID();
+      return fetchActiveAvatar(userID);
+    },
+    enabled: !!userDetails, // Ensure this query runs only after userDetails is fetched
+  });
+
+  // Set unlocked and active avatars after fetching
+  useEffect(() => {
+    if (unlockedAvatarData) {
+      setUnlockedAvatars(unlockedAvatarData);
+    }
+    if (activeAvatarData) {
+      setActiveAvatar(activeAvatarData);
+    }
+  }, [unlockedAvatarData, activeAvatarData]);
+
+  // Handle avatar unlocking
+  const handleUnlockAvatar = (avatar) => {
+    if (points >= avatar.gemsRequired && userDetails.level >= avatar.levelRequired) {
+      setModalData({
+        avatar,
+        message: `Are you sure you want to unlock the avatar ${avatar.name} and deduct ${avatar.gemsRequired} gems?`,
+        action: 'unlock', // Unlock action
+      });
     } else {
-      alert("You do not meet the requirements to select this avatar.");
+      showToast('You do not meet the requirements to unlock this avatar.', 'error');
     }
   };
 
+  // Handle setting active avatar
+  const handleSetActiveAvatar = async (avatar) => {
+    try {
+      const userID = await getUserID();
+      await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatar._id}`);
+      setActiveAvatar(avatar);
+      showToast(`Avatar ${avatar.name} is now set as your active avatar!`, 'success');
+    } catch (error) {
+      showToast('Failed to set active avatar. Please try again.', 'error');
+    }
+  };
+
+  // Confirm modal action: Set active or unlock
+  const handleConfirmAction = async () => {
+    if (!modalData?.avatar) return;
+
+    try {
+      const userID = await getUserID();
+      const avatarId = modalData.avatar._id;
+
+      if (modalData.action === 'unlock') {
+        // Unlock the avatar and automatically set it as active
+        await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlock-avatar/${avatarId}`);
+        await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
+
+        // Add the avatar to the unlocked list and set as active
+        setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
+        setActiveAvatar(modalData.avatar);
+
+        showToast(`Avatar ${modalData.avatar.name} has been unlocked and set as active!`, 'success');
+      }
+
+      setModalData(null); // Close modal after confirmation
+    } catch (error) {
+      showToast('Failed to complete the action. Please try again.', 'error');
+      console.error('Error:', error);
+    }
+  };
+
+  // Filter out avatars that are already unlocked for the locked avatars section
+  const lockedAvatars = avatars?.filter((avatar) => !unlockedAvatars.some((uAvatar) => uAvatar._id === avatar._id));
+
+  if (userLoading || avatarsLoading || activeAvatarLoading || unlockedAvatarsLoading) return <SkeletonLoader />; // Loading state
+
+  if (userError || avatarsError) {
+    return <Container>Error loading avatars or user data</Container>; // Error handling
+  }
+
   return (
     <Container>
+      {/* User Info */}
       <UserInfo />
-      {/* Top Section with main showcase */}
+
+      {/* Top Section */}
       <TopSection>
-        {/* Left Section - Avatar List */}
         <LeftSection>
           <AvatarList>
-            {avatars.slice(0, 3).map((avatar) => {
-              const isLocked = level < avatar.level || points < avatar.gems;
-              return (
+            {unlockedAvatars.length > 0 ? (
+              unlockedAvatars.map((avatar) => (
                 <AvatarCard
-                  key={avatar.id}
-                  isLocked={isLocked}
-                  onClick={() => !isLocked && handleAvatarSelect(avatar)}
+                  key={avatar._id}
+                  isLocked={false}
+                  onClick={() => handleSetActiveAvatar(avatar)} // Updated to handle set active avatar
                 >
                   <AvatarImage src={avatar.image} alt={avatar.name} />
                   <div>{avatar.name}</div>
                 </AvatarCard>
-              );
-            })}
+              ))
+            ) : (
+              <p>No avatars unlocked yet.</p>
+            )}
           </AvatarList>
         </LeftSection>
 
-        {/* Right Section - Current Avatar */}
+        {/* Right Section - Current Active Avatar */}
         <RightSection>
-          <CurrentAvatarImage
-            src={selectedAvatar.image}
-            alt={selectedAvatar.name}
-          />
-          <AvatarInfo>
-            <Title>{selectedAvatar.name}</Title>
-            <GemsDisplay>
-            <GemIcon />
-              {selectedAvatar.gems}
-            </GemsDisplay>
-            <LevelDisplay>Level: {selectedAvatar.level}</LevelDisplay>
-          </AvatarInfo>
+          {activeAvatar ? (
+            <>
+              <CurrentAvatarImage src={activeAvatar.image} alt={activeAvatar.name} />
+              <AvatarInfo>
+                <Title>{activeAvatar.name}</Title>
+              </AvatarInfo>
+            </>
+          ) : (
+            <p>No Active Avatar. Please select one.</p>
+          )}
         </RightSection>
       </TopSection>
 
       {/* More Avatars Section */}
       <MoreAvatarsSection>
-        <MoreAvatarsTitle>More Avatars</MoreAvatarsTitle>
+        <MoreAvatarsTitle>Eligible Avatars to Unlock</MoreAvatarsTitle>
         <MoreAvatarsGrid>
-          {avatars.map((avatar) => {
-            const isLocked = level < avatar.level || points < avatar.gems;
+          {lockedAvatars?.map((avatar) => {
+            const isLocked = userDetails.level < avatar.levelRequired || points < avatar.gemsRequired;
             return (
               <AvatarCard
-                key={avatar.id}
+                key={avatar._id}
                 isLocked={isLocked}
-                onClick={() => !isLocked && handleAvatarSelect(avatar)}
+                onClick={() => !isLocked && handleUnlockAvatar(avatar)}
               >
+                <TopRightGems>
+                  <GemIcon /> {avatar.gemsRequired}
+                </TopRightGems>
                 <AvatarImage src={avatar.image} alt={avatar.name} />
                 <div>{avatar.name}</div>
               </AvatarCard>
@@ -246,6 +357,19 @@ const AvatarSelection = () => {
           })}
         </MoreAvatarsGrid>
       </MoreAvatarsSection>
+
+      {/* Toast Notification */}
+      <ToastNotification />
+
+      {/* Confirmation Modal */}
+      {modalData && (
+        <AvatarSelectionModal
+          message={modalData.message}
+          title="Please Confirm"
+          onConfirm={handleConfirmAction}
+          onCancel={() => setModalData(null)}
+        />
+      )}
     </Container>
   );
 };
