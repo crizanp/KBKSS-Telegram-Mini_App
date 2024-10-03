@@ -79,8 +79,20 @@ function HomePage() {
     height: window.innerHeight,
   });
   const memoizedEagleImage = useMemo(() => {
-    return <EagleImage src={eagleImage} alt="Eagle" className="eagle-image" loading="lazy" />;
+    return (
+      <EagleImage
+        src="https://i.postimg.cc/prZCBRrr/Untitled-design-4.png" 
+        alt="Eagle"
+        className="eagle-image"
+        loading="lazy"
+        onError={(e) => {
+          e.target.onerror = null; // Prevent infinite loop in case fallback fails too
+          e.target.src = eagleImage; // Replace with your local fallback file path
+        }}
+      />
+    );
   }, []);
+  
   const fetchActiveBackground = useCallback(async () => {
     try {
       const cachedBackground = localStorage.getItem("activeBackground");
@@ -455,7 +467,6 @@ function HomePage() {
       <MiddleSection>
         {/* <Message>{getMessage}</Message>{" "} */}
         <EagleContainer>{memoizedEagleImage}</EagleContainer>
-
       </MiddleSection>
 
       {/* Right-side menu container to handle Boost and Leaderboard */}
