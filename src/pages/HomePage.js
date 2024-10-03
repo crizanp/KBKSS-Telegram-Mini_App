@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import Confetti from "react-confetti";
 import celebrationSound from "../assets/celebration.mp3";
 import leaderboardImage from "../assets/leaderboard.png";
+import { CgProfile } from "react-icons/cg";
 
 import {
   HomeContainer,
@@ -510,6 +511,23 @@ function HomePage() {
             />
           </LeaderboardContainer>
           <IconLabel>Leaderboard</IconLabel>
+        </Link>
+        <Link
+          to="/avatars"
+          onClick={(e) => e.stopPropagation()} // Prevent tap propagation
+          style={{
+            marginTop: "15px",
+            textDecoration: "none",
+            color: "white",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <BoostContainer className="boost-container">
+          <CgProfile size={30} color="#fff" />
+          </BoostContainer>
+          <IconLabel>Use Avatar</IconLabel>
         </Link>
       </RightSideMenuContainer>
 

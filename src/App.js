@@ -15,6 +15,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import LevelPage from "./pages/LevelPage";
 import BoostsPage from "./pages/BoostsPage";
+import AvatarPage from "./pages/AvatarProfile";
 
 function App() {
   return (
@@ -102,6 +103,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <BoostsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/avatars"
+                element={
+                  <ProtectedRoute>
+                    <AvatarPage />
                   </ProtectedRoute>
                 }
               />
