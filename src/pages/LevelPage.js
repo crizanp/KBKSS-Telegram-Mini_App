@@ -31,23 +31,23 @@ import {
 import styled, { keyframes } from "styled-components";
 
 // Define keyframe animation for glowing effect
-const glow = keyframes`
-  0% {
-    box-shadow: 0 0 5px green, 0 0 10px green, 0 0 15px green, 0 0 20px green;
-  }
-  50% {
-    box-shadow: 0 0 10px lime, 0 0 20px lime, 0 0 30px lime, 0 0 40px lime;
-  }
-  100% {
-    box-shadow: 0 0 5px green, 0 0 10px green, 0 0 15px green, 0 0 20px green;
-  }
-`;
+// const glow = keyframes`
+//   0% {
+//     box-shadow: 0 0 5px #f7f206, 0 0 10px #fff828, 0 0 15px #f7f206, 0 0 20px #f7f206;
+//   }
+//   50% {
+//     box-shadow: 0 0 10px #fff700, 0 0 20px #fff700, 0 0 30px #e6ff00, 0 0 40px #ebff00;
+//   }
+//   100% {
+//     box-shadow: 0 0 5px #f7f206, 0 0 10px #f7f206, 0 0 15px #f7f206, 0 0 20px #f7f206;
+//   }
+// `;
 
 // Style for the glowing check icon with dynamic color
 const GlowingCheckIcon = styled(FaCheckCircle)`
   color: ${({ color }) => color}; /* Dynamic color based on currentLevel.color */
   font-size: 21px;
-  animation: ${glow} 1.5s infinite ease-in-out;  // Apply glowing effect
+  animation:  1.5s infinite ease-in-out;  // Apply glowing effect
   vertical-align: middle;
   background: none; /* Ensure no background */
   margin-bottom: 8px;
