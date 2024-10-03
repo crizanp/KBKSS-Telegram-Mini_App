@@ -18,7 +18,7 @@ export const LeaderboardContainer = styled.div`
   flex-direction: column;
   font-family: 'Orbitron', sans-serif;
   padding-bottom: 60px;
-  padding: 0 20px;
+  ${'' /* padding: 0 10px; */}
   overflow-x: hidden;
 `;
 

@@ -62,8 +62,7 @@ function LeaderboardPage() {
   }
 
   return (
-    <LeaderboardContainer>
-      <EarnMoreContainer>
+  <><EarnMoreContainer>
         <EarnBox to="/home">
           <EarnBoxIcon>
             <FaGamepad />
@@ -85,6 +84,8 @@ function LeaderboardPage() {
           <EarnBoxTitle>Refer Friends</EarnBoxTitle>
         </EarnBox>
       </EarnMoreContainer>
+    <LeaderboardContainer>
+      
 
       <PointsDisplayContainer>
         <PointsDisplay>
@@ -106,7 +107,7 @@ function LeaderboardPage() {
           <thead>
             <tr>
               <TableHeader>#</TableHeader>
-              <TableHeader>Username</TableHeader>
+              <TableHeader>User</TableHeader>
               <TableHeader>Total</TableHeader>
             </tr>
           </thead>
@@ -139,6 +140,7 @@ function LeaderboardPage() {
         </Table>
       )}
     </LeaderboardContainer>
+    </>
   );
 }
 

@@ -197,17 +197,17 @@ const BoostsPage = () => {
     return (
       <LoadingContainer>
         <LoadingStep
-          label="Checking your level..."
+          label="Checking level..."
           isDone={loadingStep >= 1}
           progress={loadingStep === 0 ? progress : 100}
         />
         <LoadingStep
-          label="Checking your max energy..."
+          label="Checking energy..."
           isDone={loadingStep >= 2}
           progress={loadingStep === 1 ? progress : 100}
         />
         <LoadingStep
-          label="Checking your points per tap..."
+          label="Checking $GEMS per tap..."
           isDone={loadingStep >= 3}
           progress={loadingStep === 2 ? progress : 100}
         />
