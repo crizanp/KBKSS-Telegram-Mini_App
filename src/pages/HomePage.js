@@ -590,6 +590,7 @@ useEffect(() => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            userSelect:"none",
           }}
         >
           <BoostContainer className="boost-container">
@@ -608,6 +609,7 @@ useEffect(() => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            userSelect:"none",
           }}
         >
           <LeaderboardContainer className="leaderboard-container">
@@ -628,6 +630,7 @@ useEffect(() => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            userSelect:"none",
           }}
         >
           <BoostContainer className="boost-container">
