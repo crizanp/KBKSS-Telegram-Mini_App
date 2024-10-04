@@ -212,59 +212,70 @@ function HomePage() {
       const hoursSinceLastClaim = Math.floor(
         (now - new Date(lastDailyReward)) / (1000 * 60 * 60)
       ); // Calculate hours since the last claim
-
+  
       if (hoursSinceLastClaim >= 24) {
         setIsRewardAvailable(true); // Reward is available, button becomes clickable
+        setRemainingTime(0); // No timer if reward is available
       } else {
         setIsRewardAvailable(false); // Reward is not available, button stays disabled
-
+  
         // Calculate remaining time and update the state
         const timeUntilNextClaim =
           24 * 60 * 60 * 1000 - (now - new Date(lastDailyReward));
-        setRemainingTime(timeUntilNextClaim);
+        setRemainingTime(timeUntilNextClaim); // Set remaining time for the next reward
       }
     } finally {
       setIsLoading(false); // End loading state
     }
   }, [userID]);
-
+  
   // Update the remaining time every second if reward is not available
-  useEffect(() => {
-    let interval;
-    if (!isRewardAvailable && remainingTime > 0) {
-      interval = setInterval(() => {
-        setRemainingTime((prevTime) => prevTime - 1000); // Decrease the remaining time by 1 second
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isRewardAvailable, remainingTime]);
+  // Update the remaining time every second if reward is not available
+useEffect(() => {
+  let interval;
+  if (!isRewardAvailable && remainingTime > 0) {
+    interval = setInterval(() => {
+      setRemainingTime((prevTime) => prevTime - 1000); // Decrease the remaining time by 1 second
+    }, 1000);
+  }
+  return () => clearInterval(interval); // Cleanup interval on component unmount
+}, [isRewardAvailable, remainingTime]);
 
-  const formatRemainingTime = (milliseconds) => {
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+  
 
-    if (hours > 1) {
-      return `${hours} hr left`; // Show only hours left if more than 1 hour
-    }
-    return `${hours}h ${minutes}m ${seconds}s left`; // Show full timer for less than 1 hour
-  };
+const formatRemainingTime = (milliseconds) => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
 
-  const initializeUser = useCallback(async () => {
-    if (!userID) {
-      const userId = await getUserID(setUserID);
-      setUserID(userId);
-    }
+  // Format as "hours:minutes:seconds"
+  if (hours > 1) {
+    return `${hours} hr left`; // Show only hours left if more than 1 hour
+  }
+  return `${hours}h ${minutes}m ${seconds}s left`; // Show full timer for less than 1 hour
+};
+const initializeUser = useCallback(async () => {
+  if (!userID) {
+    // Get userID asynchronously if not already set
+    const fetchedUserID = await getUserID();
+    setUserID(fetchedUserID); // Set the userID in state
+  }
 
-    const savedPoints = localStorage.getItem(`points_${userID}`);
-    if (savedPoints) {
-      setPoints(parseFloat(savedPoints));
-    }
+  // Fetch points from localStorage if available, else initialize it
+  const savedPoints = localStorage.getItem(`points_${userID}`);
+  if (savedPoints) {
+    setPoints(parseFloat(savedPoints)); // Set points from localStorage
+  }
 
-    checkDailyRewardAvailability();
-  }, [userID, setUserID, setPoints, checkDailyRewardAvailability]);
-
+  // Check reward availability after userID is set
+  if (userID) {
+    await checkDailyRewardAvailability(); // Ensure reward logic executes after setting userID
+  }
+}, [userID, setUserID, setPoints, checkDailyRewardAvailability]);
+useEffect(() => {
+  initializeUser(); // Call once when component mounts
+}, [initializeUser]); // Dependency is the memoized initializeUser function
   const handleContextMenu = (e) => {
     e.preventDefault(); // This will prevent the default long-press behavior
   };
@@ -469,31 +480,38 @@ function HomePage() {
   );
   const claimDailyReward = async () => {
     try {
-      setShowModal(false); // Close the modal immediately after the claim button is clicked
-
+      // Close the modal immediately after the claim button is clicked
+      setShowModal(false);
+    
+      // Make the API call to claim the reward
       const response = await axios.put(
         `${process.env.REACT_APP_API_URL}/user-info/claim-daily-reward/${userID}`
       );
+      
+      // Get the new points after claiming the reward
       const newPoints = response.data.points;
-
+    
+      // Update the points in the state and local storage
       setPoints(newPoints);
-      localStorage.setItem(`points_${userID}`, newPoints); // Update points in local storage
-      setIsRewardAvailable(false); // Reward just claimed, so it's no longer available
-
-      // Reset the remaining time to 24 hours (86400000 milliseconds)
-      setRemainingTime(24 * 60 * 60 * 1000);
-
+      localStorage.setItem(`points_${userID}`, newPoints);
+    
+      // Mark the reward as claimed and set the timer to reset for 24 hours
+      setIsRewardAvailable(false); 
+      setRemainingTime(24 * 60 * 60 * 1000); // Reset to 24 hours (86400000 milliseconds)
+    
+      // Play the celebration sound and show confetti
       setShowConfetti(true);
-      audioRef.current.play(); // Play celebration sound
-
+      audioRef.current.play(); // Play the celebration sound
+    
+      // Hide confetti after 5 seconds
       setTimeout(() => {
-        setShowConfetti(false); // Hide confetti after 5 seconds
+        setShowConfetti(false);
       }, 5000);
     } catch (error) {
       console.error("Error claiming daily reward:", error);
     }
   };
-
+  
   const openModal = () => setShowModal(true);
 
   const closeModal = () => {
@@ -627,24 +645,26 @@ function HomePage() {
         </EnergyContainer>
 
         <Link
-          to="#"
-          onClick={isRewardAvailable ? openModal : null}
-          style={{
-            textDecoration: "none",
-            pointerEvents: isRewardAvailable ? "auto" : "none",
-            opacity: isRewardAvailable ? 1 : 0.5,
-          }}
-        >
-          {!isRewardAvailable && remainingTime > 0 && (
-            <SmallTimerText>
-              {formatRemainingTime(remainingTime)}
-            </SmallTimerText>
-          )}
-          <EnergyContainer>
-            <FireIcon $available={isRewardAvailable} />
-            Daily Reward
-          </EnergyContainer>
-        </Link>
+  to="#"
+  onClick={isRewardAvailable ? openModal : null}
+  style={{
+    textDecoration: "none",
+    pointerEvents: isRewardAvailable ? "auto" : "none",
+    opacity: isRewardAvailable ? 1 : 0.5, // Dim the button if reward is not available
+  }}
+>
+  {/* Show the timer if reward is not available and remaining time is greater than 0 */}
+  {!isRewardAvailable && remainingTime > 0 && (
+    <SmallTimerText>
+      {formatRemainingTime(remainingTime)} {/* Call the formatting function */}
+    </SmallTimerText>
+  )}
+  <EnergyContainer>
+    <FireIcon $available={isRewardAvailable} />
+    Daily Reward
+  </EnergyContainer>
+</Link>
+
       </BottomContainer>
 
       {showModal && (
