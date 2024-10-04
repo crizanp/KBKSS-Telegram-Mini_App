@@ -83,27 +83,6 @@ function HomePage() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
-  useEffect(() => {
-    const preventContextMenu = (e) => {
-      e.preventDefault(); // Prevent right-click or long-press menu
-    };
-  
-    const enableClick = (e) => {
-      e.stopPropagation(); // Stop the event from propagating, ensuring only click works
-    };
-  
-    // Attach the event listeners
-    document.addEventListener("contextmenu", preventContextMenu); // Right-click/long-press disabled
-    document.addEventListener("touchstart", enableClick, { passive: true }); // Keep touch click active
-  
-    return () => {
-      // Clean up event listeners when component unmounts
-      document.removeEventListener("contextmenu", preventContextMenu);
-      document.removeEventListener("touchstart", enableClick);
-    };
-  }, []);
-  
-
   // Fetch fallback avatar dynamically
   const fetchFallbackAvatar = useCallback(async () => {
     try {
@@ -163,7 +142,6 @@ function HomePage() {
         src={activeAvatar || fallbackAvatar} // Use active avatar if available, fallback otherwise
         alt=""
         className="eagle-image"
-        onContextMenu={(e) => e.preventDefault()}
         loading="lazy"
         onError={(e) => {
           e.target.onerror = null;
@@ -584,8 +562,7 @@ useEffect(() => {
 
       <MiddleSection>
         {/* <Message>{getMessage}</Message>{" "} */}
-        <EagleContainer
-        onContextMenu={(e) => e.preventDefault()}>{memoizedEagleImage}</EagleContainer>
+        <EagleContainer>{memoizedEagleImage}</EagleContainer>
       </MiddleSection>
 
       {/* Right-side menu container to handle Boost and Leaderboard */}
@@ -594,7 +571,6 @@ useEffect(() => {
         {/* Boost with hover, floating and gradient background */}
         <Link
           to="/boosts"
-          onContextMenu={(e) => e.preventDefault()}
           onClick={(e) => e.stopPropagation()} // Prevent tap propagation
           style={{
             marginBottom: "15px",
@@ -614,8 +590,6 @@ useEffect(() => {
         {/* Leaderboard with hover, floating and gradient background */}
         <Link
           to="/leaderboard"
-            onContextMenu={(e) => e.preventDefault()} // Prevent long-press popup
-
           onClick={(e) => e.stopPropagation()} // Prevent tap propagation
           style={{
             textDecoration: "none",
@@ -635,7 +609,6 @@ useEffect(() => {
         </Link>
         <Link
           to="/avatars"
-          onContextMenu={(e) => e.preventDefault()}
           onClick={(e) => e.stopPropagation()} // Prevent tap propagation
           style={{
             marginTop: "15px",

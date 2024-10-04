@@ -3,6 +3,10 @@ body {
   font-family: 'Orbitron',sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 code {
