@@ -104,9 +104,11 @@ export const EagleImage = styled.img`
   width: 110%;
   height: 110%;
   margin-top: 10px;
-  user-select: none;      /* Disable text/image selection */
-  pointer-events: none;   /* Disable all pointer events */
-  -webkit-user-drag: none; /* Disable drag on image in Webkit-based browsers */  
+  -webkit-tap-highlight-color: transparent;
+  margin-top: 10px;
+  user-select: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
   pointer-events: auto;
   z-index: 500; // Lower z-index than the right-side menu
 
