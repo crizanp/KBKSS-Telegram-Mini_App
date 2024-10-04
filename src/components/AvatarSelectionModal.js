@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { FaTimes } from "react-icons/fa"; // Close button icon
 import { FaRegGem } from "react-icons/fa"; // Gem icon import
 
 // Overlay for the modal background
@@ -16,8 +17,15 @@ const ModalOverlay = styled.div`
   z-index: 1000;
 `;
 
+const GemIconModal = styled(FaRegGem)`
+  color: #36a8e5; // Similar color to UserInfo component
+  margin-left: 8px;
+  margin-right: 8px;
+  font-size: 1.9rem;
+`;
+
 // Modal container with slide-up animation
-const ModalContainer = styled.div`
+const RewardModalContainer = styled.div`
   width: 100%;
   max-width: 460px;
   background: linear-gradient(135deg, #0f1a27, #0f1a27);
@@ -50,71 +58,84 @@ const ModalHeader = styled.h2`
   text-align: center;
   font-size: 26px;
   color: #ffffff;
-  margin-bottom: 20px;
 `;
 
-// Display points or confirmation message
-const ModalMessage = styled.p`
-  font-size: 16px;
-  text-align: center;
-  color: #d3cece;
-  margin-bottom: 20px;
-`;
-
-// Modal action buttons container
-const ModalActions = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-`;
-
-// Button component
-const Button = styled.button`
-  flex: 1;
+// Button to confirm action
+const ClaimButton = styled.button`
+  background-color: #36a8e5;
+  color: white;
+  font-size: 20px;
   padding: 10px 20px;
-  font-size: 16px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background-color: ${(props) => (props.isCancel ? "#555" : "#36a8e5")};
-  color: white;
+  width: 100%;
+  margin-top: 20px;
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: ${(props) => (props.isCancel ? "#444" : "#298dc8")};
+    background-color: #298dc8;
   }
 `;
 
-// Gem Icon for modal
-const GemIcon = styled(FaRegGem)`
+// Display points or confirmation message
+const PointsDisplayModal = styled.div`
+  font-size: 22px;
+  text-align: center;
   color: #36a8e5;
-  margin-right: 5px;
-  font-size: 1.5rem;
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
-const AvatarSelectionModal = ({ message, title, onConfirm, onCancel }) => {
+// Close button
+const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 40px;
+  color: #d3cece;
+  background: none;
+  border: none;
+  cursor: pointer;
+`;
+
+// Styled image component
+const StyledImage = styled.img`
+  width: 117px;
+  height: 131px;
+  display: block;
+  margin: 0 auto 20px;
+`;
+
+const AvatarSelectionModal = ({ onGoAhead, onClose, isClosing, gemsRequired, points }) => {
   return (
-    <ModalOverlay>
-      <ModalContainer>
-        {/* Header */}
-        <ModalHeader>{title}</ModalHeader>
+    <ModalOverlay onClick={onClose}>
+      <RewardModalContainer onClick={(e) => e.stopPropagation()} isClosing={isClosing}>
+        <CloseButton onClick={onClose}>×</CloseButton>
 
-        {/* Message */}
-        <ModalMessage>{message}</ModalMessage>
+        {/* Image placed below the header */}
+        <StyledImage src="https://i.ibb.co/z2c4kfZ/3d.png" alt="Crown" />
 
-        {/* Actions */}
-        <ModalActions>
-          <Button isCancel onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button onClick={onConfirm}>
-            <GemIcon />
-            Confirm
-          </Button>
-        </ModalActions>
-      </ModalContainer>
+        <ModalHeader>Unlock Avatar</ModalHeader>
+
+        {/* Updated Points Display with Gem Icon */}
+        <PointsDisplayModal>
+          <GemIconModal />
+          <span style={{ fontSize: "22px" }}>- {gemsRequired} $GEMS</span>
+        </PointsDisplayModal>
+
+        <p style={{ textAlign: "center", color: "rgb(221 204 204)", fontSize: "16px" }}>
+          Unlocking this avatar will deduct {gemsRequired} $GEMS from your total.
+        </p>
+
+        {/* Check if points are sufficient */}
+        <ClaimButton onClick={onGoAhead} disabled={gemsRequired > points}>
+          {gemsRequired > points ? 'Not Enough Gems' : 'Go Ahead'}
+        </ClaimButton>
+      </RewardModalContainer>
     </ModalOverlay>
   );
 };
-
 export default AvatarSelectionModal;

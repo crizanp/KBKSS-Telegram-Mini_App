@@ -161,14 +161,18 @@ const TopRightGems = styled.div`
 
 
 const AvatarSelection = () => {
-  const { points } = usePoints(); // Points context
+  const { points, setPoints } = usePoints();
   const [modalData, setModalData] = useState(null); // Modal data for confirmation
   const [unlockedAvatars, setUnlockedAvatars] = useState([]); // Unlocked avatars
   const [activeAvatar, setActiveAvatar] = useState(null); // Active avatar
   const [fallbackAvatar, setFallbackAvatar] = useState(null); // Fallback avatar
   const [userID, setUserID] = useState(null); // Track userID
   const queryClient = useQueryClient(); // Initialize query client to invalidate queries
-
+  const [isClosing, setIsClosing] = useState(false);
+  const handleModalClose = () => {
+    setIsClosing(true);
+    setTimeout(() => setModalData(null), 500);  // Timeout matches the animation duration
+  };
   // Fetch userID
   useEffect(() => {
     const fetchUserID = async () => {
@@ -302,6 +306,7 @@ const AvatarSelection = () => {
       setModalData({
         avatar,
         message: `Are you sure you want to unlock the avatar ${avatar.name} and deduct ${avatar.gemsRequired} gems?`,
+        gemsRequired: avatar.gemsRequired, // Pass the required gems to modal
         action: 'unlock', // Unlock action
       });
     } else {
@@ -327,36 +332,58 @@ const AvatarSelection = () => {
     }
   };
 
-  // Confirm modal action: Set active or unlock
+  // Modify your handleConfirmAction function
+
   const handleConfirmAction = async () => {
     if (!modalData?.avatar) return;
-
+  
     try {
       const avatarId = modalData.avatar._id;
-
+  
       if (modalData.action === 'unlock') {
-        // Optimistically update the unlocked avatars in local state
-        setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
-
+        // Check if user has enough points
+        if (points < modalData.avatar.gemsRequired) {
+          showToast('Not enough points to unlock this avatar!', 'error');
+          return;
+        }
+  
+        // Deduct points in the backend
+        const pointsToDeduct = modalData.avatar.gemsRequired;
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_URL}/user-info/deduct-points`,
+          {
+            userID: userID,
+            pointsToDeduct,
+          }
+        );
+  
+        // Get updated points from the response
+        const updatedPoints = response.data.points;
+  
+        // Update the points in local storage and context
+        setPoints(updatedPoints); // Update points in PointsContext
+        localStorage.setItem(`points_${userID}`, updatedPoints);
+  
         // Unlock the avatar and automatically set it as active
         await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlock-avatar/${avatarId}`);
         await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
-
+  
+        // Optimistically update the unlocked avatars in local state
+        setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
         setActiveAvatar(modalData.avatar);
-
+  
         showToast(`Avatar ${modalData.avatar.name} has been unlocked and set as active!`, 'success');
-
+  
         // Invalidate the queries to refetch the active avatar and unlocked avatars
         queryClient.invalidateQueries(['activeAvatar', userID]);
         queryClient.invalidateQueries(['unlockedAvatars', userID]);
       }
-
+  
       setModalData(null); // Close modal after confirmation
     } catch (error) {
       showToast('Failed to complete the action. Please try again.', 'error');
     }
   };
-
   // Filter out avatars that are already unlocked for the locked avatars section
   const lockedAvatars = avatars?.filter((avatar) => !unlockedAvatars.some((uAvatar) => uAvatar._id === avatar._id));
 
@@ -442,13 +469,14 @@ const AvatarSelection = () => {
 
       {/* Confirmation Modal */}
       {modalData && (
-        <AvatarSelectionModal
-          message={modalData.message}
-          title="Please Confirm"
-          onConfirm={handleConfirmAction}
-          onCancel={() => setModalData(null)}
-        />
-      )}
+  <AvatarSelectionModal
+    gemsRequired={modalData.gemsRequired}
+    onGoAhead={handleConfirmAction}
+    onClose={() => setModalData(null)}
+    isClosing={false}
+    points={points} // Pass the points prop here
+  />
+)}
     </Container>
   );
 };
