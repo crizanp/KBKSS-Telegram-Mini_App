@@ -13,6 +13,7 @@ import Confetti from "react-confetti";
 import celebrationSound from "../assets/celebration.mp3";
 import leaderboardImage from "../assets/leaderboard.png";
 import { CgProfile } from "react-icons/cg";
+import { useQuery, useQueryClient } from '@tanstack/react-query'; // Import useQueryClient for query invalidation
 
 import {
   HomeContainer,
@@ -70,6 +71,9 @@ function HomePage() {
   const bottomMenuRef = useRef(null);
   const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
   const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
+const [activeAvatar, setActiveAvatar] = useState(null); // Track active avatar state
+  const [fallbackAvatar, setFallbackAvatar] = useState(eagleImage); // Fallback avatar as default eagle
+  const queryClient = useQueryClient(); // Initialize query client
 
   // Accumulate unsynced points to avoid sending too many server requests
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
@@ -79,21 +83,47 @@ function HomePage() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
+   
   const memoizedEagleImage = useMemo(() => {
     return (
       <EagleImage
-        src="https://i.postimg.cc/prZCBRrr/Untitled-design-4.png" 
-        alt="Eagle"
+        key={activeAvatar ? activeAvatar._id : 'fallback'} // Add key for re-render
+        src={activeAvatar ? activeAvatar.image : fallbackAvatar} // Use correct 'image' key
+        alt="Avatar"
         className="eagle-image"
         loading="lazy"
         onError={(e) => {
-          e.target.onerror = null; // Prevent infinite loop in case fallback fails too
-          e.target.src = eagleImage; // Replace with your local fallback file path
+          e.target.onerror = null;
+          e.target.src = eagleImage; // Fallback to eagle image
         }}
       />
     );
-  }, []);
-  
+  }, [activeAvatar, fallbackAvatar]); // Recalculate only when avatar changes
+ // Fetch active avatar
+ const fetchActiveAvatar = useCallback(async (userID) => {
+  try {
+    const response = await axios.get(
+      `${process.env.REACT_APP_API_URL}/user-avatar/${userID}/active-avatar`
+    );
+
+    // Debug: log the response to ensure it's correct
+    console.log("Active Avatar Response:", response.data);
+
+    // Set the correct active avatar
+    if (response.data && response.data.image) {
+      setActiveAvatar(response.data); // Set the active avatar
+    } else {
+      setActiveAvatar(null); // No active avatar found, reset
+    }
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      setActiveAvatar(null); // If no avatar found, set null
+    } else {
+      console.error("Error fetching active avatar:", error);
+    }
+  }
+}, []);
+
   const fetchActiveBackground = useCallback(async () => {
     try {
       const cachedBackground = localStorage.getItem("activeBackground");
@@ -207,14 +237,34 @@ function HomePage() {
 
     checkDailyRewardAvailability();
   }, [userID, setUserID, setPoints, checkDailyRewardAvailability]);
+
   const handleContextMenu = (e) => {
     e.preventDefault(); // This will prevent the default long-press behavior
   };
+  // Refetch avatar if the user changes it
   useEffect(() => {
     if (userID) {
-      initializeUser();
+      fetchActiveAvatar(userID); // Fetch the active avatar after getting the userID
     }
-  }, [userID, initializeUser]);
+  }, [userID, fetchActiveAvatar]);
+
+  // Invalidate the avatar queries to refetch when avatar is changed
+  useEffect(() => {
+    const invalidateAvatar = () => {
+      queryClient.invalidateQueries(['activeAvatar', userID]); // Refetch active avatar
+    };
+
+    window.addEventListener("avatarChanged", invalidateAvatar); // Custom event listener
+
+    return () => {
+      window.removeEventListener("avatarChanged", invalidateAvatar);
+    };
+  }, [userID, queryClient]);
+  useEffect(() => {
+    if (userID) {
+      fetchActiveAvatar(userID); // Fetch the active avatar after getting userID
+    }
+  }, [userID, fetchActiveAvatar]);
 
   const getMessage = useMemo(() => {
     if (tapCount >= 150) return "He's feeling it! Keep going!";
