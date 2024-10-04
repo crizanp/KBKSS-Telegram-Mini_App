@@ -563,7 +563,8 @@ useEffect(() => {
 
       <MiddleSection>
         {/* <Message>{getMessage}</Message>{" "} */}
-        <EagleContainer>{memoizedEagleImage}</EagleContainer>
+        <EagleContainer
+        onContextMenu={(e) => e.preventDefault()}>{memoizedEagleImage}</EagleContainer>
       </MiddleSection>
 
       {/* Right-side menu container to handle Boost and Leaderboard */}
