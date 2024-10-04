@@ -140,7 +140,7 @@ function HomePage() {
     return (
       <EagleImage
         src={activeAvatar || fallbackAvatar} // Use active avatar if available, fallback otherwise
-        alt="Avatar"
+        alt=""
         className="eagle-image"
         loading="lazy"
         onError={(e) => {
