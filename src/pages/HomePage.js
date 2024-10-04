@@ -83,6 +83,23 @@ function HomePage() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
+  useEffect(() => {
+    const preventContextMenu = (e) => {
+      e.preventDefault(); // Prevent default context menu
+    };
+  
+    // Attach event listeners, making 'touchstart' non-passive
+    document.addEventListener("contextmenu", preventContextMenu);
+    document.addEventListener("touchstart", preventContextMenu, { passive: false }); // Explicitly set passive: false
+  
+    return () => {
+      // Clean up event listeners when component unmounts
+      document.removeEventListener("contextmenu", preventContextMenu);
+      document.removeEventListener("touchstart", preventContextMenu);
+    };
+  }, []);
+  
+
   // Fetch fallback avatar dynamically
   const fetchFallbackAvatar = useCallback(async () => {
     try {
@@ -573,6 +590,7 @@ useEffect(() => {
         {/* Boost with hover, floating and gradient background */}
         <Link
           to="/boosts"
+          onContextMenu={(e) => e.preventDefault()}
           onClick={(e) => e.stopPropagation()} // Prevent tap propagation
           style={{
             marginBottom: "15px",
@@ -592,6 +610,8 @@ useEffect(() => {
         {/* Leaderboard with hover, floating and gradient background */}
         <Link
           to="/leaderboard"
+            onContextMenu={(e) => e.preventDefault()} // Prevent long-press popup
+
           onClick={(e) => e.stopPropagation()} // Prevent tap propagation
           style={{
             textDecoration: "none",
@@ -611,6 +631,7 @@ useEffect(() => {
         </Link>
         <Link
           to="/avatars"
+          onContextMenu={(e) => e.preventDefault()}
           onClick={(e) => e.stopPropagation()} // Prevent tap propagation
           style={{
             marginTop: "15px",
