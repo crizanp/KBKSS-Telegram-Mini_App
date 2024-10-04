@@ -118,7 +118,7 @@ const GemsDisplay = styled.div`
 const GemIcon = styled(FaRegGem)`
   color: #36a8e5;
   margin-right: 5px;
-  font-size: 1.2rem;
+  font-size: 0.8rem;
 `;
 
 const LevelDisplay = styled.div`
@@ -158,37 +158,78 @@ const TopRightGems = styled.div`
   color: white;
 `;
 
-// Fetch user details from the `/user-avatar/:userID` endpoint
-const fetchUserDetails = async (userID) => {
-  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}`);
-  return data;
-};
-
-// Fetch all avatars from the API
-const fetchAvatars = async () => {
-  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/avatar`);
-  return data;
-};
-
-// Fetch unlocked avatars
-const fetchUnlockedAvatars = async (userID) => {
-  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlocked-avatars`);
-  return data;
-};
-
-// Fetch active avatar
-const fetchActiveAvatar = async (userID) => {
-  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/active-avatar`);
-  return data;
-};
-
+// AvatarSelection Component
 const AvatarSelection = () => {
   const { points } = usePoints(); // Points context
   const [modalData, setModalData] = useState(null); // Modal data for confirmation
   const [unlockedAvatars, setUnlockedAvatars] = useState([]); // Unlocked avatars
   const [activeAvatar, setActiveAvatar] = useState(null); // Active avatar
+  const [fallbackAvatar, setFallbackAvatar] = useState(null); // Fallback avatar
 
-  // Fetch userID
+  // Fetch fallback avatar
+  const fetchFallbackAvatar = async () => {
+    try {
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/fallback-avatar`);
+      const defaultAvatar = data.length > 0 ? data[0] : null;
+      setFallbackAvatar(defaultAvatar);
+    } catch (error) {
+      console.error('Error fetching fallback avatar:', error);
+    }
+  };
+
+  // Fetch user details
+  const fetchUserDetails = async (userID) => {
+    try {
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      throw error;
+    }
+  };
+
+  // Fetch active avatar
+  const fetchActiveAvatar = async (userID) => {
+    try {
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/active-avatar`);
+      setActiveAvatar(data);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        // If no active avatar is found, fetch fallback avatar
+        fetchFallbackAvatar();
+      } else {
+        showToast('Error fetching active avatar.', 'error');
+        console.error('Error fetching active avatar:', error);
+      }
+    }
+  };
+
+  // Fetch unlocked avatars
+  const fetchUnlockedAvatars = async (userID) => {
+    try {
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlocked-avatars`);
+      setUnlockedAvatars(data);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        showToast('No unlocked avatars found.', 'info');
+      } else {
+        showToast('Error fetching unlocked avatars.', 'error');
+        console.error('Error fetching unlocked avatars:', error);
+      }
+    }
+  };
+
+  // Fetch all avatars
+  const fetchAvatars = async () => {
+    try {
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/avatar`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching avatars:', error);
+    }
+  };
+
+  // Use React Query to fetch userDetails, avatars, unlockedAvatars, and activeAvatar
   const { data: userDetails, isLoading: userLoading, isError: userError } = useQuery({
     queryKey: ['userDetails'],
     queryFn: async () => {
@@ -197,30 +238,27 @@ const AvatarSelection = () => {
     },
   });
 
-  // Fetch all avatars
   const { data: avatars, isLoading: avatarsLoading, isError: avatarsError } = useQuery({
     queryKey: ['avatars'],
     queryFn: fetchAvatars,
   });
 
-  // Fetch unlocked avatars
   const { data: unlockedAvatarData, isLoading: unlockedAvatarsLoading } = useQuery({
     queryKey: ['unlockedAvatars', userDetails?.userID],
     queryFn: async () => {
-      const userID = await getUserID();
+      const userID = userDetails?.userID;
       return fetchUnlockedAvatars(userID);
     },
-    enabled: !!userDetails, // Ensure this query runs only after userDetails is fetched
+    enabled: !!userDetails?.userID, // Ensure this query runs only if userDetails and userID are available
   });
 
-  // Fetch active avatar
   const { data: activeAvatarData, isLoading: activeAvatarLoading } = useQuery({
     queryKey: ['activeAvatar', userDetails?.userID],
     queryFn: async () => {
-      const userID = await getUserID();
+      const userID = userDetails?.userID;
       return fetchActiveAvatar(userID);
     },
-    enabled: !!userDetails, // Ensure this query runs only after userDetails is fetched
+    enabled: !!userDetails?.userID, // Ensure this query runs only if userDetails and userID are available
   });
 
   // Set unlocked and active avatars after fetching
@@ -281,7 +319,6 @@ const AvatarSelection = () => {
       setModalData(null); // Close modal after confirmation
     } catch (error) {
       showToast('Failed to complete the action. Please try again.', 'error');
-      console.error('Error:', error);
     }
   };
 
@@ -329,6 +366,13 @@ const AvatarSelection = () => {
                 <Title>{activeAvatar.name}</Title>
               </AvatarInfo>
             </>
+          ) : fallbackAvatar ? (
+            <>
+              <CurrentAvatarImage src={fallbackAvatar.fallbackAvatarUrl} alt="Fallback Avatar" />
+              <AvatarInfo>
+                <Title>Default Avatar</Title>
+              </AvatarInfo>
+            </>
           ) : (
             <p>No Active Avatar. Please select one.</p>
           )}
@@ -337,7 +381,7 @@ const AvatarSelection = () => {
 
       {/* More Avatars Section */}
       <MoreAvatarsSection>
-        <MoreAvatarsTitle>Eligible Avatars to Unlock</MoreAvatarsTitle>
+        <MoreAvatarsTitle>More Avatars to Unlock</MoreAvatarsTitle>
         <MoreAvatarsGrid>
           {lockedAvatars?.map((avatar) => {
             const isLocked = userDetails.level < avatar.levelRequired || points < avatar.gemsRequired;
