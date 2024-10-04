@@ -51,7 +51,6 @@ import {
 } from "../style/HomePageStyles";
 import UserInfo from "../components/UserInfo";
 import { getUserID } from "../utils/getUserID";
-import eagleImage from "../assets/eagle.png";
 
 function HomePage() {
   const { points, setPoints, pointsPerTap, userID, setUserID } = usePoints();
@@ -71,8 +70,9 @@ function HomePage() {
   const bottomMenuRef = useRef(null);
   const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
   const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
-const [activeAvatar, setActiveAvatar] = useState(null); // Track active avatar state
-  const [fallbackAvatar, setFallbackAvatar] = useState(eagleImage); // Fallback avatar as default eagle
+  const [activeAvatar, setActiveAvatar] = useState(null);
+  const [fallbackAvatar, setFallbackAvatar] = useState(null);
+
   const queryClient = useQueryClient(); // Initialize query client
 
   // Accumulate unsynced points to avoid sending too many server requests
@@ -83,46 +83,73 @@ const [activeAvatar, setActiveAvatar] = useState(null); // Track active avatar s
     width: window.innerWidth,
     height: window.innerHeight,
   });
-   
+  // Fetch fallback avatar dynamically
+  const fetchFallbackAvatar = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/fallback-avatar`);
+      if (data && data.length > 0) {
+        setFallbackAvatar(data[0].fallbackAvatarUrl); // Set fallback avatar URL
+      }
+    } catch (error) {
+      console.error("Error fetching fallback avatar:", error);
+    }
+  }, []);
+
+  // Fetch active avatar
+  const fetchActiveAvatar = useCallback(
+    async (userID) => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/user-avatar/${userID}/active-avatar`
+        );
+
+        if (response.data && response.data.image) {
+          setActiveAvatar(response.data.image); // Set active avatar image
+        } else {
+          fetchFallbackAvatar(); // Fetch fallback if no active avatar is found
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 404) {
+          fetchFallbackAvatar(); // Fetch fallback if 404 occurs
+        } else {
+          console.error("Error fetching active avatar:", error);
+        }
+      } finally {
+        setIsLoading(false); // Once fetching is done, set loading to false
+      }
+    },
+    [fetchFallbackAvatar]
+  );
+  // Initial fetch of avatar (active or fallback)
+  useEffect(() => {
+    if (userID) {
+      fetchActiveAvatar(userID); // Fetch active avatar on component mount
+    }
+  }, [userID, fetchActiveAvatar]);
+
+  // Ensure fallback avatar is loaded if no active avatar exists
+  useEffect(() => {
+    if (!activeAvatar && !fallbackAvatar && !isLoading) {
+      fetchFallbackAvatar(); // Load fallback avatar if neither is available
+    }
+  }, [activeAvatar, fallbackAvatar, isLoading, fetchFallbackAvatar]);
+
+  // Memoized eagle image, ensure it only renders when avatar is available
   const memoizedEagleImage = useMemo(() => {
+    if (isLoading) return null; // Don't render if still loading
     return (
       <EagleImage
-        key={activeAvatar ? activeAvatar._id : 'fallback'} // Add key for re-render
-        src={activeAvatar ? activeAvatar.image : fallbackAvatar} // Use correct 'image' key
+        src={activeAvatar || fallbackAvatar} // Use active avatar if available, fallback otherwise
         alt="Avatar"
         className="eagle-image"
         loading="lazy"
         onError={(e) => {
           e.target.onerror = null;
-          e.target.src = eagleImage; // Fallback to eagle image
+          e.target.src = fallbackAvatar; // Fallback if error occurs loading active avatar
         }}
       />
     );
-  }, [activeAvatar, fallbackAvatar]); // Recalculate only when avatar changes
- // Fetch active avatar
- const fetchActiveAvatar = useCallback(async (userID) => {
-  try {
-    const response = await axios.get(
-      `${process.env.REACT_APP_API_URL}/user-avatar/${userID}/active-avatar`
-    );
-
-    // Debug: log the response to ensure it's correct
-    console.log("Active Avatar Response:", response.data);
-
-    // Set the correct active avatar
-    if (response.data && response.data.image) {
-      setActiveAvatar(response.data); // Set the active avatar
-    } else {
-      setActiveAvatar(null); // No active avatar found, reset
-    }
-  } catch (error) {
-    if (error.response && error.response.status === 404) {
-      setActiveAvatar(null); // If no avatar found, set null
-    } else {
-      console.error("Error fetching active avatar:", error);
-    }
-  }
-}, []);
+  }, [activeAvatar, fallbackAvatar, isLoading]);
 
   const fetchActiveBackground = useCallback(async () => {
     try {
