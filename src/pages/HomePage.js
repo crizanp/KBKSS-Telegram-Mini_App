@@ -142,6 +142,7 @@ function HomePage() {
         src={activeAvatar || fallbackAvatar} // Use active avatar if available, fallback otherwise
         alt=""
         className="eagle-image"
+        onContextMenu={(e) => e.preventDefault()}
         loading="lazy"
         onError={(e) => {
           e.target.onerror = null;
