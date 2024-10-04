@@ -85,17 +85,21 @@ function HomePage() {
   });
   useEffect(() => {
     const preventContextMenu = (e) => {
-      e.preventDefault(); // Prevent default context menu
+      e.preventDefault(); // Prevent right-click or long-press menu
     };
   
-    // Attach event listeners, making 'touchstart' non-passive
-    document.addEventListener("contextmenu", preventContextMenu);
-    document.addEventListener("touchstart", preventContextMenu, { passive: false }); // Explicitly set passive: false
+    const enableClick = (e) => {
+      e.stopPropagation(); // Stop the event from propagating, ensuring only click works
+    };
+  
+    // Attach the event listeners
+    document.addEventListener("contextmenu", preventContextMenu); // Right-click/long-press disabled
+    document.addEventListener("touchstart", enableClick, { passive: true }); // Keep touch click active
   
     return () => {
       // Clean up event listeners when component unmounts
       document.removeEventListener("contextmenu", preventContextMenu);
-      document.removeEventListener("touchstart", preventContextMenu);
+      document.removeEventListener("touchstart", enableClick);
     };
   }, []);
   
