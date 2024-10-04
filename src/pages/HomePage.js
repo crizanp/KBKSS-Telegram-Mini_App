@@ -14,6 +14,7 @@ import celebrationSound from "../assets/celebration.mp3";
 import leaderboardImage from "../assets/leaderboard.png";
 import { CgProfile } from "react-icons/cg";
 import { useQuery, useQueryClient } from '@tanstack/react-query'; // Import useQueryClient for query invalidation
+import styled, { keyframes } from "styled-components";
 
 import {
   HomeContainer,
@@ -21,7 +22,6 @@ import {
   PointsDisplay,
   MiddleSection,
   Message,
-  EagleContainer,
   EagleImage,
   FlyingNumber,
   SlapEmojiImage,
@@ -51,6 +51,17 @@ import {
 } from "../style/HomePageStyles";
 import UserInfo from "../components/UserInfo";
 import { getUserID } from "../utils/getUserID";
+
+ const EagleContainer = styled.div`
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  justify-content: center;
+  -webkit-user-drag: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+`;
 
 function HomePage() {
   const { points, setPoints, pointsPerTap, userID, setUserID } = usePoints();
