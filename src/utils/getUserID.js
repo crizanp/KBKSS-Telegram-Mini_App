@@ -19,8 +19,8 @@ export const getUserID = async (setUserID = () => {}, setUsername = () => {}) =>
 
   // For localhost testing
   if (isLocalhost) {
-    tgUserID = "123456789";
-    tgUsername = "mockUsernamenew"; // Mock username for testing
+    tgUserID = "1234567890";
+    tgUsername = "mockUsernamenew1"; // Mock username for testing
     tgFirstName = "MockFirstName"; // Mock first name for testing
     console.warn(
       "Running on localhost: Mock Telegram user ID, username, and first name assigned."

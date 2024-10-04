@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaRegGem } from 'react-icons/fa';
 import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'; // Added useQueryClient
 import { usePoints } from '../context/PointsContext';
 import SkeletonLoader from '../components/skeleton/AvatarSkeleton'; // Placeholder for loading state
 import UserInfo from '../components/UserInfo'; // User Info Component
@@ -158,13 +158,26 @@ const TopRightGems = styled.div`
   color: white;
 `;
 
-// AvatarSelection Component
+
+
 const AvatarSelection = () => {
   const { points } = usePoints(); // Points context
   const [modalData, setModalData] = useState(null); // Modal data for confirmation
   const [unlockedAvatars, setUnlockedAvatars] = useState([]); // Unlocked avatars
   const [activeAvatar, setActiveAvatar] = useState(null); // Active avatar
   const [fallbackAvatar, setFallbackAvatar] = useState(null); // Fallback avatar
+  const [userID, setUserID] = useState(null); // Track userID
+  const queryClient = useQueryClient(); // Initialize query client to invalidate queries
+
+  // Fetch userID
+  useEffect(() => {
+    const fetchUserID = async () => {
+      const id = await getUserID();
+      setUserID(id); // Set userID after fetching
+      console.log("UserID fetched:", id);
+    };
+    fetchUserID();
+  }, []); // Run this once when the component mounts
 
   // Fetch fallback avatar
   const fetchFallbackAvatar = async () => {
@@ -192,14 +205,15 @@ const AvatarSelection = () => {
   const fetchActiveAvatar = async (userID) => {
     try {
       const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/active-avatar`);
-      setActiveAvatar(data);
+      return data; // Return the active avatar if found
     } catch (error) {
       if (error.response && error.response.status === 404) {
-        // If no active avatar is found, fetch fallback avatar
-        fetchFallbackAvatar();
+        fetchFallbackAvatar(); // If no active avatar, fetch fallback
+        return null; // Return null if no active avatar found
       } else {
         showToast('Error fetching active avatar.', 'error');
         console.error('Error fetching active avatar:', error);
+        throw error; // Re-throw other errors
       }
     }
   };
@@ -208,13 +222,15 @@ const AvatarSelection = () => {
   const fetchUnlockedAvatars = async (userID) => {
     try {
       const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlocked-avatars`);
-      setUnlockedAvatars(data);
+      return data; // Return the unlocked avatars if found
     } catch (error) {
       if (error.response && error.response.status === 404) {
         showToast('No unlocked avatars found.', 'info');
+        return []; // Return empty array if no unlocked avatars found
       } else {
         showToast('Error fetching unlocked avatars.', 'error');
         console.error('Error fetching unlocked avatars:', error);
+        throw error; // Re-throw other errors
       }
     }
   };
@@ -231,34 +247,38 @@ const AvatarSelection = () => {
 
   // Use React Query to fetch userDetails, avatars, unlockedAvatars, and activeAvatar
   const { data: userDetails, isLoading: userLoading, isError: userError } = useQuery({
-    queryKey: ['userDetails'],
-    queryFn: async () => {
-      const userID = await getUserID();
-      return fetchUserDetails(userID);
-    },
+    queryKey: ['userDetails', userID],
+    queryFn: () => fetchUserDetails(userID),
+    enabled: !!userID, // Ensure this query runs only when userID is available
+    staleTime: Infinity, // Prevents the query from refetching after the first successful call
+    cacheTime: Infinity, // Keep the data in cache indefinitely (until page refresh)
+    refetchOnWindowFocus: false, // Prevent refetching when the window gains focus
   });
 
   const { data: avatars, isLoading: avatarsLoading, isError: avatarsError } = useQuery({
     queryKey: ['avatars'],
     queryFn: fetchAvatars,
+    staleTime: Infinity, // Fetch only once, then cache the data
+    cacheTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 
   const { data: unlockedAvatarData, isLoading: unlockedAvatarsLoading } = useQuery({
-    queryKey: ['unlockedAvatars', userDetails?.userID],
-    queryFn: async () => {
-      const userID = userDetails?.userID;
-      return fetchUnlockedAvatars(userID);
-    },
-    enabled: !!userDetails?.userID, // Ensure this query runs only if userDetails and userID are available
+    queryKey: ['unlockedAvatars', userID],
+    queryFn: () => fetchUnlockedAvatars(userID),
+    enabled: !!userID, // Ensure this query runs only when userID is available
+    staleTime: Infinity, // Prevent refetching after the first successful call
+    cacheTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 
   const { data: activeAvatarData, isLoading: activeAvatarLoading } = useQuery({
-    queryKey: ['activeAvatar', userDetails?.userID],
-    queryFn: async () => {
-      const userID = userDetails?.userID;
-      return fetchActiveAvatar(userID);
-    },
-    enabled: !!userDetails?.userID, // Ensure this query runs only if userDetails and userID are available
+    queryKey: ['activeAvatar', userID],
+    queryFn: () => fetchActiveAvatar(userID),
+    enabled: !!userID, // Ensure this query runs only when userID is available
+    staleTime: Infinity, // Fetch only once and use cached data
+    cacheTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 
   // Set unlocked and active avatars after fetching
@@ -271,8 +291,13 @@ const AvatarSelection = () => {
     }
   }, [unlockedAvatarData, activeAvatarData]);
 
+  if (!userID) {
+    // Show a loading state until the userID is available
+    return <SkeletonLoader />;
+  }
+
   // Handle avatar unlocking
-  const handleUnlockAvatar = (avatar) => {
+  const handleUnlockAvatar = async (avatar) => {
     if (points >= avatar.gemsRequired && userDetails.level >= avatar.levelRequired) {
       setModalData({
         avatar,
@@ -287,10 +312,16 @@ const AvatarSelection = () => {
   // Handle setting active avatar
   const handleSetActiveAvatar = async (avatar) => {
     try {
-      const userID = await getUserID();
-      await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatar._id}`);
+      // Optimistically update the active avatar in local state
       setActiveAvatar(avatar);
+
+      await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatar._id}`);
+
       showToast(`Avatar ${avatar.name} is now set as your active avatar!`, 'success');
+
+      // Invalidate the queries to refetch the active avatar and unlocked avatars
+      queryClient.invalidateQueries(['activeAvatar', userID]);
+      queryClient.invalidateQueries(['unlockedAvatars', userID]);
     } catch (error) {
       showToast('Failed to set active avatar. Please try again.', 'error');
     }
@@ -301,19 +332,23 @@ const AvatarSelection = () => {
     if (!modalData?.avatar) return;
 
     try {
-      const userID = await getUserID();
       const avatarId = modalData.avatar._id;
 
       if (modalData.action === 'unlock') {
+        // Optimistically update the unlocked avatars in local state
+        setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
+
         // Unlock the avatar and automatically set it as active
         await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlock-avatar/${avatarId}`);
         await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
 
-        // Add the avatar to the unlocked list and set as active
-        setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
         setActiveAvatar(modalData.avatar);
 
         showToast(`Avatar ${modalData.avatar.name} has been unlocked and set as active!`, 'success');
+
+        // Invalidate the queries to refetch the active avatar and unlocked avatars
+        queryClient.invalidateQueries(['activeAvatar', userID]);
+        queryClient.invalidateQueries(['unlockedAvatars', userID]);
       }
 
       setModalData(null); // Close modal after confirmation
@@ -328,7 +363,7 @@ const AvatarSelection = () => {
   if (userLoading || avatarsLoading || activeAvatarLoading || unlockedAvatarsLoading) return <SkeletonLoader />; // Loading state
 
   if (userError || avatarsError) {
-    return <Container>Error loading avatars or user data</Container>; // Error handling
+    return <div>Error loading avatars or user data</div>; // Error handling
   }
 
   return (
