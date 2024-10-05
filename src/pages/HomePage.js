@@ -85,6 +85,7 @@ function HomePage() {
   const { activeAvatar, fallbackAvatar, setActiveAvatar, setFallbackAvatar, fetchActiveAvatar } = useUserAvatar();
   const queryClient = useQueryClient(); 
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
+  const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false);
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
@@ -125,27 +126,22 @@ function HomePage() {
 
   const fetchActiveBackground = useCallback(async () => {
     try {
-      const cachedBackground = JSON.parse(
-        localStorage.getItem("activeBackground")
-      );
+      const cachedBackground = JSON.parse(localStorage.getItem("activeBackground"));
       const now = new Date().getTime();
       const cacheDuration = 24 * 60 * 60 * 1000; // 24 hours
 
-      if (
-        cachedBackground &&
-        now - cachedBackground.timestamp < cacheDuration
-      ) {
-        setBackgroundImage(cachedBackground.url); // Use cached background if not expired
+      if (cachedBackground && now - cachedBackground.timestamp < cacheDuration) {
+        setBackgroundImage(cachedBackground.url); // Use cached background
+        setIsBackgroundLoaded(true); // Mark background as loaded
       } else {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/background/active`
-        );
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/background/active`);
         if (response.data && response.data.url) {
           setBackgroundImage(response.data.url);
           localStorage.setItem(
             "activeBackground",
             JSON.stringify({ url: response.data.url, timestamp: now })
-          ); // Cache the background with the current timestamp
+          ); // Cache the background
+          setIsBackgroundLoaded(true); // Mark background as loaded
         }
       }
     } catch (error) {
@@ -154,25 +150,15 @@ function HomePage() {
   }, []);
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        localStorage.removeItem("activeBackground"); // Clear background cache when app is hidden
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    fetchActiveBackground();
-  }, [fetchActiveBackground]); 
+    // Only fetch background if not already loaded
+    if (!isBackgroundLoaded) {
+      fetchActiveBackground();
+    }
+  }, [fetchActiveBackground, isBackgroundLoaded]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
-      localStorage.removeItem("activeBackground"); // Clear the background on page reload/close
+      localStorage.removeItem("activeBackground"); // Clear the background on page unload/close
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -181,7 +167,7 @@ function HomePage() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
-  
+
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({
