@@ -13,8 +13,9 @@ import Confetti from "react-confetti";
 import celebrationSound from "../assets/celebration.mp3";
 import leaderboardImage from "../assets/leaderboard.png";
 import { CgProfile } from "react-icons/cg";
-import { useQuery, useQueryClient } from '@tanstack/react-query'; // Import useQueryClient for query invalidation
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Import useQueryClient for query invalidation
 import styled, { keyframes } from "styled-components";
+import { useUserAvatar } from "../context/UserAvatarContext";
 
 import {
   HomeContainer,
@@ -52,15 +53,15 @@ import {
 import UserInfo from "../components/UserInfo";
 import { getUserID } from "../utils/getUserID";
 
- const EagleContainer = styled.div`
+const EagleContainer = styled.div`
   border-radius: 50%;
   display: flex;
   align-items: center;
   margin-bottom: 15px;
   justify-content: center;
   -webkit-user-drag: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 `;
 
 function HomePage() {
@@ -68,7 +69,7 @@ function HomePage() {
   const { energy, maxEnergy, decreaseEnergy, isEnergyLoading } = useEnergy(); // Access energy loading state
   const [tapCount, setTapCount] = useState(0);
   const [flyingNumbers, setFlyingNumbers] = useState([]);
-  const [slapEmojis, setSlapEmojis] = useState([]);
+  const [slapEmojis] = useState([]);
   const [offlinePoints, setOfflinePoints] = useState(0);
   const [isRewardAvailable, setIsRewardAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // For loading state
@@ -81,12 +82,8 @@ function HomePage() {
   const bottomMenuRef = useRef(null);
   const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
   const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
-  const [activeAvatar, setActiveAvatar] = useState(null);
-  const [fallbackAvatar, setFallbackAvatar] = useState(null);
-
-  const queryClient = useQueryClient(); // Initialize query client
-
-  // Accumulate unsynced points to avoid sending too many server requests
+  const { activeAvatar, fallbackAvatar, setActiveAvatar, setFallbackAvatar, fetchActiveAvatar } = useUserAvatar();
+  const queryClient = useQueryClient(); 
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
 
   // Confetti window size
@@ -94,10 +91,13 @@ function HomePage() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
+
   // Fetch fallback avatar dynamically
   const fetchFallbackAvatar = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/fallback-avatar`);
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_API_URL}/fallback-avatar`
+      );
       if (data && data.length > 0) {
         setFallbackAvatar(data[0].fallbackAvatarUrl); // Set fallback avatar URL
       }
@@ -105,78 +105,47 @@ function HomePage() {
       console.error("Error fetching fallback avatar:", error);
     }
   }, []);
-
-  // Fetch active avatar
-  const fetchActiveAvatar = useCallback(
-    async (userID) => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/user-avatar/${userID}/active-avatar`
-        );
-
-        if (response.data && response.data.image) {
-          setActiveAvatar(response.data.image); // Set active avatar image
-        } else {
-          fetchFallbackAvatar(); // Fetch fallback if no active avatar is found
-        }
-      } catch (error) {
-        if (error.response && error.response.status === 404) {
-          fetchFallbackAvatar(); // Fetch fallback if 404 occurs
-        } else {
-          console.error("Error fetching active avatar:", error);
-        }
-      } finally {
-        setIsLoading(false); // Once fetching is done, set loading to false
-      }
-    },
-    [fetchFallbackAvatar]
-  );
-  // Initial fetch of avatar (active or fallback)
-  useEffect(() => {
-    if (userID) {
-      fetchActiveAvatar(userID); // Fetch active avatar on component mount
-    }
-  }, [userID, fetchActiveAvatar]);
-
-  // Ensure fallback avatar is loaded if no active avatar exists
+  
   useEffect(() => {
     if (!activeAvatar && !fallbackAvatar && !isLoading) {
       fetchFallbackAvatar(); // Load fallback avatar if neither is available
     }
   }, [activeAvatar, fallbackAvatar, isLoading, fetchFallbackAvatar]);
 
-  // Memoized eagle image, ensure it only renders when avatar is available
   const memoizedEagleImage = useMemo(() => {
-    if (isLoading) return null; // Don't render if still loading
+    if (!activeAvatar && !fallbackAvatar) return null; // Don't render if neither avatar is available
     return (
       <EagleImage
         src={activeAvatar || fallbackAvatar} // Use active avatar if available, fallback otherwise
-        alt=""
-        className="eagle-image"
+        alt="Avatar"
         loading="lazy"
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = fallbackAvatar; // Fallback if error occurs loading active avatar
-        }}
       />
     );
-  }, [activeAvatar, fallbackAvatar, isLoading]);
+  }, [activeAvatar, fallbackAvatar]);
 
   const fetchActiveBackground = useCallback(async () => {
     try {
-      const cachedBackground = localStorage.getItem("activeBackground");
+      const cachedBackground = JSON.parse(
+        localStorage.getItem("activeBackground")
+      );
+      const now = new Date().getTime();
+      const cacheDuration = 24 * 60 * 60 * 1000; // 24 hours
 
-      if (cachedBackground) {
-        setBackgroundImage(cachedBackground); // Use cached background if available
+      if (
+        cachedBackground &&
+        now - cachedBackground.timestamp < cacheDuration
+      ) {
+        setBackgroundImage(cachedBackground.url); // Use cached background if not expired
       } else {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/background/active`
         );
         if (response.data && response.data.url) {
           setBackgroundImage(response.data.url);
-          localStorage.setItem("activeBackground", response.data.url); // Cache the background URL
-        } else {
-          console.warn("No background URL found in the response.");
+          localStorage.setItem(
+            "activeBackground",
+            JSON.stringify({ url: response.data.url, timestamp: now })
+          ); // Cache the background with the current timestamp
         }
       }
     } catch (error) {
@@ -185,9 +154,22 @@ function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Fetch the active background when the component mounts
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        localStorage.removeItem("activeBackground"); // Clear background cache when app is hidden
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
     fetchActiveBackground();
-  }, [fetchActiveBackground]); // Add fetchActiveBackground as a dependency
+  }, [fetchActiveBackground]); 
+
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.removeItem("activeBackground"); // Clear the background on page reload/close
@@ -199,6 +181,7 @@ function HomePage() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
+  
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({
@@ -223,13 +206,13 @@ function HomePage() {
       const hoursSinceLastClaim = Math.floor(
         (now - new Date(lastDailyReward)) / (1000 * 60 * 60)
       ); // Calculate hours since the last claim
-  
+
       if (hoursSinceLastClaim >= 24) {
         setIsRewardAvailable(true); // Reward is available, button becomes clickable
         setRemainingTime(0); // No timer if reward is available
       } else {
         setIsRewardAvailable(false); // Reward is not available, button stays disabled
-  
+
         // Calculate remaining time and update the state
         const timeUntilNextClaim =
           24 * 60 * 60 * 1000 - (now - new Date(lastDailyReward));
@@ -239,54 +222,52 @@ function HomePage() {
       setIsLoading(false); // End loading state
     }
   }, [userID]);
-  
+
   // Update the remaining time every second if reward is not available
   // Update the remaining time every second if reward is not available
-useEffect(() => {
-  let interval;
-  if (!isRewardAvailable && remainingTime > 0) {
-    interval = setInterval(() => {
-      setRemainingTime((prevTime) => prevTime - 1000); // Decrease the remaining time by 1 second
-    }, 1000);
-  }
-  return () => clearInterval(interval); // Cleanup interval on component unmount
-}, [isRewardAvailable, remainingTime]);
+  useEffect(() => {
+    let interval;
+    if (!isRewardAvailable && remainingTime > 0) {
+      interval = setInterval(() => {
+        setRemainingTime((prevTime) => prevTime - 1000); // Decrease the remaining time by 1 second
+      }, 1000);
+    }
+    return () => clearInterval(interval); // Cleanup interval on component unmount
+  }, [isRewardAvailable, remainingTime]);
 
-  
+  const formatRemainingTime = (milliseconds) => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
 
-const formatRemainingTime = (milliseconds) => {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+    // Format as "hours:minutes:seconds"
+    if (hours > 1) {
+      return `${hours} hr left`; // Show only hours left if more than 1 hour
+    }
+    return `${hours}h ${minutes}m ${seconds}s left`; // Show full timer for less than 1 hour
+  };
+  const initializeUser = useCallback(async () => {
+    if (!userID) {
+      // Get userID asynchronously if not already set
+      const fetchedUserID = await getUserID();
+      setUserID(fetchedUserID); // Set the userID in state
+    }
 
-  // Format as "hours:minutes:seconds"
-  if (hours > 1) {
-    return `${hours} hr left`; // Show only hours left if more than 1 hour
-  }
-  return `${hours}h ${minutes}m ${seconds}s left`; // Show full timer for less than 1 hour
-};
-const initializeUser = useCallback(async () => {
-  if (!userID) {
-    // Get userID asynchronously if not already set
-    const fetchedUserID = await getUserID();
-    setUserID(fetchedUserID); // Set the userID in state
-  }
+    // Fetch points from localStorage if available, else initialize it
+    const savedPoints = localStorage.getItem(`points_${userID}`);
+    if (savedPoints) {
+      setPoints(parseFloat(savedPoints)); // Set points from localStorage
+    }
 
-  // Fetch points from localStorage if available, else initialize it
-  const savedPoints = localStorage.getItem(`points_${userID}`);
-  if (savedPoints) {
-    setPoints(parseFloat(savedPoints)); // Set points from localStorage
-  }
-
-  // Check reward availability after userID is set
-  if (userID) {
-    await checkDailyRewardAvailability(); // Ensure reward logic executes after setting userID
-  }
-}, [userID, setUserID, setPoints, checkDailyRewardAvailability]);
-useEffect(() => {
-  initializeUser(); // Call once when component mounts
-}, [initializeUser]); // Dependency is the memoized initializeUser function
+    // Check reward availability after userID is set
+    if (userID) {
+      await checkDailyRewardAvailability(); // Ensure reward logic executes after setting userID
+    }
+  }, [userID, setUserID, setPoints, checkDailyRewardAvailability]);
+  useEffect(() => {
+    initializeUser(); // Call once when component mounts
+  }, [initializeUser]); // Dependency is the memoized initializeUser function
   const handleContextMenu = (e) => {
     e.preventDefault(); // This will prevent the default long-press behavior
   };
@@ -300,7 +281,7 @@ useEffect(() => {
   // Invalidate the avatar queries to refetch when avatar is changed
   useEffect(() => {
     const invalidateAvatar = () => {
-      queryClient.invalidateQueries(['activeAvatar', userID]); // Refetch active avatar
+      queryClient.invalidateQueries(["activeAvatar", userID]); // Refetch active avatar
     };
 
     window.addEventListener("avatarChanged", invalidateAvatar); // Custom event listener
@@ -493,27 +474,27 @@ useEffect(() => {
     try {
       // Close the modal immediately after the claim button is clicked
       setShowModal(false);
-    
+
       // Make the API call to claim the reward
       const response = await axios.put(
         `${process.env.REACT_APP_API_URL}/user-info/claim-daily-reward/${userID}`
       );
-      
+
       // Get the new points after claiming the reward
       const newPoints = response.data.points;
-    
+
       // Update the points in the state and local storage
       setPoints(newPoints);
       localStorage.setItem(`points_${userID}`, newPoints);
-    
+
       // Mark the reward as claimed and set the timer to reset for 24 hours
-      setIsRewardAvailable(false); 
+      setIsRewardAvailable(false);
       setRemainingTime(24 * 60 * 60 * 1000); // Reset to 24 hours (86400000 milliseconds)
-    
+
       // Play the celebration sound and show confetti
       setShowConfetti(true);
       audioRef.current.play(); // Play the celebration sound
-    
+
       // Hide confetti after 5 seconds
       setTimeout(() => {
         setShowConfetti(false);
@@ -522,7 +503,7 @@ useEffect(() => {
       console.error("Error claiming daily reward:", error);
     }
   };
-  
+
   const openModal = () => setShowModal(true);
 
   const closeModal = () => {
@@ -590,7 +571,7 @@ useEffect(() => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            userSelect:"none",
+            userSelect: "none",
           }}
         >
           <BoostContainer className="boost-container">
@@ -609,7 +590,7 @@ useEffect(() => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            userSelect:"none",
+            userSelect: "none",
           }}
         >
           <LeaderboardContainer className="leaderboard-container">
@@ -630,11 +611,11 @@ useEffect(() => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            userSelect:"none",
+            userSelect: "none",
           }}
         >
           <BoostContainer className="boost-container">
-          <CgProfile size={30} color="#fff" />
+            <CgProfile size={30} color="#fff" />
           </BoostContainer>
           <IconLabel>Use Avatar</IconLabel>
         </Link>
@@ -659,26 +640,26 @@ useEffect(() => {
         </EnergyContainer>
 
         <Link
-  to="#"
-  onClick={isRewardAvailable ? openModal : null}
-  style={{
-    textDecoration: "none",
-    pointerEvents: isRewardAvailable ? "auto" : "none",
-    opacity: isRewardAvailable ? 1 : 0.5, // Dim the button if reward is not available
-  }}
->
-  {/* Show the timer if reward is not available and remaining time is greater than 0 */}
-  {!isRewardAvailable && remainingTime > 0 && (
-    <SmallTimerText>
-      {formatRemainingTime(remainingTime)} {/* Call the formatting function */}
-    </SmallTimerText>
-  )}
-  <EnergyContainer>
-    <FireIcon $available={isRewardAvailable} />
-    Daily Reward
-  </EnergyContainer>
-</Link>
-
+          to="#"
+          onClick={isRewardAvailable ? openModal : null}
+          style={{
+            textDecoration: "none",
+            pointerEvents: isRewardAvailable ? "auto" : "none",
+            opacity: isRewardAvailable ? 1 : 0.5, // Dim the button if reward is not available
+          }}
+        >
+          {/* Show the timer if reward is not available and remaining time is greater than 0 */}
+          {!isRewardAvailable && remainingTime > 0 && (
+            <SmallTimerText>
+              {formatRemainingTime(remainingTime)}{" "}
+              {/* Call the formatting function */}
+            </SmallTimerText>
+          )}
+          <EnergyContainer>
+            <FireIcon $available={isRewardAvailable} />
+            Daily Reward
+          </EnergyContainer>
+        </Link>
       </BottomContainer>
 
       {showModal && (
