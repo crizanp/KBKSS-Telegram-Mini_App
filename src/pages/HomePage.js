@@ -124,73 +124,31 @@ function HomePage() {
     );
   }, [activeAvatar, fallbackAvatar]);
 
-   // Fetch background dynamically and cache it
+   // Fetch the active background from the API
    const fetchActiveBackground = useCallback(async () => {
     try {
-      const cachedBackground = JSON.parse(localStorage.getItem("activeBackground"));
-      const now = new Date().getTime();
-      const cacheDuration = 24 * 60 * 60 * 1000; // 24 hours
-
-      if (cachedBackground && now - cachedBackground.timestamp < cacheDuration) {
-        setBackgroundImage(cachedBackground.url);
-        setIsBackgroundLoaded(true);
-      } else {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/background/active`);
-        if (response.data && response.data.url) {
-          setBackgroundImage(response.data.url);
-          localStorage.setItem(
-            "activeBackground",
-            JSON.stringify({ url: response.data.url, timestamp: now })
-          );
-          setIsBackgroundLoaded(true);
-        }
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/background/active`);
+      if (response.data && response.data.url) {
+        setBackgroundImage(response.data.url);
       }
     } catch (error) {
       console.error("Error fetching active background:", error);
     }
   }, []);
 
-  // Use the 'close' event to clear localStorage when the Mini App is closed
+  // Always refetch the background when the component mounts
   useEffect(() => {
-    const handleTelegramClose = () => {
-      localStorage.removeItem("activeBackground"); // Clear background when the app is closed
-    };
-
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.onEvent("close", handleTelegramClose);
-    }
-
-    return () => {
-      if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.offEvent("close", handleTelegramClose);
-      }
-    };
-  }, []);
-
-  // Fetch background when Telegram Mini App resumes
-  useEffect(() => {
-    const onTelegramMiniAppResume = () => {
-      fetchActiveBackground(); // Re-fetch background when the app resumes
-    };
-
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.onEvent("resume", onTelegramMiniAppResume);
-    }
-
-    return () => {
-      if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.offEvent("resume", onTelegramMiniAppResume);
-      }
-    };
+    fetchActiveBackground(); // Fetch the background on component mount
   }, [fetchActiveBackground]);
 
-  // Initial background load
+  // Periodically refetch the background every 2 minutes
   useEffect(() => {
-    if (!isBackgroundLoaded) {
-      fetchActiveBackground();
-    }
-  }, [fetchActiveBackground, isBackgroundLoaded]);
+    const intervalId = setInterval(() => {
+      fetchActiveBackground(); // Refetch the background every 2 minutes
+    }, 120000); // 120,000 milliseconds = 2 minutes
 
+    return () => clearInterval(intervalId); // Clean up the interval on unmount
+  }, [fetchActiveBackground]);
 
   useEffect(() => {
     const handleResize = () => {
