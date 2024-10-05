@@ -202,24 +202,28 @@ const AvatarSelection = () => {
 
   const handleConfirmAction = async () => {
     if (!modalData?.avatar) return;
-
+  
     try {
       const avatarId = modalData.avatar._id;
-
+  
       if (modalData.actionType === 'unlock') {
         // Unlock the avatar and deduct points
         const response = await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlock-avatar/${avatarId}`);
         const updatedPoints = response.data.updatedPoints;
-
+  
         // Deduct points and store in both context and localStorage
         const newPoints = points - modalData.gemsRequired;
         setPoints(newPoints); 
         localStorage.setItem(`points_${userID}`, newPoints);
-
+  
+        // Set the unlocked avatar as active by calling the set-active-avatar API
+        await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
+  
+        // Update local state and localStorage for active avatar
         setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
-        setActiveAvatar(modalData.avatar); // Set the unlocked avatar as active by default
+        setActiveAvatar(modalData.avatar); // Set the unlocked avatar as active
         localStorage.setItem(`activeAvatar_${userID}`, JSON.stringify(modalData.avatar)); // Update active avatar in localStorage
-
+  
         showToast(`Avatar ${modalData.avatar.name} has been unlocked and set as active!`, 'success');
       } else if (modalData.actionType === 'switch') {
         await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
@@ -227,14 +231,18 @@ const AvatarSelection = () => {
         localStorage.setItem(`activeAvatar_${userID}`, JSON.stringify(modalData.avatar)); // Update active avatar in localStorage
         showToast(`Avatar has been switched to ${modalData.avatar.name}!`, 'success');
       }
-
+  
+      // Invalidate queries to refetch the active avatar and unlocked avatars
       queryClient.invalidateQueries(['activeAvatar', userID]);
       queryClient.invalidateQueries(['unlockedAvatars', userID]);
-      setModalData(null); // Close modal after confirmation
+  
+      // Close the modal after confirmation
+      setModalData(null);
     } catch (error) {
       showToast('Failed to complete the action. Please try again.', 'error');
     }
   };
+  
 
   // Filter out avatars that are already unlocked for the locked avatars section
   const lockedAvatars = avatars?.filter((avatar) => !unlockedAvatars.some((uAvatar) => uAvatar._id === avatar._id));
