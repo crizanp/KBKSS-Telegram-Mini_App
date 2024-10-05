@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { FaTimes } from "react-icons/fa"; // Close button icon
-import { FaRegGem } from "react-icons/fa"; // Gem icon import
+import { FaTimes } from "react-icons/fa";
 
 // Overlay for the modal background
 const ModalOverlay = styled.div`
@@ -15,13 +14,6 @@ const ModalOverlay = styled.div`
   justify-content: center;
   align-items: flex-end;
   z-index: 1000;
-`;
-
-const GemIconModal = styled(FaRegGem)`
-  color: #36a8e5; // Similar color to UserInfo component
-  margin-left: 8px;
-  margin-right: 8px;
-  font-size: 1.9rem;
 `;
 
 // Modal container with slide-up animation
@@ -61,7 +53,7 @@ const ModalHeader = styled.h2`
 `;
 
 // Button to confirm action
-const ClaimButton = styled.button`
+const ConfirmButton = styled.button`
   background-color: #36a8e5;
   color: white;
   font-size: 20px;
@@ -76,17 +68,6 @@ const ClaimButton = styled.button`
   &:hover {
     background-color: #298dc8;
   }
-`;
-
-// Display points or confirmation message
-const PointsDisplayModal = styled.div`
-  font-size: 22px;
-  text-align: center;
-  color: #36a8e5;
-  margin: 20px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 `;
 
 // Close button
@@ -109,7 +90,9 @@ const StyledImage = styled.img`
   margin: 0 auto 20px;
 `;
 
-const AvatarSelectionModal = ({ onGoAhead, onClose, isClosing, gemsRequired, points }) => {
+const AvatarSelectionModal = ({ onGoAhead, onClose, isClosing, actionType, currentAvatarName, newAvatarName, gemsRequired }) => {
+  const isSwitchAction = actionType === "switch";
+
   return (
     <ModalOverlay onClick={onClose}>
       <RewardModalContainer onClick={(e) => e.stopPropagation()} isClosing={isClosing}>
@@ -118,24 +101,22 @@ const AvatarSelectionModal = ({ onGoAhead, onClose, isClosing, gemsRequired, poi
         {/* Image placed below the header */}
         <StyledImage src="https://i.ibb.co/z2c4kfZ/3d.png" alt="Crown" />
 
-        <ModalHeader>Unlock Avatar</ModalHeader>
+        <ModalHeader>{isSwitchAction ? "Switch Avatar" : "Unlock Avatar"}</ModalHeader>
 
-        {/* Updated Points Display with Gem Icon */}
-        <PointsDisplayModal>
-          <GemIconModal />
-          <span style={{ fontSize: "22px" }}>- {gemsRequired} $GEMS</span>
-        </PointsDisplayModal>
-
+        {/* Dynamic message based on action type */}
         <p style={{ textAlign: "center", color: "rgb(221 204 204)", fontSize: "16px" }}>
-          Unlocking this avatar will deduct {gemsRequired} $GEMS from your total.
+          {isSwitchAction
+            ? `Are you sure you want to switch from ${currentAvatarName} to ${newAvatarName}?`
+            : `Unlocking this avatar will deduct ${gemsRequired} $GEMS from your total.`}
         </p>
 
-        {/* Check if points are sufficient */}
-        <ClaimButton onClick={onGoAhead} disabled={gemsRequired > points}>
-          {gemsRequired > points ? 'Not Enough Gems' : 'Go Ahead'}
-        </ClaimButton>
+        {/* Confirm button changes label based on the action type */}
+        <ConfirmButton onClick={onGoAhead}>
+          {isSwitchAction ? "Switch Avatar" : "Go Ahead"}
+        </ConfirmButton>
       </RewardModalContainer>
     </ModalOverlay>
   );
 };
+
 export default AvatarSelectionModal;
