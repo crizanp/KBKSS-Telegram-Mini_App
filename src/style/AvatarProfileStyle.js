@@ -1,6 +1,23 @@
-import styled from "styled-components";
 import { FaRegGem } from 'react-icons/fa';
+import styled, { keyframes } from "styled-components";
 
+// Keyframes for pulse effect
+const pulseAnimation = keyframes`
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+`;
+
+export const ActiveAvatarAnimation = styled.div`
+  display: inline-block;
+  animation: ${pulseAnimation} 3s ease-in-out infinite; // Slight pulse effect
+`;
 // Container styling for main content
 export const Container = styled.div`
   display: flex;

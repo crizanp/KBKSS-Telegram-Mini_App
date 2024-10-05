@@ -23,7 +23,8 @@ import {
   AvatarList,
   LeftSection,
   TopSection,
-  Container
+  Container,
+  ActiveAvatarAnimation // Add this
 } from "../style/AvatarProfileStyle";
 
 const AvatarSelection = () => {
@@ -270,7 +271,10 @@ const AvatarSelection = () => {
         <RightSection>
           {activeAvatar ? (
             <>
-              <CurrentAvatarImage src={activeAvatar.image} alt={activeAvatar.name} />
+              {/* Active avatar animation */}
+              <ActiveAvatarAnimation>
+                <CurrentAvatarImage src={activeAvatar.image} alt={activeAvatar.name} />
+              </ActiveAvatarAnimation>
               <AvatarInfo>
                 <Title>{activeAvatar.name}</Title>
               </AvatarInfo>
