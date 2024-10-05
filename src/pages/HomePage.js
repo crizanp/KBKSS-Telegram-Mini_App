@@ -171,7 +171,40 @@ function HomePage() {
     };
   }, []);
 
-  // Clear background on unload/close
+  // Handle Telegram Mini App closure
+  useEffect(() => {
+    const handleTelegramClose = () => {
+      localStorage.removeItem("activeBackground"); // Clear the background when the mini app is closed
+    };
+
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.onEvent("close", handleTelegramClose);
+    }
+
+    return () => {
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.offEvent("close", handleTelegramClose);
+      }
+    };
+  }, []);
+
+  // Fetch background when Telegram Mini App resumes
+  useEffect(() => {
+    const onTelegramMiniAppResume = () => {
+      fetchActiveBackground(); // Re-fetch background when the app resumes
+    };
+
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.onEvent("resume", onTelegramMiniAppResume);
+    }
+
+    return () => {
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.offEvent("resume", onTelegramMiniAppResume);
+      }
+    };
+  }, [fetchActiveBackground]);
+
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.removeItem("activeBackground"); // Clear the background on page unload/close
