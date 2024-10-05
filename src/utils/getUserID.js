@@ -19,7 +19,7 @@ export const getUserID = async (setUserID = () => {}, setUsername = () => {}) =>
 
   // For localhost testing
   if (isLocalhost) {
-    tgUserID = "mockUserID123";
+    tgUserID = "123";
     tgUsername = "mockUsername"; // Mock username for testing
     tgFirstName = "MockFirstName"; // Mock first name for testing
     console.warn(
