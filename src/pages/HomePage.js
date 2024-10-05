@@ -156,6 +156,22 @@ function HomePage() {
     }
   }, [fetchActiveBackground, isBackgroundLoaded]);
 
+  // Clear localStorage when the app loses focus (user navigates away or switches tabs)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        localStorage.removeItem("activeBackground"); // Clear background when the tab becomes hidden
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  // Clear background on unload/close
   useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.removeItem("activeBackground"); // Clear the background on page unload/close
