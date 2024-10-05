@@ -7,7 +7,7 @@ const pulseAnimation = keyframes`
     transform: scale(1);
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.15);
   }
   100% {
     transform: scale(1);
@@ -89,7 +89,7 @@ export const AvatarCard = styled.div`
   color: white;
   background-color: ${(props) => (props.isLocked ? '#2c2c2c' : '#3374f514')};
   &:hover {
-    transform: ${(props) => (props.isLocked ? 'none' : 'scale(1.05)')};
+    transform: ${(props) => (props.isLocked ? 'none' : 'none')};
     box-shadow: ${(props) => (props.isLocked ? 'none' : '0px 4px 12px rgba(255, 255, 255, 0.2)')};
   }
 `;
@@ -101,7 +101,6 @@ export const AvatarImage = styled.img`
   object-fit: cover;
   margin-bottom: 5px;
   border-radius: 50%;
-  border: 2px solid #444;
 `;
 
 // Active avatar image styling
