@@ -18,12 +18,13 @@ import BoostsPage from "./pages/BoostsPage";
 import AvatarPage from "./pages/AvatarProfile";
 import { UserAvatarProvider } from "./context/UserAvatarContext";
 import { BackgroundProvider } from "./context/BackgroundContext";
+import { UserInfoProvider } from "./context/UserInfoContext";
 
 function App() {
   return (
     <PointsProvider>
         <BackgroundProvider>
-
+        <UserInfoProvider>
       <UserAvatarProvider>
         <EnergyProvider>
           <Router>
@@ -124,6 +125,8 @@ function App() {
           </Router>
         </EnergyProvider>
       </UserAvatarProvider>
+      </UserInfoProvider>
+
       </BackgroundProvider>
     </PointsProvider>
   );

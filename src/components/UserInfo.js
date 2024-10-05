@@ -1,12 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { FaRegGem, FaBell, FaLevelUpAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { usePoints } from '../context/PointsContext';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { getUserID } from '../utils/getUserID';
-import SkeletonLoader from './skeleton/UserinfoSkeleton'; // Correct the import here
+import { useUserInfo } from '../context/UserInfoContext';  // Use the new context
 
 // Main container with dark theme and compact mobile-first size
 const UserInfoContainer = styled.div`
@@ -100,45 +96,8 @@ const StyledLink = styled(Link)`
   text-decoration: none;
 `;
 
-const fetchUserLevel = async (userID) => {
-  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`);
-  return data;
-};
-
 const UserInfo = () => {
-  const { points } = usePoints();  // Points context
-  const [firstName, setFirstName] = useState(null);
-
-  // Fetch userID and handle firstName from Telegram WebApp
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const firstNameFromTelegram = window.Telegram.WebApp?.initDataUnsafe?.user?.first_name;
-      if (firstNameFromTelegram) {
-        setFirstName(firstNameFromTelegram.split(/[^\w]+/)[0].slice(0, 10)); // Trim the first name
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  // Fetch user level using React Query
-  const { data: userLevelData, isLoading, isError } = useQuery({
-    queryKey: ['userLevel'],
-    queryFn: async () => {
-      const userID = await getUserID();
-      return fetchUserLevel(userID);
-    },
-  });
-
-  if (isLoading) {
-    return <SkeletonLoader />; // Correctly using SkeletonLoader here
-  }
-
-  if (isError) {
-    return <UserInfoContainer>Error loading user info</UserInfoContainer>;
-  }
-
-  const userLevel = userLevelData?.currentLevel ?? 0;  // Default to 0 if no level is found
+  const { points, level, firstName } = useUserInfo();  // Fetch data from context
 
   return (
     <UserInfoContainer>
@@ -148,7 +107,7 @@ const UserInfo = () => {
         {/* Apply the styled Link here */}
         <StyledLink to="/levelpage">
           <LevelContainer>
-            <LevelIcon /> Lvl {userLevel}  {/* Dynamically display user level */}
+            <LevelIcon /> Lvl {level}  {/* Dynamically display user level */}
           </LevelContainer>
         </StyledLink>
       </UserLevelContainer>
