@@ -23,7 +23,8 @@ import {
   AvatarList,
   LeftSection,
   TopSection,
-  Container
+  Container,
+  ActiveAvatarAnimation  // Import the animation for the right-side active avatar
 } from "../style/AvatarProfileStyle";
 
 const AvatarSelection = () => {
@@ -277,11 +278,14 @@ const AvatarSelection = () => {
         <RightSection>
           {activeAvatar ? (
             <>
+            <ActiveAvatarAnimation>  {/* Wrap active avatar image with animation */}
               <CurrentAvatarImage src={activeAvatar.image} alt={activeAvatar.name} />
-              <AvatarInfo>
+              
+            </ActiveAvatarAnimation>
+            <AvatarInfo>
                 <Title>{activeAvatar.name}</Title>
               </AvatarInfo>
-            </>
+              </>
           ) : fallbackAvatar ? (
             <>
               <CurrentAvatarImage src={fallbackAvatar.fallbackAvatarUrl} alt="Fallback Avatar" />
