@@ -124,15 +124,16 @@ function HomePage() {
     );
   }, [activeAvatar, fallbackAvatar]);
 
-  const fetchActiveBackground = useCallback(async () => {
+   // Fetch background dynamically and cache it
+   const fetchActiveBackground = useCallback(async () => {
     try {
       const cachedBackground = JSON.parse(localStorage.getItem("activeBackground"));
       const now = new Date().getTime();
       const cacheDuration = 24 * 60 * 60 * 1000; // 24 hours
 
       if (cachedBackground && now - cachedBackground.timestamp < cacheDuration) {
-        setBackgroundImage(cachedBackground.url); // Use cached background
-        setIsBackgroundLoaded(true); // Mark background as loaded
+        setBackgroundImage(cachedBackground.url);
+        setIsBackgroundLoaded(true);
       } else {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/background/active`);
         if (response.data && response.data.url) {
@@ -140,8 +141,8 @@ function HomePage() {
           localStorage.setItem(
             "activeBackground",
             JSON.stringify({ url: response.data.url, timestamp: now })
-          ); // Cache the background
-          setIsBackgroundLoaded(true); // Mark background as loaded
+          );
+          setIsBackgroundLoaded(true);
         }
       }
     } catch (error) {
@@ -149,32 +150,10 @@ function HomePage() {
     }
   }, []);
 
-  useEffect(() => {
-    // Only fetch background if not already loaded
-    if (!isBackgroundLoaded) {
-      fetchActiveBackground();
-    }
-  }, [fetchActiveBackground, isBackgroundLoaded]);
-
-  // Clear localStorage when the app loses focus (user navigates away or switches tabs)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        localStorage.removeItem("activeBackground"); // Clear background when the tab becomes hidden
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
-  // Handle Telegram Mini App closure
+  // Use the 'close' event to clear localStorage when the Mini App is closed
   useEffect(() => {
     const handleTelegramClose = () => {
-      localStorage.removeItem("activeBackground"); // Clear the background when the mini app is closed
+      localStorage.removeItem("activeBackground"); // Clear background when the app is closed
     };
 
     if (window.Telegram && window.Telegram.WebApp) {
@@ -205,17 +184,13 @@ function HomePage() {
     };
   }, [fetchActiveBackground]);
 
+  // Initial background load
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      localStorage.removeItem("activeBackground"); // Clear the background on page unload/close
-    };
+    if (!isBackgroundLoaded) {
+      fetchActiveBackground();
+    }
+  }, [fetchActiveBackground, isBackgroundLoaded]);
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
 
   useEffect(() => {
     const handleResize = () => {
