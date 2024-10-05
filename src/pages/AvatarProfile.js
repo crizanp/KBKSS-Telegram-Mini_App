@@ -201,33 +201,55 @@ const AvatarSelection = () => {
 
   const handleConfirmAction = async () => {
     if (!modalData?.avatar) return;
-
+  
     try {
       const avatarId = modalData.avatar._id;
-
-      if (modalData.actionType === 'unlock') {
+  
+      if (modalData.action === 'unlock') {
+        // Unlock the avatar and automatically set it as active
         const response = await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlock-avatar/${avatarId}`);
+        
+        // Assuming the backend returns updated points, use this if available
         const updatedPoints = response.data.updatedPoints;
+  
         if (updatedPoints !== undefined) {
+          // If API returns updated points, update them in state and local storage
           setPoints(updatedPoints); // Update points in PointsContext
-          localStorage.setItem(`points_${userID}`, updatedPoints); // Update points in local storage
+          localStorage.setItem(`points_${userID}`, updatedPoints);
+        } else {
+          // Manual deduction of gems if the API doesn't return updated points
+          const newPoints = points - modalData.gemsRequired;
+  
+          // Ensure points don't go negative (extra safety check)
+          if (newPoints >= 0) {
+            setPoints(newPoints); // Update points in PointsContext
+            localStorage.setItem(`points_${userID}`, newPoints); // Update points in local storage
+          } else {
+            showToast('Not enough points to unlock this avatar!', 'error');
+            return; // Abort further actions if points are insufficient
+          }
         }
+  
+        // Automatically set the avatar as active
+        await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
+  
+        // Optimistically update the unlocked avatars in local state
         setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
         setActiveAvatar(modalData.avatar);
+  
         showToast(`Avatar ${modalData.avatar.name} has been unlocked and set as active!`, 'success');
-      } else if (modalData.actionType === 'switch') {
-        await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
-        setActiveAvatar(modalData.avatar);
-        showToast(`Avatar has been switched to ${modalData.avatar.name}!`, 'success');
+  
+        // Invalidate the queries to refetch the active avatar and unlocked avatars
+        queryClient.invalidateQueries(['activeAvatar', userID]);
+        queryClient.invalidateQueries(['unlockedAvatars', userID]);
       }
-
-      queryClient.invalidateQueries(['activeAvatar', userID]);
-      queryClient.invalidateQueries(['unlockedAvatars', userID]);
+  
       setModalData(null); // Close modal after confirmation
     } catch (error) {
       showToast('Failed to complete the action. Please try again.', 'error');
     }
   };
+  
 
   // Filter out avatars that are already unlocked for the locked avatars section
   const lockedAvatars = avatars?.filter((avatar) => !unlockedAvatars.some((uAvatar) => uAvatar._id === avatar._id));
