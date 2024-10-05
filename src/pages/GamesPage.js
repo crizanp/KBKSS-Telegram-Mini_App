@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import UserInfo from '../components/UserInfo';
+import UserInfo from "../components/UserInfo";
 import GameUnlockModal from "../components/GameUnlockModal";
 import { usePoints } from "../context/PointsContext";
-import { showToast } from '../components/ToastNotification'; // Import showToast function
-import { ToastContainer } from 'react-toastify'; // Import ToastContainer
-import 'react-toastify/dist/ReactToastify.css'; // Import toastify styles
+import { showToast } from "../components/ToastNotification"; // Import showToast function
+import { ToastContainer } from "react-toastify"; // Import ToastContainer
+import "react-toastify/dist/ReactToastify.css"; // Import toastify styles
 
 // Import styles from external file
 import {
@@ -19,8 +19,8 @@ import {
   GameTitle,
   GameDescription,
   GameIcon,
-  GameItemTitle
-} from '../style/GamesPageStyles'; 
+  GameItemTitle,
+} from "../style/GamesPageStyles";
 
 function GamesPage() {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -37,10 +37,12 @@ function GamesPage() {
     } else {
       const fetchUserInfo = async () => {
         try {
-          const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
+          const response = await axios.get(
+            `${process.env.REACT_APP_API_URL}/user-info/${userID}`
+          );
           setQuizUnlocked(response.data.quizUnlocked);
         } catch (error) {
-          showToast('Error fetching user info.', 'error');
+          showToast("Error fetching user info.", "error");
         }
       };
       fetchUserInfo();
@@ -53,16 +55,19 @@ function GamesPage() {
     setPoints(newPoints);
     localStorage.setItem(`points_${userID}`, newPoints);
 
-    setQuizUnlocked(true); 
+    setQuizUnlocked(true);
     localStorage.setItem(`quizUnlocked_${userID}`, true);
 
     try {
-      await axios.put(`${process.env.REACT_APP_API_URL}/user-info/unlock-quiz/${userID}`, {
-        points: newPoints,
-      });
-      showToast('Success! You have unlocked the quiz!', 'success');
+      await axios.put(
+        `${process.env.REACT_APP_API_URL}/user-info/unlock-quiz/${userID}`,
+        {
+          points: newPoints,
+        }
+      );
+      showToast("Success! You have unlocked the quiz!", "success");
     } catch (error) {
-      showToast('Error unlocking quiz. Please try again!', 'error');
+      showToast("Error unlocking quiz. Please try again!", "error");
       setPoints(userPoints);
       localStorage.setItem(`points_${userID}`, userPoints);
       setQuizUnlocked(false);
@@ -77,7 +82,10 @@ function GamesPage() {
     if (userPoints >= 25000 && !quizUnlocked) {
       setModalOpen(true);
     } else if (userPoints < 25000) {
-      showToast('Oops! You do not have sufficient balance to unlock this game.', 'warn');
+      showToast(
+        "Oops! You do not have sufficient balance to unlock this game.",
+        "warn"
+      );
     }
   };
 
@@ -93,14 +101,20 @@ function GamesPage() {
           <GameItem onClick={confirmUnlockQuiz} locked={userPoints < 25000}>
             <LockIcon />
             <DimmedIconWrapper>
-              <GameIcon src="https://i.ibb.co/rMcfScz/3d-1.png" alt="Quiz Icon" />
+              <GameIcon
+                src="https://i.ibb.co/rMcfScz/3d-1.png"
+                alt="Quiz Icon"
+              />
             </DimmedIconWrapper>
             <GameItemTitle>Quiz</GameItemTitle>
           </GameItem>
         ) : (
           <GameItem as={Link} to="/ecosystem">
             <IconWrapper>
-              <GameIcon src="https://i.ibb.co/rMcfScz/3d-1.png" alt="Quiz Icon" />
+              <GameIcon
+                src="https://i.ibb.co/rMcfScz/3d-1.png"
+                alt="Quiz Icon"
+              />
             </IconWrapper>
             <GameItemTitle>Quiz</GameItemTitle>
           </GameItem>
@@ -108,38 +122,65 @@ function GamesPage() {
 
         <GameItem as={Link} to="/spin-wheel">
           <IconWrapper>
-            <GameIcon src="https://i.ibb.co/W3tQ6hf/3d-2.png" alt="Spin the Wheel Icon" />
+            <GameIcon
+              src="https://i.ibb.co/W3tQ6hf/3d-2.png"
+              alt="Spin the Wheel Icon"
+            />
           </IconWrapper>
           <GameItemTitle>Spin Wheel</GameItemTitle>
         </GameItem>
 
-        <GameItem onClick={() => showToast('Oops! You do not have sufficient balance to unlock this game.', 'warn')} locked>
+        <GameItem
+          onClick={() =>
+            showToast(
+              "Oops! You do not have sufficient balance to unlock this game.",
+              "warn"
+            )
+          }
+          locked
+        >
           <LockIcon />
           <DimmedIconWrapper>
-            <GameIcon src="https://i.ibb.co/20zNsDw/3d-3.png" alt="Treasure Hunt Icon" />
+            <GameIcon
+              src="https://i.ibb.co/20zNsDw/3d-3.png"
+              alt="Treasure Hunt Icon"
+            />
           </DimmedIconWrapper>
           <GameItemTitle>Treasure Hunt</GameItemTitle>
         </GameItem>
 
-        <GameItem onClick={() => showToast('This game is on the way, stay tuned.', 'warn')} locked>
+        <GameItem
+          onClick={() =>
+            showToast("This game is on the way, stay tuned.", "warn")
+          }
+          locked
+        >
           <LockIcon />
           <DimmedIconWrapper>
-            <GameIcon src="https://cdn-icons-png.freepik.com/512/8853/8853822.png" alt="Predict & Win Icon" />
+            <GameIcon
+              src="https://cdn-icons-png.freepik.com/512/8853/8853822.png"
+              alt="Predict & Win Icon"
+            />
           </DimmedIconWrapper>
           <GameItemTitle>Predict & Win</GameItemTitle>
         </GameItem>
 
-        <GameItem onClick={() => showToast('This game is on the way, stay tuned', 'warn')} locked>
-          <LockIcon />
-          <DimmedIconWrapper>
-            <GameIcon src="https://www.freeiconspng.com/thumbs/eagle-icon-png/eagle-icon-png-9.png" alt="Catch the Eagle Icon" />
-          </DimmedIconWrapper>
+        <GameItem as={Link} to="/catch-eagle">
+          <IconWrapper>
+            <GameIcon
+              src="https://www.freeiconspng.com/thumbs/eagle-icon-png/eagle-icon-png-9.png"
+              alt="Catch the Eagle Icon"
+            />
+          </IconWrapper>
           <GameItemTitle>Catch the Eagle</GameItemTitle>
         </GameItem>
 
         <GameItem comingSoon>
           <IconWrapper>
-            <GameIcon src="https://i.ibb.co/887LhN5/3d-4.png" alt="Coming Soon Icon" />
+            <GameIcon
+              src="https://i.ibb.co/887LhN5/3d-4.png"
+              alt="Coming Soon Icon"
+            />
           </IconWrapper>
           <GameItemTitle>Coming Soon</GameItemTitle>
         </GameItem>
