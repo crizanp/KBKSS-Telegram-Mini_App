@@ -23,8 +23,7 @@ import {
   AvatarList,
   LeftSection,
   TopSection,
-  Container,
-  ActiveAvatarAnimation // Add this
+  Container
 } from "../style/AvatarProfileStyle";
 
 const AvatarSelection = () => {
@@ -34,6 +33,7 @@ const AvatarSelection = () => {
   const [activeAvatar, setActiveAvatar] = useState(null); // Active avatar
   const [fallbackAvatar, setFallbackAvatar] = useState(null); // Fallback avatar
   const [userID, setUserID] = useState(null); // Track userID
+  const [processing, setProcessing] = useState(false); // Processing state for modal
   const queryClient = useQueryClient(); // Initialize query client to invalidate queries
   const [isClosing, setIsClosing] = useState(false); // Modal closing animation state
 
@@ -202,47 +202,45 @@ const AvatarSelection = () => {
 
   const handleConfirmAction = async () => {
     if (!modalData?.avatar) return;
-  
+
+    setProcessing(true); // Start processing
     try {
       const avatarId = modalData.avatar._id;
-  
+
       if (modalData.actionType === 'unlock') {
         // Unlock the avatar and deduct points
         const response = await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlock-avatar/${avatarId}`);
         const updatedPoints = response.data.updatedPoints;
-  
+
         // Deduct points and store in both context and localStorage
         const newPoints = points - modalData.gemsRequired;
         setPoints(newPoints); 
         localStorage.setItem(`points_${userID}`, newPoints);
-  
-        // Set the unlocked avatar as active by calling the set-active-avatar API
-        await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
-  
-        // Update local state and localStorage for active avatar
+
         setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
-        setActiveAvatar(modalData.avatar); // Set the unlocked avatar as active
+        setActiveAvatar(modalData.avatar); // Set the unlocked avatar as active by default
         localStorage.setItem(`activeAvatar_${userID}`, JSON.stringify(modalData.avatar)); // Update active avatar in localStorage
-  
+
         showToast(`Avatar ${modalData.avatar.name} has been unlocked and set as active!`, 'success');
+        
+        // Set the avatar as active via API
+        await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
       } else if (modalData.actionType === 'switch') {
         await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
         setActiveAvatar(modalData.avatar);
         localStorage.setItem(`activeAvatar_${userID}`, JSON.stringify(modalData.avatar)); // Update active avatar in localStorage
         showToast(`Avatar has been switched to ${modalData.avatar.name}!`, 'success');
       }
-  
-      // Invalidate queries to refetch the active avatar and unlocked avatars
+
       queryClient.invalidateQueries(['activeAvatar', userID]);
       queryClient.invalidateQueries(['unlockedAvatars', userID]);
-  
-      // Close the modal after confirmation
-      setModalData(null);
+      setModalData(null); // Close modal after confirmation
     } catch (error) {
       showToast('Failed to complete the action. Please try again.', 'error');
+    } finally {
+      setProcessing(false); // End processing
     }
   };
-  
 
   // Filter out avatars that are already unlocked for the locked avatars section
   const lockedAvatars = avatars?.filter((avatar) => !unlockedAvatars.some((uAvatar) => uAvatar._id === avatar._id));
@@ -279,10 +277,7 @@ const AvatarSelection = () => {
         <RightSection>
           {activeAvatar ? (
             <>
-              {/* Active avatar animation */}
-              <ActiveAvatarAnimation>
-                <CurrentAvatarImage src={activeAvatar.image} alt={activeAvatar.name} />
-              </ActiveAvatarAnimation>
+              <CurrentAvatarImage src={activeAvatar.image} alt={activeAvatar.name} />
               <AvatarInfo>
                 <Title>{activeAvatar.name}</Title>
               </AvatarInfo>
@@ -334,7 +329,7 @@ const AvatarSelection = () => {
           onGoAhead={handleConfirmAction}
           onClose={handleModalClose}
           isClosing={isClosing}
-          points={points} // Pass the points prop here
+          processing={processing} // Pass the processing state here
         />
       )}
     </Container>

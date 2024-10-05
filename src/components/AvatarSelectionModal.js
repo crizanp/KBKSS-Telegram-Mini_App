@@ -68,6 +68,11 @@ const ConfirmButton = styled.button`
   &:hover {
     background-color: #298dc8;
   }
+
+  &:disabled {
+    background-color: grey;
+    cursor: not-allowed;
+  }
 `;
 
 // Close button
@@ -90,7 +95,7 @@ const StyledImage = styled.img`
   margin: 0 auto 20px;
 `;
 
-const AvatarSelectionModal = ({ onGoAhead, onClose, isClosing, actionType, currentAvatarName, newAvatarName, gemsRequired }) => {
+const AvatarSelectionModal = ({ onGoAhead, onClose, isClosing, actionType, currentAvatarName, newAvatarName, gemsRequired, processing }) => {
   const isSwitchAction = actionType === "switch";
 
   return (
@@ -111,8 +116,8 @@ const AvatarSelectionModal = ({ onGoAhead, onClose, isClosing, actionType, curre
         </p>
 
         {/* Confirm button changes label based on the action type */}
-        <ConfirmButton onClick={onGoAhead}>
-          {isSwitchAction ? "Switch Avatar" : "Go Ahead"}
+        <ConfirmButton onClick={onGoAhead} disabled={processing}>
+          {processing ? "Processing..." : isSwitchAction ? "Switch Avatar" : "Go Ahead"}
         </ConfirmButton>
       </RewardModalContainer>
     </ModalOverlay>
