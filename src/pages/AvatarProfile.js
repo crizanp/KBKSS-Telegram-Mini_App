@@ -206,15 +206,19 @@ const AvatarSelection = () => {
       const avatarId = modalData.avatar._id;
 
       if (modalData.actionType === 'unlock') {
+        // Unlock the avatar and deduct points
         const response = await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlock-avatar/${avatarId}`);
         const updatedPoints = response.data.updatedPoints;
-        if (updatedPoints !== undefined) {
-          setPoints(updatedPoints); // Update points in PointsContext
-          localStorage.setItem(`points_${userID}`, updatedPoints); // Update points in local storage
-        }
+
+        // Deduct points and store in both context and localStorage
+        const newPoints = points - modalData.gemsRequired;
+        setPoints(newPoints); 
+        localStorage.setItem(`points_${userID}`, newPoints);
+
         setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
-        setActiveAvatar(modalData.avatar);
+        setActiveAvatar(modalData.avatar); // Set the unlocked avatar as active by default
         localStorage.setItem(`activeAvatar_${userID}`, JSON.stringify(modalData.avatar)); // Update active avatar in localStorage
+
         showToast(`Avatar ${modalData.avatar.name} has been unlocked and set as active!`, 'success');
       } else if (modalData.actionType === 'switch') {
         await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
@@ -230,8 +234,6 @@ const AvatarSelection = () => {
       showToast('Failed to complete the action. Please try again.', 'error');
     }
   };
-
-  
 
   // Filter out avatars that are already unlocked for the locked avatars section
   const lockedAvatars = avatars?.filter((avatar) => !unlockedAvatars.some((uAvatar) => uAvatar._id === avatar._id));
