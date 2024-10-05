@@ -16,6 +16,7 @@ import { CgProfile } from "react-icons/cg";
 import { useQuery, useQueryClient } from "@tanstack/react-query"; // Import useQueryClient for query invalidation
 import styled, { keyframes } from "styled-components";
 import { useUserAvatar } from "../context/UserAvatarContext";
+import { useBackground } from "../context/BackgroundContext"; // Import the context
 
 import {
   HomeContainer,
@@ -80,12 +81,18 @@ function HomePage() {
   const [isClosing, setIsClosing] = useState(false);
   const curvedBorderRef = useRef(null);
   const bottomMenuRef = useRef(null);
-  const [backgroundImage, setBackgroundImage] = useState(""); // Holds the active background URL
   const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
-  const { activeAvatar, fallbackAvatar, setActiveAvatar, setFallbackAvatar, fetchActiveAvatar } = useUserAvatar();
-  const queryClient = useQueryClient(); 
+  const {
+    activeAvatar,
+    fallbackAvatar,
+    setActiveAvatar,
+    setFallbackAvatar,
+    fetchActiveAvatar,
+  } = useUserAvatar();
+  const queryClient = useQueryClient();
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
-  const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false);
+  const { backgroundImage } =
+    useBackground(); // Use the context
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
@@ -106,7 +113,7 @@ function HomePage() {
       console.error("Error fetching fallback avatar:", error);
     }
   }, []);
-  
+
   useEffect(() => {
     if (!activeAvatar && !fallbackAvatar && !isLoading) {
       fetchFallbackAvatar(); // Load fallback avatar if neither is available
@@ -120,35 +127,11 @@ function HomePage() {
         src={activeAvatar || fallbackAvatar} // Use active avatar if available, fallback otherwise
         alt="Avatar"
         loading="lazy"
+        className="eagle-image"
+
       />
     );
   }, [activeAvatar, fallbackAvatar]);
-
-   // Fetch the active background from the API
-   const fetchActiveBackground = useCallback(async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/background/active`);
-      if (response.data && response.data.url) {
-        setBackgroundImage(response.data.url);
-      }
-    } catch (error) {
-      console.error("Error fetching active background:", error);
-    }
-  }, []);
-
-  // Always refetch the background when the component mounts
-  useEffect(() => {
-    fetchActiveBackground(); // Fetch the background on component mount
-  }, [fetchActiveBackground]);
-
-  // Periodically refetch the background every 2 minutes
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      fetchActiveBackground(); // Refetch the background every 2 minutes
-    }, 120000); // 120,000 milliseconds = 2 minutes
-
-    return () => clearInterval(intervalId); // Clean up the interval on unmount
-  }, [fetchActiveBackground]);
 
   useEffect(() => {
     const handleResize = () => {
