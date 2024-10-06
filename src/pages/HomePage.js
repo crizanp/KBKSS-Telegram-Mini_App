@@ -70,7 +70,6 @@ function HomePage() {
   const { energy, maxEnergy, decreaseEnergy, isEnergyLoading } = useEnergy(); // Access energy loading state
   const [tapCount, setTapCount] = useState(0);
   const [flyingNumbers, setFlyingNumbers] = useState([]);
-  const [slapEmojis] = useState([]);
   const [offlinePoints, setOfflinePoints] = useState(0);
   const [isRewardAvailable, setIsRewardAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // For loading state
@@ -85,14 +84,12 @@ function HomePage() {
   const {
     activeAvatar,
     fallbackAvatar,
-    setActiveAvatar,
     setFallbackAvatar,
     fetchActiveAvatar,
   } = useUserAvatar();
   const queryClient = useQueryClient();
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
-  const { backgroundImage } =
-    useBackground(); // Use the context
+  const { backgroundImage } = useBackground(); // Use the context
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
@@ -112,7 +109,7 @@ function HomePage() {
     } catch (error) {
       console.error("Error fetching fallback avatar:", error);
     }
-  }, []);
+  }, [setFallbackAvatar]);
 
   useEffect(() => {
     if (!activeAvatar && !fallbackAvatar && !isLoading) {
@@ -128,7 +125,6 @@ function HomePage() {
         alt="Avatar"
         loading="lazy"
         className="eagle-image"
-
       />
     );
   }, [activeAvatar, fallbackAvatar]);
@@ -175,7 +171,6 @@ function HomePage() {
   }, [userID]);
 
   // Update the remaining time every second if reward is not available
-  // Update the remaining time every second if reward is not available
   useEffect(() => {
     let interval;
     if (!isRewardAvailable && remainingTime > 0) {
@@ -198,6 +193,7 @@ function HomePage() {
     }
     return `${hours}h ${minutes}m ${seconds}s left`; // Show full timer for less than 1 hour
   };
+
   const initializeUser = useCallback(async () => {
     if (!userID) {
       // Get userID asynchronously if not already set
@@ -216,12 +212,15 @@ function HomePage() {
       await checkDailyRewardAvailability(); // Ensure reward logic executes after setting userID
     }
   }, [userID, setUserID, setPoints, checkDailyRewardAvailability]);
+
   useEffect(() => {
     initializeUser(); // Call once when component mounts
   }, [initializeUser]); // Dependency is the memoized initializeUser function
+
   const handleContextMenu = (e) => {
     e.preventDefault(); // This will prevent the default long-press behavior
   };
+
   // Refetch avatar if the user changes it
   useEffect(() => {
     if (userID) {
@@ -241,18 +240,6 @@ function HomePage() {
       window.removeEventListener("avatarChanged", invalidateAvatar);
     };
   }, [userID, queryClient]);
-  useEffect(() => {
-    if (userID) {
-      fetchActiveAvatar(userID); // Fetch the active avatar after getting userID
-    }
-  }, [userID, fetchActiveAvatar]);
-
-  const getMessage = useMemo(() => {
-    if (tapCount >= 150) return "He's feeling it! Keep going!";
-    if (tapCount >= 100) return "Ouch! That's gotta hurt!";
-    if (tapCount >= 50) return "Yeah, slap him more! :)";
-    return "Slap this eagle, he took my Golden CHICK!";
-  }, [tapCount]);
 
   const calculatePoints = () => {
     return 1;
@@ -291,6 +278,7 @@ function HomePage() {
       }
     }
   }, [userID, setPoints]);
+
   const handleTap = useCallback(
     (e) => {
       if (energy <= 0) return; // Prevent tapping if there's no energy
@@ -421,6 +409,7 @@ function HomePage() {
       userID,
     ]
   );
+
   const claimDailyReward = async () => {
     try {
       // Close the modal immediately after the claim button is clicked
@@ -504,13 +493,11 @@ function HomePage() {
       </PointsDisplayContainer>
 
       <MiddleSection>
-        {/* <Message>{getMessage}</Message>{" "} */}
         <EagleContainer>{memoizedEagleImage}</EagleContainer>
       </MiddleSection>
 
       {/* Right-side menu container to handle Boost and Leaderboard */}
       <RightSideMenuContainer>
-        {/* Boost with hover, floating and gradient background */}
         {/* Boost with hover, floating and gradient background */}
         <Link
           to="/boosts"
@@ -603,7 +590,6 @@ function HomePage() {
           {!isRewardAvailable && remainingTime > 0 && (
             <SmallTimerText>
               {formatRemainingTime(remainingTime)}{" "}
-              {/* Call the formatting function */}
             </SmallTimerText>
           )}
           <EnergyContainer>
@@ -648,15 +634,6 @@ function HomePage() {
         <FlyingNumber key={number.id} x={number.x} y={number.y}>
           +{number.value}
         </FlyingNumber>
-      ))}
-      {slapEmojis.map((emoji) => (
-        <SlapEmojiImage
-          key={emoji.id}
-          x={emoji.x}
-          y={emoji.y}
-          src="https://clipart.info/images/ccovers/1516938336sparkle-png-transparent.png"
-          alt="Slap"
-        />
       ))}
     </HomeContainer>
   );

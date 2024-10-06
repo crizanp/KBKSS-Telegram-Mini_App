@@ -1,9 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+import axios from 'axios';
+import { getUserID } from '../utils/getUserID';
 
 const LoadingContainer = styled.div`
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
@@ -13,30 +16,82 @@ const LoadingContainer = styled.div`
   background-size: cover; /* Optionally cover the entire background */
 `;
 
+const LoadingText = styled.p`
+  color: white;
+  font-size: 18px;
+  font-family: 'Orbitron', sans-serif;
+  margin-top: 20px;
+`;
+
+const ProgressContainer = styled.div`
+  position: absolute;
+  bottom: 30px;
+  width: 80%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+`;
+
+const progressAnimation = keyframes`
+  0% { width: 0; }
+  100% { width: 100%; }
+`;
+
+const ProgressBar = styled.div`
+  height: 100%;
+  background-color: #3baeef;
+  border-radius: 10px;
+  animation: ${progressAnimation} 4s linear forwards;
+`;
+
 function LoadingPage() {
   const navigate = useNavigate();
+  const [loadingProgress, setLoadingProgress] = useState(0);
+
+  const prefetchData = async () => {
+    try {
+      // Simulate loading by incrementing progress
+      const incrementProgress = () => {
+        setLoadingProgress((prev) => Math.min(prev + 25, 100));
+      };
+
+      // Fetch user data
+      incrementProgress();
+      const userID = await getUserID();
+      await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
+      
+      // Fetch user level
+      incrementProgress();
+      await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`);
+      
+      // Fetch active background
+      incrementProgress();
+      await axios.get(`${process.env.REACT_APP_API_URL}/background/active`);
+      
+      // Fetch avatar data
+      incrementProgress();
+      await axios.get(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}`);
+
+      // Once all data is fetched, navigate to the home page
+      navigate('/home');
+    } catch (error) {
+      console.error("Error pre-fetching data:", error);
+      // Handle error, navigate to an error page if needed
+    }
+  };
 
   useEffect(() => {
-    const checkEnvironment = () => {
-      const isLocalhost = window.location.hostname === 'localhost';
-      const tg = window.Telegram.WebApp;
+    prefetchData();
+  }, []);
 
-      if (isLocalhost) {
-        // If running on localhost, navigate to home directly after 4 seconds
-        setTimeout(() => navigate('/home'), 4000);
-      } else if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        // If running in Telegram, wait 4 seconds and then navigate to home
-        setTimeout(() => navigate('/home'), 4000);
-      } else {
-        // If not in Telegram and not on localhost, stay on loading page
-        // Additional logic could be added here if needed
-      }
-    };
-
-    checkEnvironment();
-  }, [navigate]);
-
-  return <LoadingContainer />;
+  return (
+    <LoadingContainer>
+      <LoadingText>Loading... Please wait.</LoadingText>
+      <ProgressContainer>
+        <ProgressBar style={{ width: `${loadingProgress}%` }} />
+      </ProgressContainer>
+    </LoadingContainer>
+  );
 }
 
 export default LoadingPage;
