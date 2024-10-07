@@ -62,7 +62,7 @@ function LoadingPage() {
       
       // Fetch user level
       incrementProgress();
-      await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`);
+      await axios.get(`${process.env.REACT_APP_API_URL}/user-level/userlevel/${userID}`);
       
       // Fetch active background
       incrementProgress();
