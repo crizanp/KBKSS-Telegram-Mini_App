@@ -18,7 +18,7 @@ export const UserInfoProvider = ({ children }) => {
   const fetchUserData = useCallback(async () => {
     try {
       // Fetch user level
-      const levelResponse = await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${userID}`);
+      const levelResponse = await axios.get(`${process.env.REACT_APP_API_URL}/user-level/userlevel/${userID}`);
       setLevel(levelResponse.data.currentLevel || 0);
 
       // Set first name from Telegram (if available)
