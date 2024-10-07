@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from "react";
-import {
-  FaCheckCircle,
-  FaGamepad,
-  FaUserFriends,
-} from "react-icons/fa";
+import { FaCheckCircle, FaTimesCircle, FaGamepad, FaUserFriends } from "react-icons/fa";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
-import UserInfo from "../components/UserInfo"; 
-import { getUserID } from "../utils/getUserID"; 
+import UserInfo from "../components/UserInfo";
+import { getUserID } from "../utils/getUserID";
 import {
   CriterionIcon,
   CriterionText,
-  StatusText,
   CriterionBox,
   CriteriaContainer,
   GemIcon,
@@ -25,42 +20,35 @@ import {
   SliderIconContainer,
   LevelPageContainer,
   Avatar,
-  levelsData,
   getAvatarByLevel,
 } from "../style/LevelPageStyle";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 
-// Define keyframe animation for glowing effect
-// const glow = keyframes`
-//   0% {
-//     box-shadow: 0 0 5px #f7f206, 0 0 10px #fff828, 0 0 15px #f7f206, 0 0 20px #f7f206;
-//   }
-//   50% {
-//     box-shadow: 0 0 10px #fff700, 0 0 20px #fff700, 0 0 30px #e6ff00, 0 0 40px #ebff00;
-//   }
-//   100% {
-//     box-shadow: 0 0 5px #f7f206, 0 0 10px #f7f206, 0 0 15px #f7f206, 0 0 20px #f7f206;
-//   }
-// `;
-
-// Style for the glowing check icon with dynamic color
+// Dynamic Glowing Check Icon
 const GlowingCheckIcon = styled(FaCheckCircle)`
-  color: ${({ color }) => color}; /* Dynamic color based on currentLevel.color */
+  color: ${({ color }) => color};
   font-size: 21px;
-  animation:  1.5s infinite ease-in-out;  // Apply glowing effect
+  animation: 1.5s infinite ease-in-out;
   vertical-align: middle;
-  background: none; /* Ensure no background */
   margin-bottom: 8px;
-  border-radius: 50%; /* Ensure the checkmark is circular */
-  padding: 0; /* Remove any padding around the icon */
-  box-shadow: none; /* Remove any box-shadow if applied unintentionally */
+  border-radius: 50%;
+  padding: 0;
 `;
 
-// Fallback non-animated icon when not completed
-const StaticIcon = styled(FaCheckCircle)`
-  color: #ccc;
+// Styled Components for "Done" and "Not Done" Icons
+const DoneIcon = styled(FaCheckCircle)`
+  color: #4caf50; /* Green for done */
   font-size: 24px;
-  transition: color 0.3s ease;
+  margin-left: 10px;
+  margin-right: 10px;
+`;
+
+const NotDoneIcon = styled(FaTimesCircle)`
+  color: #f44336; /* Red for not done */
+  font-size: 24px;
+  margin-left: 10px;
+  margin-right: 10px;
+
 `;
 
 // Function to fetch user level data using React Query
@@ -72,65 +60,150 @@ const fetchUserLevelData = async () => {
   return response.data;
 };
 
+// Function to fetch levels criteria from backend
+const fetchLevelsData = async () => {
+  const response = await axios.get(`${process.env.REACT_APP_API_URL}/level-management/levels`);
+  return response.data;
+};
+
 const LevelPage = () => {
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0); // Track level index
 
-  // Use React Query to fetch user level data, ensure queryKey is an array
-  const { data: userLevelData, isLoading, isError } = useQuery(
-    ['userLevelData'], // queryKey should be an array
-    fetchUserLevelData, // queryFn
+  // Fetch user level data and levels data using React Query
+  const { data: userLevelData, isLoading: userLoading, isError: userError } = useQuery(
+    ["userLevelData"],
+    fetchUserLevelData,
     {
       staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
     }
   );
 
+  const { data: levelsData, isLoading: levelsLoading, isError: levelsError } = useQuery(
+    ["levelsData"],
+    fetchLevelsData,
+    {
+      staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
+    }
+  );
+
+  // Sort levelsData in ascending order
+  const sortedLevelsData = levelsData?.sort((a, b) => a.levelNumber - b.levelNumber) || [];
+
   // Find the user's current level index in the levelsData
   useEffect(() => {
-    if (userLevelData) {
-      const currentLevel = levelsData.findIndex(
-        (level) => level.level === userLevelData.currentLevel
+    if (userLevelData && sortedLevelsData.length > 0) {
+      const currentLevel = sortedLevelsData.findIndex(
+        (level) => level.levelNumber === userLevelData.currentLevel
       );
       if (currentLevel !== -1) {
         setCurrentLevelIndex(currentLevel);
       }
     }
-  }, [userLevelData]);
+  }, [userLevelData, sortedLevelsData]);
 
   const handlePrevious = () => {
     setCurrentLevelIndex((prevIndex) =>
-      prevIndex > 0 ? prevIndex - 1 : levelsData.length - 1
+      prevIndex > 0 ? prevIndex - 1 : sortedLevelsData.length - 1
     );
   };
 
   const handleNext = () => {
     setCurrentLevelIndex((prevIndex) =>
-      prevIndex < levelsData.length - 1 ? prevIndex + 1 : 0
+      prevIndex < sortedLevelsData.length - 1 ? prevIndex + 1 : 0
     );
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>; // Loading state
+  if (userLoading || levelsLoading) {
+    return <div>Loading...</div>;
   }
 
-  if (isError) {
-    return <div>Error loading data...</div>; // Error state
+  if (userError || levelsError) {
+    return <div>Error loading data...</div>;
   }
 
-  const currentLevel = levelsData[currentLevelIndex];
+  const currentLevel = sortedLevelsData[currentLevelIndex];
+  const userAvatar = getAvatarByLevel(currentLevel.levelNumber);
 
-  // Get avatar based on current level
-  const userAvatar = getAvatarByLevel(currentLevel.level);
+  // Calculate the width percentage for each level
+  const totalLevels = sortedLevelsData.length;
+  const levelWidthPercentage = 100 / totalLevels; // Divide the full width equally among all levels
 
-  // Check if criteria are completed
-  const tasksCompleted =
-    userLevelData?.actualTasksCompleted >=
-    parseInt(currentLevel.criteria.tasks.split(" ")[1]);
-  const gamesUnlocked =
-    userLevelData?.actualGamesUnlocked >=
-    parseInt(currentLevel.criteria.games.split(" ")[1]);
-  const invitesCompleted =
-    userLevelData?.actualInvites >=
-    parseInt(currentLevel.criteria.invites.split(" ")[1]);
+  // Calculate progress for the level based on criteria
+  const calculateProgress = () => {
+    let totalCriteria = 0;
+    let completedCriteria = 0;
+
+    Object.keys(currentLevel.criteria).forEach((key) => {
+      totalCriteria++;
+      const actualValue = userLevelData[`actual${key.charAt(0).toUpperCase() + key.slice(1)}`];
+      const requiredValue = parseInt(currentLevel.criteria[key]);
+
+      if (actualValue >= requiredValue) {
+        completedCriteria++;
+      }
+    });
+
+    // Calculate percentage of criteria completion
+    return (completedCriteria / totalCriteria) * 100;
+  };
+
+  // Calculate total progress for all levels
+  const calculateTotalProgress = () => {
+    const currentLevelProgress = calculateProgress();
+    const totalProgress = currentLevelIndex * levelWidthPercentage + (currentLevelProgress * levelWidthPercentage) / 100;
+    return totalProgress;
+  };
+
+  // Dynamically check criteria completion
+  const checkCriteriaCompletion = (criteriaKey) => {
+    let actualValue;
+  
+    // Map criteria to actual data in userLevelData
+    if (criteriaKey === "tasks") {
+      actualValue = userLevelData.actualTasksCompleted;
+    } else if (criteriaKey === "games") {
+      actualValue = userLevelData.actualGamesUnlocked;
+    } else if (criteriaKey === "invites") {
+      actualValue = userLevelData.actualInvites;
+    } else if (criteriaKey === "avatarsUnlocked") {
+      actualValue = userLevelData.actualAvatarsUnlocked;
+    }
+
+    const requiredValue = parseInt(currentLevel.criteria[criteriaKey]);
+
+    console.log(`Checking completion for ${criteriaKey}: Actual=${actualValue}, Required=${requiredValue}`);
+
+    return actualValue >= requiredValue;
+  };
+
+  // Render criteria dynamically based on level data
+  const renderCriteria = () => {
+    return Object.keys(currentLevel.criteria).map((key) => {
+      let IconComponent;
+      if (key === "tasks") {
+        IconComponent = FaCheckCircle;
+      } else if (key === "games") {
+        IconComponent = FaGamepad;
+      } else if (key === "invites") {
+        IconComponent = FaUserFriends;
+      } else {
+        IconComponent = FaCheckCircle; // Default icon
+      }
+
+      const isCompleted = checkCriteriaCompletion(key);
+
+      return (
+        <CriterionBox key={key} completed={isCompleted}>
+          <CriterionIcon>
+            <IconComponent />
+          </CriterionIcon>
+          <CriterionText>{key.charAt(0).toUpperCase() + key.slice(1)}: {currentLevel.criteria[key]}</CriterionText>
+          {/* Display a green or red icon based on completion status */}
+          {isCompleted ? <DoneIcon /> : <NotDoneIcon />}
+        </CriterionBox>
+      );
+    });
+  };
 
   return (
     <LevelPageContainer>
@@ -147,58 +220,27 @@ const LevelPage = () => {
 
         {/* Show level name with "(current)" and dynamic colored glowing checkmark */}
         <LevelName style={{ color: currentLevel.color }}>
-          Lvl {currentLevel.level}{" "}
-          {currentLevel.level === userLevelData?.currentLevel && (
-            <>
-              <GlowingCheckIcon color={currentLevel.color} />  {/* Pass the dynamic color */}
-            </>
+          Lvl {currentLevel.levelNumber}{" "}
+          {currentLevel.levelNumber === userLevelData?.currentLevel && (
+            <GlowingCheckIcon color={currentLevel.color} />
           )}
         </LevelName>
 
         {/* Progress Bar */}
         <ProgressBarWrapper>
           <ProgressBarContainer>
+            {/* Dynamically set the total progress for all levels */}
             <ProgressFill
-              width={`${currentLevel.progress}%`}
+              width={`${calculateTotalProgress()}%`}  // Set total progress
               color={currentLevel.color}
             />
-            <GemIcon position={`${currentLevel.progress - 1}%`} />
+            <GemIcon position={`${calculateTotalProgress()}%`} />
           </ProgressBarContainer>
         </ProgressBarWrapper>
       </LevelContent>
 
       {/* Task Criteria Section */}
-      <CriteriaContainer>
-        <CriterionBox completed={tasksCompleted}>
-          <CriterionIcon>
-            <FaCheckCircle />
-          </CriterionIcon>
-          <CriterionText>{currentLevel.criteria.tasks}</CriterionText>
-          <StatusText completed={isLoading ? null : tasksCompleted}>
-            {isLoading ? "Checking..." : tasksCompleted ? "Completed" : "Not Completed"}
-          </StatusText>
-        </CriterionBox>
-
-        <CriterionBox completed={gamesUnlocked}>
-          <CriterionIcon>
-            <FaGamepad />
-          </CriterionIcon>
-          <CriterionText>{currentLevel.criteria.games}</CriterionText>
-          <StatusText completed={isLoading ? null : gamesUnlocked}>
-            {isLoading ? "Checking..." : gamesUnlocked ? "Completed" : "Not Completed"}
-          </StatusText>
-        </CriterionBox>
-
-        <CriterionBox completed={invitesCompleted}>
-          <CriterionIcon>
-            <FaUserFriends />
-          </CriterionIcon>
-          <CriterionText>{currentLevel.criteria.invites}</CriterionText>
-          <StatusText completed={isLoading ? null : invitesCompleted}>
-            {isLoading ? "Checking..." : invitesCompleted ? "Completed" : "Not Completed"}
-          </StatusText>
-        </CriterionBox>
-      </CriteriaContainer>
+      <CriteriaContainer>{renderCriteria()}</CriteriaContainer>
 
       {/* Right arrow button */}
       <SliderIconContainer style={{ right: "10px" }} onClick={handleNext}>
