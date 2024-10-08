@@ -51,7 +51,7 @@ export const AnnouncementBox = styled(Link)`
   transition: all 0.3s ease-in-out;
 
   &:hover {
-    background-color: #4c1bb5; // Darker shade on hover
+    background-color: #36a8e5; // Darker shade on hover
     transform: translateY(-3px); // Hover effect with slight movement
   }
 

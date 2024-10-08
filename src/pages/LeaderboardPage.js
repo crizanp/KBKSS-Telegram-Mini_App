@@ -36,7 +36,6 @@ const TabContainer = styled.div`
 const Tab = styled.button`
   padding: 10px 20px;
   font-size: 18px;
-  font-weight: bold;
   background-color: ${(props) => (props.active ? "#6023f5" : "#f1f1f1")};
   color: ${(props) => (props.active ? "#ffffff" : "#000000")};
   border: none;
@@ -46,7 +45,7 @@ const Tab = styled.button`
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: ${(props) => (props.active ? "#4c1bb5" : "#d9d9d9")};
+    background-color: ${(props) => (props.active ? "#36a8e5" : "#d9d9d9")};
   }
 `;
 
@@ -174,6 +173,7 @@ function LeaderboardPage() {
           renderLeaderboard()
         )}
       </LeaderboardContainer>
+      
     </>
   );
 }
