@@ -300,7 +300,7 @@ const AvatarSelection = () => {
       </TopSection>
 
       <MoreAvatarsSection>
-        <MoreAvatarsTitle>More Avatars to Unlock</MoreAvatarsTitle>
+        <MoreAvatarsTitle>Collect Avatars to Level Up</MoreAvatarsTitle>
         <MoreAvatarsGrid>
           {lockedAvatars?.map((avatar) => {
             const isLocked = userDetails.level < avatar.levelRequired || points < avatar.gemsRequired;

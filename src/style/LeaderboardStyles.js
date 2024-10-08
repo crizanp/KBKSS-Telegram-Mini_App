@@ -102,7 +102,7 @@ export const TableRow = styled.tr`
 
 // Title for "Top 30 Leaders" section
 export const Top30LeaderText = styled.h1`
-  font-size: 2.2rem;
+  font-size: 24px;
   color: #e1ecf2;
   margin: 20px 0;
   text-align: center;

@@ -35,8 +35,8 @@ const TabContainer = styled.div`
 // Styled component for each Tab
 const Tab = styled.button`
   padding: 10px 20px;
-  font-size: 18px;
-  background-color: ${(props) => (props.active ? "#6023f5" : "#f1f1f1")};
+  font-size: 14px;
+  background-color: ${(props) => (props.active ? "#36a8e5" : "#f1f1f1")};
   color: ${(props) => (props.active ? "#ffffff" : "#000000")};
   border: none;
   border-radius: 8px;
