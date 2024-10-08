@@ -20,6 +20,7 @@ import { UserAvatarProvider } from "./context/UserAvatarContext";
 import { BackgroundProvider } from "./context/BackgroundContext";
 import { UserInfoProvider } from "./context/UserInfoContext";
 import Game from "./pages/GemsCatch";
+import WeeklyLeaderboardPage from "./pages/WeeklyLeaderboard";
 
 function App() {
   return (
@@ -126,6 +127,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <Game />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/weekly-leaderboard"
+                      element={
+                        <ProtectedRoute>
+                          <WeeklyLeaderboardPage />
                         </ProtectedRoute>
                       }
                     />
