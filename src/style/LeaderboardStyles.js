@@ -1,7 +1,7 @@
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 
-export const telegramColor = "#0088cc"; // Telegram blue color
+export const telegramColor = "#36a8e5"; // Telegram blue color
 
 // Dynamically import all avatar images
 export const avatarImages = {};
@@ -36,7 +36,7 @@ export const PointsDisplayContainer = styled.div`
 
 // Announcement Box for weekly leaderboard with hover effect
 export const AnnouncementBox = styled(Link)`
-  background-color: #6023f5; // Purple background
+  background-color: #36a8e5; // Purple background
   color: #ffffff;
   padding: 14px;
   text-align: center;
