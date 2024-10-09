@@ -71,7 +71,7 @@ export const RightSection = styled.div`
   background-color: #1c1c1c;
   text-align: center;
   @media (max-width: 768px) {
-    width: 65%;
+    width: 110%;
     height: auto;
   }
 `;
@@ -157,7 +157,6 @@ export const LevelDisplay = styled.div`
 
 // Section for more avatars
 export const MoreAvatarsSection = styled.div`
-  margin-top: 30px;
 `;
 
 // Title for more avatars section
@@ -187,4 +186,63 @@ export const TopRightGems = styled.div`
   align-items: center;
   font-size: 10px;
   color: white;
+`;
+
+export const MenuItem = styled.div`
+  padding: 15px 20px;
+  margin: 5px 5px;
+  width: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: ${(props) => (props.active ? '#007bff' : '#f8f9fa')}; // Active or default background color
+  color: ${(props) => (props.active ? '#fff' : '#000')}; // Text color based on active state
+  border-radius: 8px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+
+  &:hover {
+    background-color: ${(props) => (props.active ? '#0056b3' : '#e9ecef')}; // Darker hover effect
+  }
+
+  &:active {
+    background-color: ${(props) => (props.active ? '#004085' : '#ced4da')}; // Active press effect
+  }
+`;
+// MenuOptions container styling
+export const MenuOptions = styled.div`
+  display: flex;
+  flex-direction: column; // Vertically align menu items
+  align-items: flex-start; // Align menu items to the left
+  width: 100%;
+  padding: 10px 0;
+
+  // Add some margin or padding around the menu items
+  & > div {
+    margin-bottom: 10px;
+  }
+
+  // Optionally, you can apply media queries for responsiveness
+  @media (max-width: 768px) {
+    flex-direction: row; // Horizontally align menu items on smaller screens
+    justify-content: space-around;
+  }
+`;
+export const FallbackAvatarMessage = styled.p`
+  color: #ff6b6b;  /* A soft red color to highlight fallback message */
+  font-size: 1rem; /* Default font size */
+  text-align: center; /* Center align the message */
+  margin-top: 10px;  /* Add some spacing above the message */
+  background-color: rgba(255, 107, 107, 0.1); /* Light background for emphasis */
+  padding: 10px; /* Padding around the text for better visibility */
+  border-radius: 8px; /* Rounded corners for a softer look */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem; /* Slightly smaller text on mobile */
+    padding: 8px; /* Adjust padding on mobile */
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.85rem; /* Further reduce font size for small devices */
+    padding: 6px; /* Adjust padding for smaller screens */
+  }
 `;
