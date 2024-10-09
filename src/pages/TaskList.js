@@ -117,26 +117,34 @@ const TaskList = () => {
   });
 
   // Function to verify Telegram tasks
-  const verifyTelegramTask = async (task) => {
-    try {
-      const userID = getUserID(); // Make sure this returns a string or number
-  
-      if (!userID) {
-        throw new Error("User ID is required for Telegram verification.");
-      }
-  
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/telegram-verify/verify-telegram-task`, {
-        userID,
-        chatIds: [task.chatId], // Ensure it's an array
-        actionType: task.telegramAction,
-      });
-  
-      return response.data.success;
-    } catch (error) {
-      console.error("Error verifying Telegram task:", error);
-      return false;
+ // Function to verify Telegram tasks
+const verifyTelegramTask = async (task) => {
+  try {
+    const userID = getUserID(); // Ensure this returns a string or number
+    
+    // Log userID for debugging
+    console.log("Verifying Telegram task for userID:", userID);
+    
+    // Validate userID
+    if (!userID || typeof userID !== "string" && typeof userID !== "number") {
+      console.error("Invalid userID:", userID);
+      throw new Error("User ID is required and should be a valid string or number.");
     }
-  };
+    
+    // Make the API call to verify the Telegram task
+    const response = await axios.post(`${process.env.REACT_APP_API_URL}/telegram-verify/verify-telegram-task`, {
+      userID,
+      chatIds: [task.chatId], // Ensure chatIds is passed as an array
+      actionType: task.telegramAction,
+    });
+
+    return response.data.success;
+  } catch (error) {
+    console.error("Error verifying Telegram task:", error);
+    return false;
+  }
+};
+
 
   const claimRewardMutation = useMutation(
     async ({ task }) => {
