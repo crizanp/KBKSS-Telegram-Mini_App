@@ -39,26 +39,19 @@ import {
 } from "../style/TaskList.styles";
 import celebrationSound from "../assets/celebration.mp3";
 
-// Fetch tasks function
 const fetchTasks = async () => {
-  const { data } = await axios.get(
-    `${process.env.REACT_APP_API_URL}/igh-airdrop-tasks`
-  );
+  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/igh-airdrop-tasks`);
   return data;
 };
 
-// Fetch user info function
 const fetchUserInfo = async (userID) => {
-  const { data } = await axios.get(
-    `${process.env.REACT_APP_API_URL}/user-info/${userID}`
-  );
+  const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
   return data;
 };
 
-// Group tasks by category
 const groupTasksByCategory = (tasks) => {
   return tasks.reduce((acc, task) => {
-    const category = task.category || "Uncategorized"; // Default to 'Uncategorized' if no category
+    const category = task.category || "Uncategorized";
     if (!acc[category]) {
       acc[category] = [];
     }
@@ -69,11 +62,8 @@ const groupTasksByCategory = (tasks) => {
 
 const TaskList = () => {
   const { points, setPoints, userID, setUserID, setUsername } = usePoints();
-
-  // Declare completedTasks state
   const [completedTasks, setCompletedTasks] = useState({});
-  const [isCompletedTasksLoading, setIsCompletedTasksLoading] = useState(true); // New loading state
-
+  const [isCompletedTasksLoading, setIsCompletedTasksLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isClaimable, setIsClaimable] = useState(false);
   const [underModeration, setUnderModeration] = useState(false);
@@ -88,7 +78,6 @@ const TaskList = () => {
 
   const queryClient = useQueryClient();
 
-  // Handle window resize to adjust confetti size
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({
@@ -100,102 +89,101 @@ const TaskList = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Fetch User Info and completed tasks
-  const {
-    data: userInfo,
-    isLoading: userLoading,
-    isError: userError,
-  } = useQuery({
+  const { data: userInfo, isLoading: userLoading, isError: userError } = useQuery({
     queryKey: ["userInfo", userID],
     queryFn: () => fetchUserInfo(userID),
-    enabled: !!userID, // Only fetch if userID is available
+    enabled: !!userID,
     onSuccess: (data) => {
       setPoints(data.points);
       const completedTasksMap = {};
       data.tasksCompleted.forEach((taskId) => {
         completedTasksMap[taskId] = true;
       });
-      setCompletedTasks(completedTasksMap); // Set the completed tasks
-      setIsCompletedTasksLoading(false); // Set loading to false once the tasks are loaded
+      setCompletedTasks(completedTasksMap);
+      setIsCompletedTasksLoading(false);
     },
     onError: () => {
       showToast("Unexpected error fetching user data", "error");
-      setIsCompletedTasksLoading(false); // Even on error, stop loading
+      setIsCompletedTasksLoading(false);
     },
   });
 
-  // Fetch Tasks
-  const {
-    data: tasksData,
-    isLoading: tasksLoading,
-    isError: tasksError,
-  } = useQuery({
+  const { data: tasksData, isLoading: tasksLoading, isError: tasksError } = useQuery({
     queryKey: ["tasks"],
     queryFn: fetchTasks,
-    onError: (error) => {
+    onError: () => {
       showToast("Error fetching tasks", "error");
     },
   });
 
-  // Claim Reward Mutation
-  // Claim Reward Mutation
-const claimRewardMutation = useMutation(
-  async ({ task }) => {
-    await axios.put(
-      `${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`,
-      {
-        pointsToAdd: task.points,
-        username: window.Telegram.WebApp?.initDataUnsafe?.user?.username,
-      }
-    );
-
-    await axios.post(`${process.env.REACT_APP_API_URL}/user-info`, {
-      userID,
-      tasksCompleted: [task._id],
-      taskHistory: [
-        {
-          taskId: task._id,
-          pointsEarned: task.points,
-          completedAt: new Date(),
-        },
-      ],
-    });
-  },
-  {
-    onSuccess: async (data, variables) => {
-      // Invalidate user info query to refetch user points and task data
-      queryClient.invalidateQueries(["userInfo", userID]);
-      
-      // Update points in state
-      setPoints((prevPoints) => {
-        const updatedPoints = prevPoints + variables.task.points;
-        // Store updated points in local storage
-        localStorage.setItem(`points_${userID}`, updatedPoints);
-        return updatedPoints;
+  // Function to verify Telegram tasks
+  const verifyTelegramTask = async (task) => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/verify-telegram/verify-telegram-task`, {
+        userID: getUserID(),
+        chatIds: [task.chatId], // Provide an array with a single chatId
+        actionType: task.telegramAction,
       });
 
-      showToast("Points awarded!", "success");
-      setShowConfetti(true);
-      audioRef.current.play();
-      setTimeout(() => setShowConfetti(false), 5000);
-      setSelectedTask(null); // Clear the selected task
-    },
-    onError: () => {
-      showToast("Error claiming the reward.", "error");
-    },
-    onSettled: () => setUnderModeration(false),
-  }
-);
+      return response.data.success;
+    } catch (error) {
+      console.error("Error verifying Telegram task:", error);
+      return false;
+    }
+  };
 
+  const claimRewardMutation = useMutation(
+    async ({ task }) => {
+      if (task.taskType === "telegram") {
+        // Verify the Telegram task first
+        const isVerified = await verifyTelegramTask(task);
+        if (!isVerified) {
+          throw new Error("Telegram task verification failed.");
+        }
+      }
 
-  // Start countdown timer
+      await axios.put(`${process.env.REACT_APP_API_URL}/user-info/update-points/${userID}`, {
+        pointsToAdd: task.points,
+        username: window.Telegram.WebApp?.initDataUnsafe?.user?.username,
+      });
+
+      await axios.post(`${process.env.REACT_APP_API_URL}/user-info`, {
+        userID,
+        tasksCompleted: [task._id],
+        taskHistory: [
+          {
+            taskId: task._id,
+            pointsEarned: task.points,
+            completedAt: new Date(),
+          },
+        ],
+      });
+    },
+    {
+      onSuccess: async (data, variables) => {
+        queryClient.invalidateQueries(["userInfo", userID]);
+        setPoints((prevPoints) => {
+          const updatedPoints = prevPoints + variables.task.points;
+          localStorage.setItem(`points_${userID}`, updatedPoints);
+          return updatedPoints;
+        });
+        showToast("Points awarded!", "success");
+        setShowConfetti(true);
+        audioRef.current.play();
+        setTimeout(() => setShowConfetti(false), 5000);
+        setSelectedTask(null);
+      },
+      onError: (error) => {
+        showToast(`Error claiming the reward: ${error.message}`, "error");
+      },
+      onSettled: () => setUnderModeration(false),
+    }
+  );
+
   useEffect(() => {
     let countdown;
     if (selectedTask && timerStarted && !isClaimable && timer > 0) {
-      countdown = setInterval(
-        () => setTimer((prevTimer) => prevTimer - 1),
-        1000
-      );
+      countdown = setInterval(() => setTimer((prevTimer) => prevTimer - 1), 1000);
     } else if (timer === 0) {
       setIsClaimable(true);
       clearInterval(countdown);
@@ -204,7 +192,6 @@ const claimRewardMutation = useMutation(
   }, [selectedTask, timerStarted, isClaimable, timer]);
 
   const handleTaskClick = (task) => {
-    // Disable clicks when completed tasks are still loading
     if (isCompletedTasksLoading || completedTasks[task._id]) return;
 
     setSelectedTask(task);
@@ -266,19 +253,13 @@ const claimRewardMutation = useMutation(
     return <div>Error loading data.</div>;
   }
 
-  // Group the tasks by category
   const groupedTasks = groupTasksByCategory(tasksData);
-
-  // Desired category order
   const categoryOrder = ["Special", "Daily", "Lists", "Extra"];
 
   return (
     <>
-      {/* Confetti and Points Display */}
       <audio ref={audioRef} src={celebrationSound} />
-      {showConfetti && (
-        <Confetti width={windowSize.width} height={windowSize.height} />
-      )}
+      {showConfetti && <Confetti width={windowSize.width} height={windowSize.height} />}
 
       <PointsDisplayContainer id="pointsDisplay">
         <UserInfo userID={userID} points={points} />
@@ -307,7 +288,6 @@ const claimRewardMutation = useMutation(
         respectful and ensure all tasks are completed correctly.
       </AirdropDescription>
 
-      {/* Render grouped tasks in the desired category order */}
       <TaskContainer>
         {categoryOrder.map(
           (category) =>
@@ -316,21 +296,15 @@ const claimRewardMutation = useMutation(
                 <TaskTitle>{category} Tasks</TaskTitle>
 
                 {groupedTasks[category]
-                  .sort((a, b) => (completedTasks[a._id] ? 1 : -1)) // Sort tasks by completion status
+                  .sort((a, b) => (completedTasks[a._id] ? 1 : -1))
                   .map((task) => (
                     <TaskItemContainer
                       key={task._id}
                       $completed={completedTasks[task._id]}
                       onClick={() => handleTaskClick(task)}
                       style={{
-                        cursor:
-                          isCompletedTasksLoading || completedTasks[task._id]
-                            ? "not-allowed"
-                            : "pointer", // Make unclickable initially and for completed tasks
-                        pointerEvents:
-                          isCompletedTasksLoading || completedTasks[task._id]
-                            ? "none"
-                            : "auto", // Disable interaction initially and for completed tasks
+                        cursor: isCompletedTasksLoading || completedTasks[task._id] ? "not-allowed" : "pointer",
+                        pointerEvents: isCompletedTasksLoading || completedTasks[task._id] ? "none" : "auto",
                       }}
                     >
                       <TaskDetailsContainer>
@@ -355,7 +329,6 @@ const claimRewardMutation = useMutation(
         )}
       </TaskContainer>
 
-      {/* Modal for Task Details */}
       {selectedTask && (
         <ModalOverlay>
           <Modal>
@@ -372,16 +345,10 @@ const claimRewardMutation = useMutation(
 
             {isClaimable && !underModeration ? (
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <ClaimButton
-                  onClick={handleClaimReward}
-                  disabled={underModeration}
-                >
+                <ClaimButton onClick={handleClaimReward} disabled={underModeration}>
                   {underModeration ? "Claiming..." : "Claim Reward"}
                 </ClaimButton>
-                <PerformAgainButton
-                  onClick={handleStartTask}
-                  disabled={underModeration}
-                >
+                <PerformAgainButton onClick={handleStartTask} disabled={underModeration}>
                   Perform Again
                 </PerformAgainButton>
               </div>
@@ -391,14 +358,11 @@ const claimRewardMutation = useMutation(
               <ModalButton onClick={handleStartTask}>Start Task</ModalButton>
             ) : null}
 
-            {underModeration && (
-              <ModalContent>Task under moderation...</ModalContent>
-            )}
+            {underModeration && <ModalContent>Task under moderation...</ModalContent>}
           </Modal>
         </ModalOverlay>
       )}
 
-      {/* Render the ToastContainer globally */}
       <ToastNotification />
     </>
   );
