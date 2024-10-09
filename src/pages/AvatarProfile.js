@@ -167,8 +167,14 @@ const AvatarSelection = () => {
 
   const handleUnlockAvatar = async (avatar) => {
     if (modalData) return;
-
-    if (points >= avatar.gemsRequired && userDetails.level >= avatar.levelRequired) {
+  
+    // Check if the avatar is already unlocked
+    const isAlreadyUnlocked = unlockedAvatars.some((unlockedAvatar) => unlockedAvatar._id === avatar._id);
+  
+    if (isAlreadyUnlocked) {
+      // If the avatar is already unlocked, switch to the avatar instead of unlocking
+      handleSwitchAvatar(avatar);
+    } else if (points >= avatar.gemsRequired && userDetails.level >= avatar.levelRequired) {
       setModalData({
         avatar,
         message: `Are you sure you want to unlock the avatar ${avatar.name} and deduct ${avatar.gemsRequired} gems?`,
@@ -180,10 +186,14 @@ const AvatarSelection = () => {
       showToast('You are not eligible to unlock this avatar. Please level up.', 'error');
     }
   };
-
   const handleSwitchAvatar = async (avatar) => {
     if (modalData) return; // Prevent multiple modals
-
+  
+    // Check if the avatar is the current active avatar, if so, no need to switch
+    if (activeAvatar && activeAvatar._id === avatar._id) {
+      showToast('This avatar is already active.', 'info');
+      return;
+    }
     // Set modal data to prompt user for switching avatar confirmation
     setModalData({
       actionType: 'switch',
