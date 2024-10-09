@@ -151,14 +151,16 @@ const AvatarSelection = () => {
     refetchOnWindowFocus: false,
   });
 
-  useEffect(() => {
-    if (unlockedAvatarData) {
-      setUnlockedAvatars(unlockedAvatarData);
-    }
-    if (activeAvatarData) {
-      setActiveAvatar(activeAvatarData);
-    }
-  }, [unlockedAvatarData, activeAvatarData]);
+  // Set unlocked and active avatars after fetching
+useEffect(() => {
+  if (unlockedAvatarData) {
+    setUnlockedAvatars(unlockedAvatarData);
+  }
+  if (activeAvatarData) {
+    setActiveAvatar(activeAvatarData);
+  }
+}, [unlockedAvatarData, activeAvatarData]);
+
 
   if (!userID) {
     return <SkeletonLoader />;
@@ -181,54 +183,63 @@ const AvatarSelection = () => {
   };
 
   const handleSwitchAvatar = async (avatar) => {
-    if (modalData) return;
-
+    if (modalData) return; // Prevent multiple modals
+  
+    // Set modal data to prompt user for switching avatar confirmation
     setModalData({
       actionType: 'switch',
-      currentAvatarName: activeAvatar?.name || "your current avatar",
+      currentAvatarName: activeAvatar?.name || 'your current avatar', // Show current avatar name or fallback message
       newAvatarName: avatar.name,
       avatar,
     });
   };
-
+  
   const handleConfirmAction = async () => {
     if (!modalData?.avatar) return;
-
-    setProcessing(true);
+  
+    setProcessing(true); // Start processing
     try {
       const avatarId = modalData.avatar._id;
-
+  
       if (modalData.actionType === 'unlock') {
+        // Unlock the avatar and deduct points
         const response = await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/unlock-avatar/${avatarId}`);
         const updatedPoints = response.data.updatedPoints;
-
+  
+        // Deduct points and store in both context and localStorage
         const newPoints = points - modalData.gemsRequired;
         setPoints(newPoints);
         localStorage.setItem(`points_${userID}`, newPoints);
-
+  
+        // Set the newly unlocked avatar as active by default
         setUnlockedAvatars((prev) => [...prev, modalData.avatar]);
-        setActiveAvatar(modalData.avatar);
+        setActiveAvatar(modalData.avatar); 
         localStorage.setItem(`activeAvatar_${userID}`, JSON.stringify(modalData.avatar));
-
+  
         showToast(`Avatar ${modalData.avatar.name} has been unlocked and set as active!`, 'success');
-        
+  
+        // Set the avatar as active via API
         await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
       } else if (modalData.actionType === 'switch') {
+        // Update the active avatar on the server
         await axios.put(`${process.env.REACT_APP_API_URL}/user-avatar/${userID}/set-active-avatar/${avatarId}`);
+  
+        // Update the active avatar in state and localStorage
         setActiveAvatar(modalData.avatar);
         localStorage.setItem(`activeAvatar_${userID}`, JSON.stringify(modalData.avatar));
         showToast(`Avatar has been switched to ${modalData.avatar.name}!`, 'success');
       }
-
-      queryClient.invalidateQueries(['activeAvatar', userID]);
-      queryClient.invalidateQueries(['unlockedAvatars', userID]);
-      setModalData(null);
+  
+      queryClient.invalidateQueries(['activeAvatar', userID]); // Refetch active avatar data
+      queryClient.invalidateQueries(['unlockedAvatars', userID]); // Refetch unlocked avatars
+      setModalData(null); // Close modal after confirmation
     } catch (error) {
       showToast('Failed to complete the action. Please try again.', 'error');
     } finally {
-      setProcessing(false);
+      setProcessing(false); // End processing
     }
   };
+  
 
   const lockedAvatars = avatars?.filter((avatar) => !unlockedAvatars.some((uAvatar) => uAvatar._id === avatar._id));
 
