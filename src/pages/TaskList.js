@@ -119,7 +119,7 @@ const TaskList = () => {
   // Function to verify Telegram tasks
   const verifyTelegramTask = async (task) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/verify-telegram/verify-telegram-task`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/telegram-verify/verify-telegram-task`, {
         userID: getUserID(),
         chatIds: [task.chatId], // Provide an array with a single chatId
         actionType: task.telegramAction,
