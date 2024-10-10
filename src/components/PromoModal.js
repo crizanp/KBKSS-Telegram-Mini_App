@@ -19,7 +19,7 @@ const ModalOverlay = styled.div`
 // Modal Container with gradient background and slow slide-up animation
 const PromoModalContainer = styled.div`
   width: 100%;
-  max-width: 460px;
+  max-width: 564px;
   background: linear-gradient(135deg, #0f1a27, #0f1a27); /* Gradient background */
   padding: 25px;
   border-radius: 20px 20px 0 0;

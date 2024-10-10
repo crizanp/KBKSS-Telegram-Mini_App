@@ -25,6 +25,7 @@ const UserInfoContainer = styled.div`
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   font-family: 'Orbitron', sans-serif;
   animation: fadeIn 0.6s ease-in-out;
+  max-width: 524px;
 `;
 
 // Username and Level container

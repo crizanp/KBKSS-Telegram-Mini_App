@@ -19,7 +19,7 @@ const ModalOverlay = styled.div`
 // Modal container with slide-up animation
 const RewardModalContainer = styled.div`
   width: 100%;
-  max-width: 460px;
+  max-width: 564px;
   background: linear-gradient(135deg, #0f1a27, #0f1a27);
   padding: 20px;
   border-radius: 20px 20px 0 0;

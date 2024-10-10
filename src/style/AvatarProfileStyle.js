@@ -105,8 +105,8 @@ export const AvatarImage = styled.img`
 
 // Active avatar image styling
 export const CurrentAvatarImage = styled.img`
-  width: 100%;
-  height: 300px;
+  width: 60%;
+  height: auto;
   object-fit: cover;
   border-radius: 10px;
   margin-bottom: 10px;

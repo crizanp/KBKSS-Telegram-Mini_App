@@ -9,7 +9,7 @@ import { getUserID } from "../utils/getUserID";  // Importing the function corre
 const LayoutContainer = styled.div`
   font-family: 'Orbitron', sans-serif;
   background-color: #090c12;
-  max-width: 460px;
+  max-width: 564px;
   height: 100vh;
   margin: 0 auto;
   display: flex;
@@ -23,7 +23,7 @@ const RestrictedContainer = styled.div`
   justify-content: center;
   align-items: center;
   height: 100vh;
-  max-width: 460px;
+  max-width: 564px;
   background-image: ${(props) => `url(${props.imageUrl})`};
   background-size: cover;
   background-position: center;
