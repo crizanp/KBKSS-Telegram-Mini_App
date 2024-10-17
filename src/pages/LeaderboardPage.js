@@ -103,7 +103,6 @@ const DateTabContainer = styled(TabContainer)`
   overflow-x: auto;
   white-space: nowrap;
   margin-top: 10px;
-  padding-left: 80px;  // Add padding to ensure the leftmost tab is fully visible
   scroll-behavior: smooth;
 
   /* Hide scrollbar */
@@ -112,7 +111,13 @@ const DateTabContainer = styled(TabContainer)`
   }
   -ms-overflow-style: none;  /* Hide scrollbar in IE and Edge */
   scrollbar-width: none;  /* Hide scrollbar in Firefox */
+
+  /* Add margin to the first tab to ensure it's fully visible */
+  & > :first-child {
+    margin-left: 117px; /* Adjust this margin to ensure proper spacing */
+  }
 `;
+
 
 
 // Utility function to truncate usernames (used only for non-top-3 users)
