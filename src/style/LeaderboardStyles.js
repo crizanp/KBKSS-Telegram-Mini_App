@@ -184,6 +184,16 @@ export const PointsCellbelow = styled.td`
     vertical-align: middle;  // Ensures the text is aligned
   }
 `;
+export const AirdropDescription = styled.p`
+  color: #aaaaaa;
+  margin-bottom: 20px;
+  margin-left: 18px;
+    margin-right: 18px;
+  
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.5;
+`;
 // Avatar image styling in the leaderboard
 export const UserAvatar = styled.img`
   width: 42px;

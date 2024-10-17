@@ -24,7 +24,8 @@ import {
   Tab,
   TabContainer,
   Top30LeaderText,
-  PointsCellbelow
+  PointsCellbelow,
+  AirdropDescription
 } from "../style/LeaderboardStyles";
 
 // Styled Components
@@ -38,12 +39,12 @@ const StyledLeaderboardPage = styled.div`
 
 const StyledTableRow = styled(TableRow)`
   background: ${({ rank }) => {
-    if (rank === 1 || rank === 3) return "#2c15d354";  // Same bluish background for ranks 1 and 3
-    if (rank === 2) return "#1c1c1c"; // Slightly dim background for rank 2
-    return rank % 2 === 0 ? "transparent" : "#333333";  // Dark background for odd rows
+    if (rank === 1 || rank === 3) return "#2c15d354";  // Bluish background for ranks 1 and 3
+    if (rank === 2) return "#2745b07d";  // Always apply dim background for rank 2
+    return rank % 2 === 0 ? "transparent" : "#333333";  // Alternating backgrounds for even/odd rows
   }};
   font-weight: ${({ rank }) => (rank <= 3 ? "bold" : "normal")};
-  color: ${({ rank }) => (rank <= 3 ? "#fff" : "#000")};
+  color: ${({ rank }) => (rank <= 3 ? "#fff" : "#e8e7e4")};  // Light color for top 3
   &:hover {
     background-color: #333333;
     transition: background-color 0.3s ease-in-out;
@@ -51,6 +52,8 @@ const StyledTableRow = styled(TableRow)`
     transform: scale(1.01);
   }
 `;
+
+
 
 const StyledTop3Container = styled.div`
   display: flex;
@@ -350,6 +353,9 @@ function LeaderboardPage() {
           <FullWidthContainer>
             <PointsDisplayContainer>
               <Top30LeaderText>Top 10 Weekly Leaders</Top30LeaderText>
+              <AirdropDescription>
+              Participate in the weekly leaderboard challenge and earn USDT every week. Top 3 Highest will get rewarded. Check announcement on Gem Hunters Club official channel.
+        </AirdropDescription>
             </PointsDisplayContainer>
             {isWeeklyError ? (
               <NoUsersMessage>Error fetching leaderboard data. Please try again later.</NoUsersMessage>
@@ -360,7 +366,7 @@ function LeaderboardPage() {
 
           <FullWidthContainer>
             <PointsDisplayContainer>
-              <Top30LeaderText>Top 3 Weekly Leaders</Top30LeaderText>
+              <Top30LeaderText>Weekly Winners</Top30LeaderText>
             </PointsDisplayContainer>
 <DateTabContainer>
               {weeks.map((week) => (
