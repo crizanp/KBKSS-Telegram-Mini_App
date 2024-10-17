@@ -103,7 +103,7 @@ const DateTabContainer = styled(TabContainer)`
   overflow-x: auto;
   white-space: nowrap;
   margin-top: 10px;
-  padding-left: 10px;  // Add padding to ensure the leftmost tab is fully visible
+  padding-left: 80px;  // Add padding to ensure the leftmost tab is fully visible
   scroll-behavior: smooth;
 
   /* Hide scrollbar */
