@@ -114,7 +114,8 @@ const DateTabContainer = styled(TabContainer)`
 
   /* Add margin to the first tab to ensure it's fully visible */
   & > :first-child {
-    margin-left: 117px; /* Adjust this margin to ensure proper spacing */
+    ${'' /* margin-left: 117px;  */}
+    /* Adjust this margin to ensure proper spacing */
   }
 `;
 
