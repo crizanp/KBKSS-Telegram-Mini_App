@@ -165,7 +165,16 @@ function GamesPage() {
           <GameItemTitle>Predict & Win</GameItemTitle>
         </GameItem>
 
-        <GameItem as={Link} to="/catch-eagle">
+        {/* <GameItem as={Link} to="/catch-eagle">
+          <IconWrapper>
+            <GameIcon
+              src="https://www.freeiconspng.com/thumbs/eagle-icon-png/eagle-icon-png-9.png"
+              alt="Catch the Eagle Icon"
+            />
+          </IconWrapper>
+          <GameItemTitle>Catch the Eagle</GameItemTitle>
+        </GameItem>  */}
+        <GameItem comingSoon>
           <IconWrapper>
             <GameIcon
               src="https://www.freeiconspng.com/thumbs/eagle-icon-png/eagle-icon-png-9.png"
