@@ -103,14 +103,17 @@ const DateTabContainer = styled(TabContainer)`
   overflow-x: auto;
   white-space: nowrap;
   margin-top: 10px;
+  padding-left: 10px;  // Add padding to ensure the leftmost tab is fully visible
+  scroll-behavior: smooth;
+
+  /* Hide scrollbar */
   &::-webkit-scrollbar {
-    height: 8px;
+    display: none;
   }
-  &::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 4px;
-  }
+  -ms-overflow-style: none;  /* Hide scrollbar in IE and Edge */
+  scrollbar-width: none;  /* Hide scrollbar in Firefox */
 `;
+
 
 // Utility function to truncate usernames (used only for non-top-3 users)
 const truncateUsername = (username) => {
