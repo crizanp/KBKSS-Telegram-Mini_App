@@ -23,7 +23,8 @@ import {
   avatarImages,
   Tab,
   TabContainer,
-  Top30LeaderText  
+  Top30LeaderText,
+  PointsCellbelow
 } from "../style/LeaderboardStyles";
 
 // Styled Components
@@ -300,7 +301,6 @@ function LeaderboardPage() {
     );
   };
 
-  // Handle rendering the Weekly Top 3 leaderboard for a selected week (no truncation)
   const renderWeeklyTop3Leaderboard = () => {
     if (weeklyTopUsers.length === 0) {
       return <NoUsersMessage>No users found for this week</NoUsersMessage>;
@@ -312,10 +312,10 @@ function LeaderboardPage() {
           <Top3Card key={user.userID} rank={index + 1}>
             <AvatarImage src={avatarImages[(user.userID % 20) + 1]} alt="User Avatar" rank={index + 1} />
             <span>{user.username}</span> {/* No truncation for top 3 users */}
-            <PointsCell>
+            <PointsCellbelow>
               <FaRegGem style={{ marginRight: "8px", color: "#fff" }} />
               {formatPoints(user.weeklyPoints)} {/* Gems and points aligned */}
-            </PointsCell>
+            </PointsCellbelow>
           </Top3Card>
         ))}
       </StyledTop3Container>

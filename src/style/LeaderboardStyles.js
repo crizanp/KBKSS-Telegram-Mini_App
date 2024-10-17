@@ -166,7 +166,24 @@ export const PointsCell = styled.td`
     color: #36a8e5; // Blue accent color for points icon
   }
 `;
+// Cell displaying points in the leaderboard
+export const PointsCellbelow = styled.td`
+  display: flex;
+  align-items: center;  // Ensures vertical alignment is centered
+  justify-content: center;  // Optional: Adjust if you want to center the content horizontally
+  padding: 12px;
+  color: #d5dbd7;
+  font-weight: bold;
+  font-size: 18px;
 
+  svg {
+    margin-right: 8px;  // Space between the icon and points
+  }
+
+  span {
+    vertical-align: middle;  // Ensures the text is aligned
+  }
+`;
 // Avatar image styling in the leaderboard
 export const UserAvatar = styled.img`
   width: 42px;
