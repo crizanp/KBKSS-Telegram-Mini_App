@@ -116,28 +116,77 @@ const UpdateButton = styled.button`
 `;
 
 const ProfilePage = () => {
-  const { firstName, username, level, tasksCompleted, gamesUnlocked, invites } = useUserInfo(); // Assuming this context provides user info
+  const { firstName, username } = useUserInfo(); // Assuming this context provides user info
   const [tgUserID, setTgUserID] = useState('');
-  const [tgUsername, setTgUsername] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [userLevelData, setUserLevelData] = useState(null); // To store user level data
   const [showEdit, setShowEdit] = useState(false); // Toggle for username editing
 
-  // Fetch Telegram user ID and info
+  // Fetch Telegram user ID, profile photo, and user level data
   useEffect(() => {
     const fetchTelegramUserInfo = async () => {
-      const userID = await getUserID(setTgUserID, setTgUsername);
+      const userID = await getUserID(setTgUserID);
       setTgUserID(userID);
+
+      // Fetch Telegram profile photo
+      if (userID) {
+        try {
+          const response = await axios.post(
+            `https://api.telegram.org/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/getUserProfilePhotos`,
+            `user_id=${userID}`,
+            {
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+            }
+          );
+
+          if (response.data.ok && response.data.result.total_count > 0) {
+            const fileId = response.data.result.photos[0][2].file_id; // Assuming the largest photo is at index [0][2]
+
+            const fileResponse = await axios.post(
+              `https://api.telegram.org/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/getFile`,
+              `file_id=${fileId}`,
+              {
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+              }
+            );
+
+            const filePath = fileResponse.data.result.file_path;
+            setProfileImageUrl(`https://api.telegram.org/file/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/${filePath}`);
+          }
+        } catch (error) {
+          console.error('Error fetching profile photo:', error);
+        }
+      }
+    };
+
+    const fetchUserLevelData = async () => {
+      try {
+        // Use tgUserID here to fetch user level data
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${tgUserID}`);
+        setUserLevelData(response.data); // Store the user level data
+      } catch (error) {
+        console.error('Error fetching user level data:', error);
+      }
     };
 
     fetchTelegramUserInfo();
-  }, []);
+
+    // Only fetch user-level data if tgUserID is available
+    if (tgUserID) {
+      fetchUserLevelData();
+    }
+  }, [tgUserID]);
 
   // Handle username update
   const handleUsernameUpdate = async () => {
     try {
       // Make a POST request to update the username in your backend
-      await axios.post(`${process.env.REACT_APP_API_URL}/user-info/update-username`, {
-        userID: tgUserID,
-        username: tgUsername || firstName, // Update with Telegram username or first name
+      await axios.put(`${process.env.REACT_APP_API_URL}/user-info/update-username/${tgUserID}`, {
+        username: username || firstName, // Update with Telegram username or first name
       });
 
       alert('Username updated successfully!');
@@ -151,11 +200,11 @@ const ProfilePage = () => {
     <ProfilePageContainer>
       {/* Top Section with Profile Image */}
       <TopSection>
-        {/* Fetch Telegram profile picture using the user ID */}
-        <ProfileImage
-          src={`https://t.me/i/userpic/320/${tgUserID}.jpg`} 
-          alt="User profile"
-        />
+        {profileImageUrl ? (
+          <ProfileImage src={profileImageUrl} alt="User profile" />
+        ) : (
+          <p>Loading profile picture...</p>
+        )}
       </TopSection>
 
       {/* Info Section */}
@@ -169,21 +218,21 @@ const ProfilePage = () => {
         {/* Display user stats */}
         <StatsContainer>
           <StatBox>
-            <StatNumber>{tasksCompleted}</StatNumber>
+            <StatNumber>{userLevelData?.actualTasksCompleted || 0}</StatNumber>
             <StatLabel>Tasks</StatLabel>
           </StatBox>
           <StatBox>
-            <StatNumber>{gamesUnlocked}</StatNumber>
+            <StatNumber>{userLevelData?.actualGamesUnlocked || 0}</StatNumber>
             <StatLabel>Games</StatLabel>
           </StatBox>
           <StatBox>
-            <StatNumber>{invites}</StatNumber>
+            <StatNumber>{userLevelData?.actualInvites || 0}</StatNumber>
             <StatLabel>Invites</StatLabel>
           </StatBox>
         </StatsContainer>
 
         {/* Current level display */}
-        <h3>Current Level: {level}</h3>
+        <h3>Current Level: {userLevelData?.currentLevel || 1}</h3>
 
         {/* Show update button if user clicked to edit */}
         {showEdit && (
