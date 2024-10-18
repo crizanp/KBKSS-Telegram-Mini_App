@@ -135,7 +135,9 @@ const ProfilePage = () => {
             console.error('Error: Unable to fetch profile photo.');
           }
         } catch (error) {
+          // Handle errors gracefully
           console.error('Error fetching profile photo:', error);
+          setProfileImageUrl(null); // Reset profile image on error
         }
       }
     };
@@ -188,7 +190,7 @@ const ProfilePage = () => {
         {profileImageUrl ? (
           <ProfileImage src={profileImageUrl} alt="User profile" />
         ) : (
-          <p>Loading profile picture...</p>
+          <p>No profile picture available.</p> // Show this when there is an error or no image
         )}
       </TopSection>
 
