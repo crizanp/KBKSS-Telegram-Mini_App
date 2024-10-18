@@ -125,17 +125,17 @@ const ProfilePage = () => {
       // Fetch Telegram profile photo via backend API
       if (userID) {
         try {
-          const response = await axios.post(`${process.env.REACT_APP_API_URL}/telegram-verify/getProfilePhoto`, {
-            userID,
-          });
+          const response = await axios.post(
+            `${process.env.REACT_APP_API_URL}/telegram-verify/getProfilePhoto`,
+            { userID },
+            {
+              responseType: 'blob', // Ensure the response is handled as a binary blob
+            }
+          );
 
-          if (response.data) {
-            const blob = new Blob([response.data], { type: 'image/jpeg' });
-            const imageUrl = URL.createObjectURL(blob);
-            setProfileImageUrl(imageUrl);
-          } else {
-            console.error('Error: Unable to fetch profile photo.');
-          }
+          // Create a URL for the blob object to display it in the img tag
+          const imageUrl = URL.createObjectURL(response.data);
+          setProfileImageUrl(imageUrl);
         } catch (error) {
           // Handle errors gracefully
           console.error('Error fetching profile photo:', error);
