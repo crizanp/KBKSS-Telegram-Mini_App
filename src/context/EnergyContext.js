@@ -63,6 +63,7 @@ export const EnergyProvider = ({ children }) => {
       if (now >= cooldownEnd) {
         // Cooldown is over, reset energy to 0 and resume regeneration
         setEnergy(0);  // Reset energy to 0 after cooldown
+        localStorage.setItem(`energy_${USER_ID}`, '0'); // Ensure energy is reset in localStorage
         setIsCooldownActive(false);
         localStorage.removeItem(`cooldownEnd_${USER_ID}`);
         return;
@@ -75,6 +76,7 @@ export const EnergyProvider = ({ children }) => {
         if (updatedCooldownTime <= 0) {
           clearInterval(cooldownInterval);
           setEnergy(0);  // Reset energy to 0 after cooldown
+          localStorage.setItem(`energy_${USER_ID}`, '0'); // Ensure energy is reset in localStorage
           setIsCooldownActive(false); // Cooldown is over
           setCooldownTimeLeft(0);
           localStorage.removeItem(`cooldownEnd_${USER_ID}`);
