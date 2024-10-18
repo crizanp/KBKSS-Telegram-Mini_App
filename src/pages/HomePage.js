@@ -13,7 +13,7 @@ import Confetti from "react-confetti";
 import celebrationSound from "../assets/celebration.mp3";
 import leaderboardImage from "../assets/leaderboard.png";
 import { CgProfile } from "react-icons/cg";
-import { useQuery, useQueryClient } from "@tanstack/react-query"; 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import styled, { keyframes } from "styled-components";
 import { useUserAvatar } from "../context/UserAvatarContext";
 import { useBackground } from "../context/BackgroundContext";
@@ -66,29 +66,32 @@ const EagleContainer = styled.div`
 
 function HomePage() {
   const { points, setPoints, pointsPerTap, userID, setUserID } = usePoints();
-  const { energy, maxEnergy, decreaseEnergy, isEnergyLoading } = useEnergy(); 
+  const {
+    energy,
+    maxEnergy,
+    decreaseEnergy,
+    isEnergyLoading,
+    cooldownTimeLeft,
+    isCooldownActive,
+  } = useEnergy();
   const [tapCount, setTapCount] = useState(0);
   const [flyingNumbers, setFlyingNumbers] = useState([]);
   const [offlinePoints, setOfflinePoints] = useState(0);
   const [isRewardAvailable, setIsRewardAvailable] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); 
-  const [showModal, setShowModal] = useState(false); 
-  const [showConfetti, setShowConfetti] = useState(false); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [rewardClaimed, setRewardClaimed] = useState(false);
-  const audioRef = useRef(null); 
+  const audioRef = useRef(null);
   const [isClosing, setIsClosing] = useState(false);
   const curvedBorderRef = useRef(null);
   const bottomMenuRef = useRef(null);
   const [remainingTime, setRemainingTime] = useState(null);
-  const {
-    activeAvatar,
-    fallbackAvatar,
-    setFallbackAvatar,
-    fetchActiveAvatar,
-  } = useUserAvatar();
+  const { activeAvatar, fallbackAvatar, setFallbackAvatar, fetchActiveAvatar } =
+    useUserAvatar();
   const queryClient = useQueryClient();
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
-  const { backgroundImage } = useBackground(); 
+  const { backgroundImage } = useBackground();
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
@@ -103,7 +106,7 @@ function HomePage() {
         `${process.env.REACT_APP_API_URL}/fallback-avatar`
       );
       if (data && data.length > 0) {
-        setFallbackAvatar(data[0].fallbackAvatarUrl); 
+        setFallbackAvatar(data[0].fallbackAvatarUrl);
       }
     } catch (error) {
       console.error("Error fetching fallback avatar:", error);
@@ -112,15 +115,15 @@ function HomePage() {
 
   useEffect(() => {
     if (!activeAvatar && !fallbackAvatar && !isLoading) {
-      fetchFallbackAvatar(); 
+      fetchFallbackAvatar();
     }
   }, [activeAvatar, fallbackAvatar, isLoading, fetchFallbackAvatar]);
 
   const memoizedEagleImage = useMemo(() => {
-    if (!activeAvatar && !fallbackAvatar) return null; 
+    if (!activeAvatar && !fallbackAvatar) return null;
     return (
       <EagleImage
-        src={activeAvatar || fallbackAvatar} 
+        src={activeAvatar || fallbackAvatar}
         alt="Avatar"
         loading="lazy"
         className="eagle-image"
@@ -151,21 +154,20 @@ function HomePage() {
       const now = new Date();
       const hoursSinceLastClaim = Math.floor(
         (now - new Date(lastDailyReward)) / (1000 * 60 * 60)
-      ); 
+      );
 
       if (hoursSinceLastClaim >= 24) {
-        setIsRewardAvailable(true); 
-        setRemainingTime(0); 
+        setIsRewardAvailable(true);
+        setRemainingTime(0);
       } else {
-        setIsRewardAvailable(false); 
+        setIsRewardAvailable(false);
 
-        
         const timeUntilNextClaim =
           24 * 60 * 60 * 1000 - (now - new Date(lastDailyReward));
-        setRemainingTime(timeUntilNextClaim); 
+        setRemainingTime(timeUntilNextClaim);
       }
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   }, [userID]);
 
@@ -177,7 +179,7 @@ function HomePage() {
         setRemainingTime((prevTime) => prevTime - 1000); // Decrease the remaining time by 1 second
       }, 1000);
     }
-    return () => clearInterval(interval); 
+    return () => clearInterval(interval);
   }, [isRewardAvailable, remainingTime]);
 
   const formatRemainingTime = (milliseconds) => {
@@ -188,7 +190,7 @@ function HomePage() {
 
     // Format as "hours:minutes:seconds"
     if (hours > 1) {
-      return `${hours} hr left`; 
+      return `${hours} hr left`;
     }
     return `${hours}h ${minutes}m ${seconds}s left`;
   };
@@ -560,6 +562,18 @@ function HomePage() {
 
       {/* Bottom container with only Energy and Claim */}
       <BottomContainer ref={bottomMenuRef} className="bottom-menu">
+      
+      <div  style={{ textAlign: "center", color:"#ccc" }}><SmallTimerText>
+          {isCooldownActive ? (
+            <span style={{paddingBottom:"0px"}}>
+              {" "}
+              {Math.floor(cooldownTimeLeft / 60000)}m{" "}
+              {Math.floor((cooldownTimeLeft % 60000) / 1000)}s
+            </span>
+          ) : (
+            <p></p>
+          )}
+        </SmallTimerText>
         <EnergyContainer>
           {/* Conditionally render based on isEnergyLoading */}
           {isEnergyLoading ? (
@@ -574,7 +588,7 @@ function HomePage() {
               </EnergyCounter>
             </>
           )}
-        </EnergyContainer>
+        </EnergyContainer></div>
 
         <Link
           to="#"
