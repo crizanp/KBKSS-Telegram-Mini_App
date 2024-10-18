@@ -122,34 +122,17 @@ const ProfilePage = () => {
       const userID = await getUserID(setTgUserID);
       setTgUserID(userID);
 
-      // Fetch Telegram profile photo
+      // Fetch Telegram profile photo via backend API
       if (userID) {
         try {
-          const response = await axios.post(
-            `https://api.telegram.org/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/getUserProfilePhotos`,
-            `user_id=${userID}`,
-            {
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-            }
-          );
+          const response = await axios.post(`${process.env.REACT_APP_API_URL}/telegram-verify/getProfilePhoto`, {
+            userID,
+          });
 
-          if (response.data.ok && response.data.result.total_count > 0) {
-            const fileId = response.data.result.photos[0][2].file_id; // Assuming the largest photo is at index [0][2]
-
-            const fileResponse = await axios.post(
-              `https://api.telegram.org/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/getFile`,
-              `file_id=${fileId}`,
-              {
-                headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded',
-                },
-              }
-            );
-
-            const filePath = fileResponse.data.result.file_path;
-            setProfileImageUrl(`https://api.telegram.org/file/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/${filePath}`);
+          if (response.data.success) {
+            setProfileImageUrl(response.data.profilePhotoUrl);
+          } else {
+            console.error('Error: Unable to fetch profile photo.');
           }
         } catch (error) {
           console.error('Error fetching profile photo:', error);
