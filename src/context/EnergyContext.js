@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getUserID } from '../utils/getUserID';
+import { getUserID } from '../utils/getUserID'; 
 import axios from 'axios';
 
 const EnergyContext = createContext();
@@ -12,13 +12,10 @@ export const EnergyProvider = ({ children }) => {
   const [USER_ID, setUSER_ID] = useState(null);
   const [isEnergyReady, setIsEnergyReady] = useState(false); // Track when energy is ready
   const [isEnergyLoading, setIsEnergyLoading] = useState(true); // Track energy loading state
-  const [cooldownTimer, setCooldownTimer] = useState(0); // Timer for the 1-hour pause
-  const [isCooldownActive, setIsCooldownActive] = useState(false); // Flag to track cooldown status
 
   const INITIAL_ENERGY = 1000; // Default initial energy for new users
   const ENERGY_REGEN_RATE = 1; // Energy regenerated per interval
   const ENERGY_REGEN_INTERVAL = 1000; // Interval for energy regeneration (1 second)
-  const COOLDOWN_DURATION = 60 * 60 * 1000; // 1-hour cooldown in milliseconds
 
   useEffect(() => {
     const fetchUserID = async () => {
@@ -65,14 +62,6 @@ export const EnergyProvider = ({ children }) => {
       // Check if energy exists in localStorage, if not, set initial energy for new users
       const savedEnergy = parseFloat(localStorage.getItem(`energy_${USER_ID}`)) || INITIAL_ENERGY;
       const lastUpdate = parseInt(localStorage.getItem(`lastUpdate_${USER_ID}`), 10) || Date.now();
-      const cooldownEndTime = parseInt(localStorage.getItem(`cooldownEndTime_${USER_ID}`), 10);
-
-      // Check if the cooldown is active
-      if (cooldownEndTime && Date.now() < cooldownEndTime) {
-        setIsCooldownActive(true);
-        setCooldownTimer(cooldownEndTime - Date.now());
-        return;
-      }
 
       const initialEnergy = regenerateEnergy(savedEnergy, lastUpdate, maxEnergy);
       setEnergy(initialEnergy); // Set the initial energy state
@@ -85,7 +74,7 @@ export const EnergyProvider = ({ children }) => {
 
   // Regenerate energy every second without user action
   useEffect(() => {
-    if (!isEnergyReady || isCooldownActive) return; // Ensure energy is ready before regenerating
+    if (!isEnergyReady) return; // Ensure energy is ready before regenerating
 
     const regenInterval = setInterval(() => {
       if (USER_ID && maxEnergy !== null) {
@@ -103,7 +92,7 @@ export const EnergyProvider = ({ children }) => {
     }, ENERGY_REGEN_INTERVAL); // Regenerate energy every second
 
     return () => clearInterval(regenInterval); // Clean up interval on component unmount
-  }, [USER_ID, maxEnergy, isEnergyReady, isCooldownActive]);
+  }, [USER_ID, maxEnergy, isEnergyReady]);
 
   // Decrease energy function (can be used from other parts of the app)
   const decreaseEnergy = (amount) => {
@@ -111,44 +100,14 @@ export const EnergyProvider = ({ children }) => {
 
     setEnergy((prevEnergy) => {
       const newEnergy = Math.max(prevEnergy - amount, 0); // Prevent energy from going below 0
-
-      if (newEnergy === 0) {
-        // Start the cooldown when energy hits 0
-        const cooldownEndTime = Date.now() + COOLDOWN_DURATION;
-        setIsCooldownActive(true);
-        setCooldownTimer(COOLDOWN_DURATION);
-        localStorage.setItem(`cooldownEndTime_${USER_ID}`, cooldownEndTime.toString());
-      }
-
       localStorage.setItem(`energy_${USER_ID}`, newEnergy.toFixed(2));
       localStorage.setItem(`lastUpdate_${USER_ID}`, Date.now().toString());
-
       return newEnergy;
     });
   };
 
-  // Handle cooldown timer logic
-  useEffect(() => {
-    if (!isCooldownActive) return;
-
-    const timerInterval = setInterval(() => {
-      setCooldownTimer((prevTime) => {
-        if (prevTime <= 1000) {
-          // Reset cooldown when timer finishes
-          clearInterval(timerInterval);
-          setIsCooldownActive(false);
-          localStorage.removeItem(`cooldownEndTime_${USER_ID}`);
-          return 0;
-        }
-        return prevTime - 1000;
-      });
-    }, 1000); // Update timer every second
-
-    return () => clearInterval(timerInterval); // Clean up timer interval on unmount
-  }, [isCooldownActive, USER_ID]);
-
   return (
-    <EnergyContext.Provider value={{ energy, maxEnergy, decreaseEnergy, isEnergyLoading, cooldownTimer, isCooldownActive }}>
+    <EnergyContext.Provider value={{ energy, maxEnergy, decreaseEnergy, isEnergyLoading, setMaxEnergy }}>
       {children}
     </EnergyContext.Provider>
   );
