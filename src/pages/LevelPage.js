@@ -304,7 +304,7 @@ const LevelPage = () => {
               width={`${calculateTotalProgress()}%`}  // Set total progress
               color={currentLevel.color}
             />
-            <GemIcon position={`${calculateTotalProgress()}%`} />
+            {/* <GemIcon position={`${calculateTotalProgress()}%`} /> */}
           </ProgressBarContainer>
         </ProgressBarWrapper>
       </LevelContent>

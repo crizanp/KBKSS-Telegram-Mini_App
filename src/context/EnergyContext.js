@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getUserID } from '../utils/getUserID'; 
+import { getUserID } from '../utils/getUserID';
 import axios from 'axios';
 
 const EnergyContext = createContext();
@@ -48,7 +48,7 @@ export const EnergyProvider = ({ children }) => {
     }
   };
 
-  // Regenerate energy based on the time elapsed since last update
+  // Regenerate energy based on the time elapsed since last update, but prevent it during cooldown
   const regenerateEnergy = (savedEnergy, lastUpdate, maxEnergy) => {
     const timeElapsed = (Date.now() - lastUpdate) / ENERGY_REGEN_INTERVAL;
     return Math.min(maxEnergy, savedEnergy + timeElapsed * ENERGY_REGEN_RATE);
@@ -119,7 +119,7 @@ export const EnergyProvider = ({ children }) => {
 
   // Regenerate energy every second without user action
   useEffect(() => {
-    if (!isEnergyReady || isCooldownActive) return; // Ensure energy is ready before regenerating
+    if (!isEnergyReady || isCooldownActive) return; // Ensure energy is ready before regenerating, stop if cooldown active
 
     const regenInterval = setInterval(() => {
       if (USER_ID && maxEnergy !== null) {
