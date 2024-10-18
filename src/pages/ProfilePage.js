@@ -126,7 +126,7 @@ const ProfilePage = () => {
       if (userID) {
         try {
           const response = await axios.post(
-            `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUserProfilePhotos`,
+            `https://api.telegram.org/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/getUserProfilePhotos`,
             `user_id=${userID}`,
             {
               headers: {
@@ -139,7 +139,7 @@ const ProfilePage = () => {
             const fileId = response.data.result.photos[0][2].file_id; // Assuming the largest photo is at index [0][2]
 
             const fileResponse = await axios.post(
-              `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getFile`,
+              `https://api.telegram.org/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/getFile`,
               `file_id=${fileId}`,
               {
                 headers: {
@@ -149,7 +149,7 @@ const ProfilePage = () => {
             );
 
             const filePath = fileResponse.data.result.file_path;
-            setProfileImageUrl(`https://api.telegram.org/file/bot<YOUR_BOT_TOKEN>/${filePath}`);
+            setProfileImageUrl(`https://api.telegram.org/file/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/${filePath}`);
           }
         } catch (error) {
           console.error('Error fetching profile photo:', error);
