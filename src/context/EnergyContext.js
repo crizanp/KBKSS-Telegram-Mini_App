@@ -20,6 +20,7 @@ export const EnergyProvider = ({ children }) => {
   const ENERGY_REGEN_INTERVAL = 1000;
   const COOLDOWN_DURATION = 60 * 2 * 1000; // 2-minute cooldown
 
+  // Fetch the user ID when the component mounts
   useEffect(() => {
     const fetchUserID = async () => {
       try {
@@ -32,6 +33,7 @@ export const EnergyProvider = ({ children }) => {
     fetchUserID();
   }, []);
 
+  // Fetch max energy based on user ID
   const fetchMaxEnergy = async (userID) => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-info/${userID}`);
@@ -47,22 +49,25 @@ export const EnergyProvider = ({ children }) => {
     }
   };
 
+  // Regenerate energy based on elapsed time since last update
   const regenerateEnergy = (savedEnergy, lastUpdate, maxEnergy) => {
     const timeElapsed = (Date.now() - lastUpdate) / ENERGY_REGEN_INTERVAL;
     return Math.min(maxEnergy, savedEnergy + timeElapsed * ENERGY_REGEN_RATE);
   };
 
-  // Prevent energy regeneration during cooldown and ensure energy resets to 1 after cooldown
+  // Handle cooldown logic: stop regeneration and reset energy to 1 after cooldown ends
   useEffect(() => {
     if (isCooldownActive) {
       const cooldownEnd = parseInt(localStorage.getItem(`cooldownEnd_${USER_ID}`), 10);
       const now = Date.now();
 
       if (now >= cooldownEnd) {
-        // Cooldown is over, reset energy to 1 and resume regeneration
+        // Cooldown is over, reset energy to 1, clear old energy values, and resume regeneration
         setEnergy(1);
+        localStorage.setItem(`energy_${USER_ID}`, '1');  // Save energy as 1 in localStorage
+        localStorage.setItem(`lastUpdate_${USER_ID}`, Date.now().toString());  // Update last update time
         setIsCooldownActive(false);
-        localStorage.removeItem(`cooldownEnd_${USER_ID}`);
+        localStorage.removeItem(`cooldownEnd_${USER_ID}`); // Remove cooldown from localStorage
         return;
       }
 
@@ -73,6 +78,7 @@ export const EnergyProvider = ({ children }) => {
         if (updatedCooldownTime <= 0) {
           clearInterval(cooldownInterval);
           setEnergy(1);  // Reset energy to 1 after cooldown
+          localStorage.setItem(`energy_${USER_ID}`, '1');  // Update local storage to 1
           setIsCooldownActive(false);
           setCooldownTimeLeft(0);
           localStorage.removeItem(`cooldownEnd_${USER_ID}`);
