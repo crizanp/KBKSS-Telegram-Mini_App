@@ -21,6 +21,7 @@ import { BackgroundProvider } from "./context/BackgroundContext";
 import { UserInfoProvider } from "./context/UserInfoContext";
 import Game from "./pages/GemsCatch";
 import WeeklyLeaderboardPage from "./pages/WeeklyLeaderboard";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -135,6 +136,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <WeeklyLeaderboardPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/profilepage"
+                      element={
+                        <ProtectedRoute>
+                          <ProfilePage />
                         </ProtectedRoute>
                       }
                     />

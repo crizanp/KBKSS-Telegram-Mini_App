@@ -95,6 +95,7 @@ const BellIcon = styled(FaBell)`
 // Styled Link to remove underline
 const StyledLink = styled(Link)`
   text-decoration: none;
+  color: inherit; /* Ensure the link inherits the color */
 `;
 
 const UserInfo = () => {
@@ -104,7 +105,11 @@ const UserInfo = () => {
     <UserInfoContainer>
       {/* Display the username and level together */}
       <UserLevelContainer>
-        <Username>Hi {firstName || 'User'}</Username>
+        {/* Wrap the Username with the StyledLink to /profilepage */}
+        <StyledLink to="/profilepage">
+          <Username>Hi {firstName || 'User'}</Username>
+        </StyledLink>
+        
         {/* Apply the styled Link here */}
         <StyledLink to="/levelpage">
           <LevelContainer>
