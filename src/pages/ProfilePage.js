@@ -1,11 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import axios from 'axios';
 import { FaTasks, FaGamepad, FaUserFriends, FaEdit } from 'react-icons/fa';
 import { useUserInfo } from '../context/UserInfoContext'; // To fetch user data
 import { getUserID } from '../utils/getUserID'; // To fetch Telegram user ID
 
-// Styled components for Profile Page
+// Skeleton animation
+const shimmer = keyframes`
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+`;
+
+// Styled components for skeleton
+const Skeleton = styled.div`
+  background: #ddd;
+  background-image: linear-gradient(90deg, #ddd 25%, #e1e1e1 50%, #ddd 75%);
+  background-size: 200px 100%;
+  animation: ${shimmer} 1.5s infinite linear;
+`;
+
+const SkeletonProfileImage = styled(Skeleton)`
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid white;
+  position: absolute;
+  bottom: -60px;
+`;
+
+const SkeletonText = styled(Skeleton)`
+  height: 20px;
+  width: 120px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+`;
+
+const SkeletonStatBox = styled(Skeleton)`
+  width: 60px;
+  height: 30px;
+  border-radius: 5px;
+`;
+
 const ProfilePageContainer = styled.div`
   background-color: #f0f4f8;
   min-height: 100vh;
@@ -114,11 +153,16 @@ const ProfilePage = () => {
   const [tgUserID, setTgUserID] = useState('');
   const [profileImageUrl, setProfileImageUrl] = useState('');
   const [userLevelData, setUserLevelData] = useState(null); // To store user level data
+  const [isLoading, setIsLoading] = useState(true); // To handle loading state
   const [showEdit, setShowEdit] = useState(false); // Toggle for username editing
+
+  // Default image URL when no profile image is available
+  const fallbackImageUrl = "https://i.postimg.cc/Y0gbLtnc/5.png";
 
   // Fetch Telegram user ID, profile photo, and user level data
   useEffect(() => {
     const fetchTelegramUserInfo = async () => {
+      setIsLoading(true); // Start loading
       const userID = await getUserID(setTgUserID);
       setTgUserID(userID);
 
@@ -133,15 +177,22 @@ const ProfilePage = () => {
             }
           );
 
-          // Create a URL for the blob object to display it in the img tag
-          const imageUrl = URL.createObjectURL(response.data);
-          setProfileImageUrl(imageUrl);
+          if (response.data.size > 0) {
+            // Create a URL for the blob object to display it in the img tag
+            const imageUrl = URL.createObjectURL(response.data);
+            setProfileImageUrl(imageUrl);
+          } else {
+            // Use fallback image if no profile image is available
+            setProfileImageUrl(fallbackImageUrl);
+          }
         } catch (error) {
           // Handle errors gracefully
           console.error('Error fetching profile photo:', error);
-          setProfileImageUrl(null); // Reset profile image on error
+          setProfileImageUrl(fallbackImageUrl); // Use fallback image on error
         }
       }
+
+      setIsLoading(false); // End loading
     };
 
     const fetchUserLevelData = async () => {
@@ -189,44 +240,58 @@ const ProfilePage = () => {
     <ProfilePageContainer>
       {/* Top Section with Profile Image */}
       <TopSection>
-        {profileImageUrl ? (
-          <ProfileImage src={profileImageUrl} alt="User profile" />
+        {isLoading ? (
+          <SkeletonProfileImage /> // Skeleton loader for profile image
         ) : (
-          <p>No profile picture available.</p> // Show this when there is an error or no image
+          <ProfileImage src={profileImageUrl || fallbackImageUrl} alt="User profile" />
         )}
       </TopSection>
 
       {/* Info Section */}
       <InfoSection>
         {/* Username and Edit */}
-        <UsernameContainer>
-          <UsernameText>{username || firstName || 'User'}</UsernameText>
-          <EditIcon onClick={() => setShowEdit(!showEdit)} />
-        </UsernameContainer>
+        {isLoading ? (
+          <SkeletonText />
+        ) : (
+          <UsernameContainer>
+            <UsernameText>{username || firstName || 'User'}</UsernameText>
+            <EditIcon onClick={() => setShowEdit(!showEdit)} />
+          </UsernameContainer>
+        )}
 
         {/* Display user stats */}
         <StatsContainer>
-          <StatBox>
-            <StatNumber>{userLevelData?.actualTasksCompleted || 0}</StatNumber>
-            <StatLabel>Tasks</StatLabel>
-          </StatBox>
-          <StatBox>
-            <StatNumber>{userLevelData?.actualGamesUnlocked || 0}</StatNumber>
-            <StatLabel>Games</StatLabel>
-          </StatBox>
-          <StatBox>
-            <StatNumber>{userLevelData?.actualInvites || 0}</StatNumber>
-            <StatLabel>Invites</StatLabel>
-          </StatBox>
+          {isLoading ? (
+            <>
+              <SkeletonStatBox />
+              <SkeletonStatBox />
+              <SkeletonStatBox />
+            </>
+          ) : (
+            <>
+              <StatBox>
+                <StatNumber>{userLevelData?.actualTasksCompleted || 0}</StatNumber>
+                <StatLabel>Tasks</StatLabel>
+              </StatBox>
+              <StatBox>
+                <StatNumber>{userLevelData?.actualGamesUnlocked || 0}</StatNumber>
+                <StatLabel>Games</StatLabel>
+              </StatBox>
+              <StatBox>
+                <StatNumber>{userLevelData?.actualInvites || 0}</StatNumber>
+                <StatLabel>Invites</StatLabel>
+              </StatBox>
+            </>
+          )}
         </StatsContainer>
 
         {/* Current level display */}
-        <h3>Current Level: {userLevelData?.currentLevel || 1}</h3>
+        {isLoading ? <SkeletonText /> : <h3>Current Level: {userLevelData?.currentLevel || 1}</h3>}
 
         {/* Show update button if user clicked to edit */}
         {showEdit && (
           <UpdateButton onClick={handleUsernameUpdate}>
-            Update Username to Telegram Username
+          Refresh with your latest Telegram username
           </UpdateButton>
         )}
       </InfoSection>
