@@ -18,7 +18,7 @@ export const EnergyProvider = ({ children }) => {
   const INITIAL_ENERGY = 1000; // Default initial energy for new users
   const ENERGY_REGEN_RATE = 1; // Energy regenerated per interval
   const ENERGY_REGEN_INTERVAL = 1000; // Interval for energy regeneration (1 second)
-  const COOLDOWN_DURATION = 60 * 60 * 1000; // 1-hour cooldown in milliseconds
+  const COOLDOWN_DURATION = 60 * 2 * 1000; // 1-hour cooldown in milliseconds
 
   useEffect(() => {
     const fetchUserID = async () => {

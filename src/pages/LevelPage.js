@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import styled, { keyframes } from "styled-components";
 import { FaCheckCircle, FaTimesCircle, FaGamepad, FaUserFriends } from "react-icons/fa";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
@@ -22,7 +23,51 @@ import {
   Avatar,
   getAvatarByLevel,
 } from "../style/LevelPageStyle";
-import styled from "styled-components";
+
+// Skeleton loading animation
+const shimmer = keyframes`
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+`;
+
+// Styled components for skeleton loading
+const Skeleton = styled.div`
+  background: #ddd;
+  background-image: linear-gradient(90deg, #ddd 25%, #e1e1e1 50%, #ddd 75%);
+  background-size: 200px 100%;
+  animation: ${shimmer} 1.5s infinite linear;
+`;
+
+const SkeletonAvatar = styled(Skeleton)`
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin: 0 auto;
+`;
+
+const SkeletonText = styled(Skeleton)`
+  width: 100px;
+  height: 20px;
+  border-radius: 10px;
+  margin: 10px 0;
+`;
+
+const SkeletonProgressBar = styled(Skeleton)`
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+`;
+
+const SkeletonCriteriaBox = styled(Skeleton)`
+  width: 80%;
+  height: 40px;
+  border-radius: 8px;
+  margin: 10px 0;
+`;
 
 // Dynamic Glowing Check Icon
 const GlowingCheckIcon = styled(FaCheckCircle)`
@@ -48,7 +93,6 @@ const NotDoneIcon = styled(FaTimesCircle)`
   font-size: 24px;
   margin-left: 10px;
   margin-right: 10px;
-
 `;
 
 // Function to fetch user level data using React Query
@@ -114,7 +158,33 @@ const LevelPage = () => {
   };
 
   if (userLoading || levelsLoading) {
-    return <div>Loading...</div>;
+    return (
+      <LevelPageContainer>
+        <UserInfo />
+        <SliderIconContainer style={{ left: "10px" }}>
+          <LeftSliderIcon />
+        </SliderIconContainer>
+
+        {/* Skeleton loading */}
+        <LevelContent>
+          <SkeletonAvatar />
+          <SkeletonText />
+          <ProgressBarWrapper>
+            <SkeletonProgressBar />
+          </ProgressBarWrapper>
+        </LevelContent>
+
+        <CriteriaContainer>
+          {[...Array(3)].map((_, index) => (
+            <SkeletonCriteriaBox key={index} />
+          ))}
+        </CriteriaContainer>
+
+        <SliderIconContainer style={{ right: "10px" }}>
+          <RightSliderIcon />
+        </SliderIconContainer>
+      </LevelPageContainer>
+    );
   }
 
   if (userError || levelsError) {
