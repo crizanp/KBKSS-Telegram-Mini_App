@@ -13,11 +13,10 @@ import Confetti from "react-confetti";
 import celebrationSound from "../assets/celebration.mp3";
 import leaderboardImage from "../assets/leaderboard.png";
 import { CgProfile } from "react-icons/cg";
-import { useQuery, useQueryClient } from "@tanstack/react-query"; // Import useQueryClient for query invalidation
+import { useQuery, useQueryClient } from "@tanstack/react-query"; 
 import styled, { keyframes } from "styled-components";
 import { useUserAvatar } from "../context/UserAvatarContext";
-import { useBackground } from "../context/BackgroundContext"; // Import the context
-
+import { useBackground } from "../context/BackgroundContext";
 import {
   HomeContainer,
   PointsDisplayContainer,
@@ -67,20 +66,20 @@ const EagleContainer = styled.div`
 
 function HomePage() {
   const { points, setPoints, pointsPerTap, userID, setUserID } = usePoints();
-  const { energy, maxEnergy, decreaseEnergy, isEnergyLoading } = useEnergy(); // Access energy loading state
+  const { energy, maxEnergy, decreaseEnergy, isEnergyLoading } = useEnergy(); 
   const [tapCount, setTapCount] = useState(0);
   const [flyingNumbers, setFlyingNumbers] = useState([]);
   const [offlinePoints, setOfflinePoints] = useState(0);
   const [isRewardAvailable, setIsRewardAvailable] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // For loading state
-  const [showModal, setShowModal] = useState(false); // Modal visibility state
-  const [showConfetti, setShowConfetti] = useState(false); // Confetti state
-  const [rewardClaimed, setRewardClaimed] = useState(false); // Reward claimed state
-  const audioRef = useRef(null); // Ref for playing sound
+  const [isLoading, setIsLoading] = useState(true); 
+  const [showModal, setShowModal] = useState(false); 
+  const [showConfetti, setShowConfetti] = useState(false); 
+  const [rewardClaimed, setRewardClaimed] = useState(false);
+  const audioRef = useRef(null); 
   const [isClosing, setIsClosing] = useState(false);
   const curvedBorderRef = useRef(null);
   const bottomMenuRef = useRef(null);
-  const [remainingTime, setRemainingTime] = useState(null); // For showing remaining time
+  const [remainingTime, setRemainingTime] = useState(null);
   const {
     activeAvatar,
     fallbackAvatar,
@@ -89,7 +88,7 @@ function HomePage() {
   } = useUserAvatar();
   const queryClient = useQueryClient();
   const [unsyncedPoints, setUnsyncedPoints] = useState(0);
-  const { backgroundImage } = useBackground(); // Use the context
+  const { backgroundImage } = useBackground(); 
 
   // Confetti window size
   const [windowSize, setWindowSize] = useState({
@@ -104,7 +103,7 @@ function HomePage() {
         `${process.env.REACT_APP_API_URL}/fallback-avatar`
       );
       if (data && data.length > 0) {
-        setFallbackAvatar(data[0].fallbackAvatarUrl); // Set fallback avatar URL
+        setFallbackAvatar(data[0].fallbackAvatarUrl); 
       }
     } catch (error) {
       console.error("Error fetching fallback avatar:", error);
@@ -113,15 +112,15 @@ function HomePage() {
 
   useEffect(() => {
     if (!activeAvatar && !fallbackAvatar && !isLoading) {
-      fetchFallbackAvatar(); // Load fallback avatar if neither is available
+      fetchFallbackAvatar(); 
     }
   }, [activeAvatar, fallbackAvatar, isLoading, fetchFallbackAvatar]);
 
   const memoizedEagleImage = useMemo(() => {
-    if (!activeAvatar && !fallbackAvatar) return null; // Don't render if neither avatar is available
+    if (!activeAvatar && !fallbackAvatar) return null; 
     return (
       <EagleImage
-        src={activeAvatar || fallbackAvatar} // Use active avatar if available, fallback otherwise
+        src={activeAvatar || fallbackAvatar} 
         alt="Avatar"
         loading="lazy"
         className="eagle-image"
@@ -144,7 +143,7 @@ function HomePage() {
   // ** Timer calculation logic **
   const checkDailyRewardAvailability = useCallback(async () => {
     try {
-      setIsLoading(true); // Set loading state while checking
+      setIsLoading(true);
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}/user-info/${userID}`
       );
@@ -152,21 +151,21 @@ function HomePage() {
       const now = new Date();
       const hoursSinceLastClaim = Math.floor(
         (now - new Date(lastDailyReward)) / (1000 * 60 * 60)
-      ); // Calculate hours since the last claim
+      ); 
 
       if (hoursSinceLastClaim >= 24) {
-        setIsRewardAvailable(true); // Reward is available, button becomes clickable
-        setRemainingTime(0); // No timer if reward is available
+        setIsRewardAvailable(true); 
+        setRemainingTime(0); 
       } else {
-        setIsRewardAvailable(false); // Reward is not available, button stays disabled
+        setIsRewardAvailable(false); 
 
-        // Calculate remaining time and update the state
+        
         const timeUntilNextClaim =
           24 * 60 * 60 * 1000 - (now - new Date(lastDailyReward));
-        setRemainingTime(timeUntilNextClaim); // Set remaining time for the next reward
+        setRemainingTime(timeUntilNextClaim); 
       }
     } finally {
-      setIsLoading(false); // End loading state
+      setIsLoading(false); 
     }
   }, [userID]);
 
@@ -178,7 +177,7 @@ function HomePage() {
         setRemainingTime((prevTime) => prevTime - 1000); // Decrease the remaining time by 1 second
       }, 1000);
     }
-    return () => clearInterval(interval); // Cleanup interval on component unmount
+    return () => clearInterval(interval); 
   }, [isRewardAvailable, remainingTime]);
 
   const formatRemainingTime = (milliseconds) => {
@@ -189,9 +188,9 @@ function HomePage() {
 
     // Format as "hours:minutes:seconds"
     if (hours > 1) {
-      return `${hours} hr left`; // Show only hours left if more than 1 hour
+      return `${hours} hr left`; 
     }
-    return `${hours}h ${minutes}m ${seconds}s left`; // Show full timer for less than 1 hour
+    return `${hours}h ${minutes}m ${seconds}s left`;
   };
 
   const initializeUser = useCallback(async () => {
