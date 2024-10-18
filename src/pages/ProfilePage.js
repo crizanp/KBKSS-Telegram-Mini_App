@@ -16,9 +16,8 @@ const ProfilePageContainer = styled.div`
   font-family: 'Orbitron', sans-serif;
 `;
 
-// Top section with blue Telegram-like background and profile image
 const TopSection = styled.div`
-  background-color: #36a8e5; // Telegram blue color
+  background-color: #36a8e5;
   width: 100%;
   height: 180px;
   display: flex;
@@ -28,7 +27,6 @@ const TopSection = styled.div`
   position: relative;
 `;
 
-// Profile image with Telegram API URL
 const ProfileImage = styled.img`
   width: 120px;
   height: 120px;
@@ -38,7 +36,6 @@ const ProfileImage = styled.img`
   bottom: -60px;
 `;
 
-// Information section styled
 const InfoSection = styled.div`
   margin-top: 80px;
   width: 90%;
@@ -50,7 +47,6 @@ const InfoSection = styled.div`
   text-align: center;
 `;
 
-// Username display with edit option
 const UsernameContainer = styled.div`
   display: flex;
   align-items: center;
@@ -69,7 +65,6 @@ const EditIcon = styled(FaEdit)`
   cursor: pointer;
 `;
 
-// Stats container for displaying tasks, games, and invites
 const StatsContainer = styled.div`
   display: flex;
   justify-content: space-around;
@@ -98,7 +93,6 @@ const StatLabel = styled.span`
   color: #555;
 `;
 
-// Styled button for username update request
 const UpdateButton = styled.button`
   background-color: #36a8e5;
   color: white;
@@ -116,7 +110,7 @@ const UpdateButton = styled.button`
 `;
 
 const ProfilePage = () => {
-  const { firstName, username } = useUserInfo(); // Assuming this context provides user info
+  const { firstName, username } = useUserInfo(); // Fetch user info from context
   const [tgUserID, setTgUserID] = useState('');
   const [profileImageUrl, setProfileImageUrl] = useState('');
   const [userLevelData, setUserLevelData] = useState(null); // To store user level data
@@ -132,7 +126,7 @@ const ProfilePage = () => {
       if (userID) {
         try {
           const response = await axios.post(
-            `https://api.telegram.org/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/getUserProfilePhotos`,
+            `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUserProfilePhotos`,
             `user_id=${userID}`,
             {
               headers: {
@@ -145,7 +139,7 @@ const ProfilePage = () => {
             const fileId = response.data.result.photos[0][2].file_id; // Assuming the largest photo is at index [0][2]
 
             const fileResponse = await axios.post(
-              `https://api.telegram.org/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/getFile`,
+              `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getFile`,
               `file_id=${fileId}`,
               {
                 headers: {
@@ -155,7 +149,7 @@ const ProfilePage = () => {
             );
 
             const filePath = fileResponse.data.result.file_path;
-            setProfileImageUrl(`https://api.telegram.org/file/bot7524880035:AAEx907UVgKlICcSV0412IRYCmJVQmHiIig/${filePath}`);
+            setProfileImageUrl(`https://api.telegram.org/file/bot<YOUR_BOT_TOKEN>/${filePath}`);
           }
         } catch (error) {
           console.error('Error fetching profile photo:', error);
@@ -165,7 +159,6 @@ const ProfilePage = () => {
 
     const fetchUserLevelData = async () => {
       try {
-        // Use tgUserID here to fetch user level data
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user-level/user-level/${tgUserID}`);
         setUserLevelData(response.data); // Store the user level data
       } catch (error) {
@@ -175,18 +168,27 @@ const ProfilePage = () => {
 
     fetchTelegramUserInfo();
 
-    // Only fetch user-level data if tgUserID is available
     if (tgUserID) {
       fetchUserLevelData();
     }
   }, [tgUserID]);
 
-  // Handle username update
+  // Handle username update from Telegram API
   const handleUsernameUpdate = async () => {
     try {
-      // Make a POST request to update the username in your backend
+      // Check if Telegram Web App provides the user data
+      const isTelegramAvailable = window.Telegram?.WebApp?.initDataUnsafe?.user;
+
+      // Extract the username or first name from Telegram Web App
+      let newUsername = isTelegramAvailable ? window.Telegram.WebApp.initDataUnsafe.user.username : null;
+      let newFirstName = isTelegramAvailable ? window.Telegram.WebApp.initDataUnsafe.user.first_name : null;
+
+      // Fallback to existing first name if username is not available
+      newUsername = newUsername || newFirstName || firstName;
+
+      // Make a PUT request to update the username in your backend
       await axios.put(`${process.env.REACT_APP_API_URL}/user-info/update-username/${tgUserID}`, {
-        username: username || firstName, // Update with Telegram username or first name
+        username: newUsername, // Update with Telegram username or first name
       });
 
       alert('Username updated successfully!');
