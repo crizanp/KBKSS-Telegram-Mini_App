@@ -129,8 +129,10 @@ const ProfilePage = () => {
             userID,
           });
 
-          if (response.data.success) {
-            setProfileImageUrl(response.data.profilePhotoUrl);
+          if (response.data) {
+            const blob = new Blob([response.data], { type: 'image/jpeg' });
+            const imageUrl = URL.createObjectURL(blob);
+            setProfileImageUrl(imageUrl);
           } else {
             console.error('Error: Unable to fetch profile photo.');
           }
