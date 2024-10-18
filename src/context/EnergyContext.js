@@ -18,7 +18,7 @@ export const EnergyProvider = ({ children }) => {
   const INITIAL_ENERGY = 1000; // Default initial energy for new users
   const ENERGY_REGEN_RATE = 1; // Energy regenerated per interval
   const ENERGY_REGEN_INTERVAL = 1000; // Interval for energy regeneration (1 second)
-  const COOLDOWN_DURATION = 60 * 2 * 1000; // 1-hour cooldown in milliseconds
+  const COOLDOWN_DURATION = 60 * 2 * 1000; // 2-min cooldown in milliseconds
 
   useEffect(() => {
     const fetchUserID = async () => {
@@ -61,7 +61,8 @@ export const EnergyProvider = ({ children }) => {
       const now = Date.now();
 
       if (now >= cooldownEnd) {
-        // Cooldown is over, resume regeneration
+        // Cooldown is over, reset energy to 0 and resume regeneration
+        setEnergy(0);  // Reset energy to 0 after cooldown
         setIsCooldownActive(false);
         localStorage.removeItem(`cooldownEnd_${USER_ID}`);
         return;
@@ -73,6 +74,7 @@ export const EnergyProvider = ({ children }) => {
         const updatedCooldownTime = cooldownEnd - Date.now();
         if (updatedCooldownTime <= 0) {
           clearInterval(cooldownInterval);
+          setEnergy(0);  // Reset energy to 0 after cooldown
           setIsCooldownActive(false); // Cooldown is over
           setCooldownTimeLeft(0);
           localStorage.removeItem(`cooldownEnd_${USER_ID}`);
@@ -149,7 +151,7 @@ export const EnergyProvider = ({ children }) => {
         const cooldownEnd = Date.now() + COOLDOWN_DURATION;
         localStorage.setItem(`cooldownEnd_${USER_ID}`, cooldownEnd.toString());
         setIsCooldownActive(true); // Activate cooldown
-        setCooldownTimeLeft(COOLDOWN_DURATION); // Start 1-hour timer
+        setCooldownTimeLeft(COOLDOWN_DURATION); // Start cooldown timer
       }
 
       localStorage.setItem(`energy_${USER_ID}`, newEnergy.toFixed(2));
