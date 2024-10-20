@@ -98,6 +98,7 @@ function HomePage() {
     width: window.innerWidth,
     height: window.innerHeight,
   });
+  
 
   // Fetch fallback avatar dynamically
   const fetchFallbackAvatar = useCallback(async () => {
@@ -214,6 +215,7 @@ function HomePage() {
     }
   }, [userID, setUserID, setPoints, checkDailyRewardAvailability]);
 
+  
   useEffect(() => {
     initializeUser(); // Call once when component mounts
   }, [initializeUser]); // Dependency is the memoized initializeUser function
@@ -246,7 +248,7 @@ function HomePage() {
     return 1;
   };
 
-  
+
   const syncPointsWithServer = useCallback(async () => {
     const pointsToSync = parseInt(
       localStorage.getItem(`unsyncedPoints_${userID}`) || 0
