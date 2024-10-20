@@ -192,7 +192,7 @@ export const MenuItem = styled.div`
   padding: 15px 20px;
   margin: 5px 5px;
   width: 50%;
-  font-size: 16px;
+  font-size: 13px;
   cursor: pointer;
   background-color: ${(props) => (props.active ? '#007bff' : '#f8f9fa')}; // Active or default background color
   color: ${(props) => (props.active ? '#fff' : '#000')}; // Text color based on active state
@@ -245,4 +245,49 @@ export const FallbackAvatarMessage = styled.p`
     font-size: 0.85rem; /* Further reduce font size for small devices */
     padding: 6px; /* Adjust padding for smaller screens */
   }
+`;
+export const LockedOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7); /* Semi-transparent dark overlay */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  pointer-events: none; /* Ensure the overlay does not capture clicks */
+  z-index: 1;
+`;
+
+export const CongratsMessage = styled.div`
+  text-align: center;
+  font-size: 18px;
+  color: green;
+  margin-top: 20px;
+`;
+
+export const SuccessIcon = styled.span`
+  font-size: 24px;
+  color: green;
+  margin-right: 10px;
+`;
+
+export const GreenSign = styled.div`
+  width: 20px;
+  height: 20px;
+  background-color: green;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 10px;
+`;
+
+export const BuyAvatarMessage = styled.div`
+  text-align: center;
+  font-size: 18px;
+  color: red;
+  margin-top: 20px;
 `;
