@@ -246,6 +246,7 @@ function HomePage() {
     return 1;
   };
 
+  
   const syncPointsWithServer = useCallback(async () => {
     const pointsToSync = parseInt(
       localStorage.getItem(`unsyncedPoints_${userID}`) || 0
