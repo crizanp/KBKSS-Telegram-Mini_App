@@ -174,7 +174,7 @@ function GamesPage() {
           </IconWrapper>
           <GameItemTitle>Catch the Eagle</GameItemTitle>
         </GameItem>  */}
-        <GameItem comingSoon>
+        <GameItem as={Link} to="/catch-the-ball">
           <IconWrapper>
             <GameIcon
               src="https://www.freeiconspng.com/thumbs/eagle-icon-png/eagle-icon-png-9.png"

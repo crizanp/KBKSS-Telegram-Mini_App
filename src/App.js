@@ -22,6 +22,7 @@ import { UserInfoProvider } from "./context/UserInfoContext";
 import Game from "./pages/GemsCatch";
 import WeeklyLeaderboardPage from "./pages/WeeklyLeaderboard";
 import ProfilePage from "./pages/ProfilePage";
+import BallCatch from "./pages/ballcatchgame";
 
 function App() {
   return (
@@ -144,6 +145,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <ProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/catch-the-ball"
+                      element={
+                        <ProtectedRoute>
+                          <BallCatch />
                         </ProtectedRoute>
                       }
                     />

@@ -8,6 +8,8 @@ import UserInfo from "../components/UserInfo";
 import { FaChevronRight } from "react-icons/fa";
 import { showToast } from "../components/ToastNotification";
 import ToastNotification from "../components/ToastNotification";
+import ConnectWallet from "../components/ConnectWallet"; // Import ConnectWallet component
+
 import SkeletonLoaderTaskPage from "../components/skeleton/SkeletonLoaderTaskPage";
 import {
   TaskContainer,
@@ -111,10 +113,23 @@ const TaskList = () => {
   const { data: tasksData, isLoading: tasksLoading, isError: tasksError } = useQuery({
     queryKey: ["tasks"],
     queryFn: fetchTasks,
+    onSuccess: (data) => {
+      // Add the Connect Wallet task manually to the fetched tasks
+      data.push({
+        _id: "connectWallet",
+        name: "Connect TON Wallet",
+        description: "Connect your TON wallet to earn 5000 gems!",
+        logo: "https://your-wallet-icon-url.com/icon.png", // Replace with an actual icon URL
+        points: 5000,
+        category: "Special",
+        taskType: "wallet",
+      });
+    },
     onError: () => {
       showToast("Error fetching tasks", "error");
     },
   });
+  
 
   // Function to verify Telegram tasks
  // Function to verify Telegram tasks
@@ -207,12 +222,16 @@ const verifyTelegramTask = async (task) => {
 
   const handleTaskClick = (task) => {
     if (isCompletedTasksLoading || completedTasks[task._id]) return;
-
+  
     setSelectedTask(task);
     setIsClaimable(false);
     setUnderModeration(false);
     setTimer(10);
     setTimerStarted(false);
+  
+    if (task.taskType === "others") {
+      setSelectedTask({ ...task, isWalletTask: true });
+    }
   };
 
   const handleStartTask = () => {
@@ -376,7 +395,19 @@ const verifyTelegramTask = async (task) => {
           </Modal>
         </ModalOverlay>
       )}
-
+{selectedTask?.isWalletTask && (
+        <ModalOverlay>
+          <Modal>
+            <ModalHeader>Connect TON Wallet</ModalHeader>
+            <ModalContent>Earn 5000 gems by connecting your TON wallet!</ModalContent>
+            <ConnectWallet onConnectionSuccess={() => {
+              setSelectedTask(null);
+              setCompletedTasks(prev => ({ ...prev, [selectedTask._id]: true }));
+            }} />
+            <CloseButtonModel onClick={() => setSelectedTask(null)} />
+          </Modal>
+        </ModalOverlay>
+      )}
       <ToastNotification />
     </>
   );
