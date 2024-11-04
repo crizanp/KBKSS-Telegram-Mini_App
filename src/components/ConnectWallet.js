@@ -1,4 +1,3 @@
-// ConnectWallet.js
 import React, { useState, useEffect } from "react";
 import { TonConnect } from "@tonconnect/sdk";
 import axios from "axios";
@@ -13,7 +12,7 @@ const ConnectWallet = ({ onConnectionSuccess }) => {
   useEffect(() => {
     // Initialize TonConnect SDK
     const tonConnectInstance = new TonConnect({
-      manifestUrl: `${window.location.origin}/tonconnect-manifest.json`, // Adjust path as needed
+      manifestUrl: `${window.location.origin}/tonconnect-manifest.json`,
     });
     setTonConnect(tonConnectInstance);
   }, []);
@@ -29,7 +28,9 @@ const ConnectWallet = ({ onConnectionSuccess }) => {
       }
 
       // Request connection to TON wallet
-      const walletConnection = await tonConnect.connect();
+      const walletConnection = await tonConnect.connect({
+        showQR: true, // Ensures QR code or UI options are shown
+      });
 
       if (walletConnection) {
         showToast("Wallet connected successfully!", "success");
