@@ -109,7 +109,7 @@ const TaskList = () => {
     }
   
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/verify-ton-connect-task`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user-info/verify-ton-connect-task`, {
         userID,
         tonWalletAddress: tonWallet.address, // Add the wallet address here
       });
