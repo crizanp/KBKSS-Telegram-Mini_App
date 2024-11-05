@@ -93,7 +93,7 @@ const TaskList = () => {
   }, []);
   const verifyTonConnectTask = async () => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/verify-ton-connect-task`, { userID });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user-info/verify-ton-connect-task`, { userID });
       return response.data.success;
     } catch (error) {
       console.error('Error verifying TON Connect task:', error);
@@ -103,20 +103,30 @@ const TaskList = () => {
   };
 
   const handleTonConnectTask = async () => {
-    if (!userID) {
-      showToast('User ID is required to verify TON Connect task', 'error');
+    if (!userID || !tonWallet) {
+      showToast('Please connect your TON wallet to complete the task', 'info');
       return;
     }
-
-    // Verify connection via backend
-    const isVerified = await verifyTonConnectTask();
-    if (isVerified) {
-      showToast('TON Connect task verified successfully!', 'success');
-      claimRewardMutation.mutate({ task: selectedTask });
-    } else {
-      showToast('TON Connect task verification failed.', 'error');
+  
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/verify-ton-connect-task`, {
+        userID,
+        tonWalletAddress: tonWallet.address, // Add the wallet address here
+      });
+  
+      if (response.data.success) {
+        showToast('TON Connect task verified successfully!', 'success');
+        setCompletedTasks((prev) => ({ ...prev, [selectedTask._id]: true }));
+        setSelectedTask(null); // Close the modal
+      } else {
+        showToast('TON Connect task verification failed.', 'error');
+      }
+    } catch (error) {
+      console.error('Error verifying TON Connect task:', error);
+      showToast('Error verifying TON Connect task', 'error');
     }
   };
+  
   const { data: userInfo, isLoading: userLoading, isError: userError } = useQuery({
     queryKey: ["userInfo", userID],
     queryFn: () => fetchUserInfo(userID),
@@ -145,34 +155,34 @@ const TaskList = () => {
   });
 
   // Function to verify Telegram tasks
- // Function to verify Telegram tasks
-// Function to verify Telegram tasks
-const verifyTelegramTask = async (task) => {
-  try {
-    const userID = await getUserID(); // Await the Promise to get the resolved user ID
+  // Function to verify Telegram tasks
+  // Function to verify Telegram tasks
+  const verifyTelegramTask = async (task) => {
+    try {
+      const userID = await getUserID(); // Await the Promise to get the resolved user ID
 
-    // Log userID for debugging
-    console.log("Verifying Telegram task for userID:", userID);
+      // Log userID for debugging
+      console.log("Verifying Telegram task for userID:", userID);
 
-    // Validate userID
-    if (!userID || (typeof userID !== "string" && typeof userID !== "number")) {
-      console.error("Invalid userID:", userID);
-      throw new Error("User ID is required and should be a valid string or number.");
+      // Validate userID
+      if (!userID || (typeof userID !== "string" && typeof userID !== "number")) {
+        console.error("Invalid userID:", userID);
+        throw new Error("User ID is required and should be a valid string or number.");
+      }
+
+      // Make the API call to verify the Telegram task
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/telegram-verify/verify-telegram-task`, {
+        userID,
+        chatIds: [task.chatId], // Ensure chatIds is passed as an array
+        actionType: task.telegramAction,
+      });
+
+      return response.data.success;
+    } catch (error) {
+      console.error("Error verifying Telegram task:", error);
+      return false;
     }
-
-    // Make the API call to verify the Telegram task
-    const response = await axios.post(`${process.env.REACT_APP_API_URL}/telegram-verify/verify-telegram-task`, {
-      userID,
-      chatIds: [task.chatId], // Ensure chatIds is passed as an array
-      actionType: task.telegramAction,
-    });
-
-    return response.data.success;
-  } catch (error) {
-    console.error("Error verifying Telegram task:", error);
-    return false;
-  }
-};
+  };
 
   const claimRewardMutation = useMutation(
     async ({ task }) => {
