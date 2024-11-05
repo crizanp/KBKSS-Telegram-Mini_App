@@ -1,12 +1,5 @@
 {
-    "manifest": {
-      "url": "https://tg-test-frontend.vercel.app",
-      "name": "IGH Mini App",
-      "iconUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTl_xEHMwv_ENI1-oaA8-yuczrD7dWrrVyfYyVGdYWFfkOANf6lP-VuFoC2hRXSzeq0bRc&usqp=CAU", 
-      "tonconnect": {
-        "authMethods": ["connect"],
-        "permissions": ["balance"] 
-      }
-    }
-  }
-  
+  "name": "IGH Mini App",
+  "url": "https://ksbsk-frontend.vercel.app",
+  "iconUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTl_xEHMwv_ENI1-oaA8-yuczrD7dWrrVyfYyVGdYWFfkOANf6lP-VuFoC2hRXSzeq0bRc&usqp=CAU"
+}
