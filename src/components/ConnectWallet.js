@@ -27,9 +27,9 @@ const ConnectWallet = ({ onConnectionSuccess }) => {
         return;
       }
 
-      // Request connection to TON wallet
+      // Use TonConnect's connect method with options to ensure modal appearance
       const walletConnection = await tonConnect.connect({
-        showQR: true, // Ensures QR code or UI options are shown
+        showQR: true, // Ensures a modal/overlay instead of a new page
       });
 
       if (walletConnection) {

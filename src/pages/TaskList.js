@@ -8,9 +8,9 @@ import UserInfo from "../components/UserInfo";
 import { FaChevronRight } from "react-icons/fa";
 import { showToast } from "../components/ToastNotification";
 import ToastNotification from "../components/ToastNotification";
-import ConnectWallet from "../components/ConnectWallet"; // Import ConnectWallet component
-
 import SkeletonLoaderTaskPage from "../components/skeleton/SkeletonLoaderTaskPage";
+import { TonConnectButton, useTonWallet } from '@tonconnect/ui-react';
+
 import {
   TaskContainer,
   TaskCategory,
@@ -77,6 +77,7 @@ const TaskList = () => {
     width: window.innerWidth,
     height: window.innerHeight,
   });
+  const tonWallet = useTonWallet(); // Hook to check TON wallet connection
 
   const queryClient = useQueryClient();
 
@@ -90,7 +91,32 @@ const TaskList = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+  const verifyTonConnectTask = async () => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/verify-ton-connect-task`, { userID });
+      return response.data.success;
+    } catch (error) {
+      console.error('Error verifying TON Connect task:', error);
+      showToast('Error verifying TON Connect task', 'error');
+      return false;
+    }
+  };
 
+  const handleTonConnectTask = async () => {
+    if (!userID) {
+      showToast('User ID is required to verify TON Connect task', 'error');
+      return;
+    }
+
+    // Verify connection via backend
+    const isVerified = await verifyTonConnectTask();
+    if (isVerified) {
+      showToast('TON Connect task verified successfully!', 'success');
+      claimRewardMutation.mutate({ task: selectedTask });
+    } else {
+      showToast('TON Connect task verification failed.', 'error');
+    }
+  };
   const { data: userInfo, isLoading: userLoading, isError: userError } = useQuery({
     queryKey: ["userInfo", userID],
     queryFn: () => fetchUserInfo(userID),
@@ -113,23 +139,10 @@ const TaskList = () => {
   const { data: tasksData, isLoading: tasksLoading, isError: tasksError } = useQuery({
     queryKey: ["tasks"],
     queryFn: fetchTasks,
-    onSuccess: (data) => {
-      // Add the Connect Wallet task manually to the fetched tasks
-      data.push({
-        _id: "connectWallet",
-        name: "Connect TON Wallet",
-        description: "Connect your TON wallet to earn 5000 gems!",
-        logo: "https://your-wallet-icon-url.com/icon.png", // Replace with an actual icon URL
-        points: 5000,
-        category: "Special",
-        taskType: "wallet",
-      });
-    },
     onError: () => {
       showToast("Error fetching tasks", "error");
     },
   });
-  
 
   // Function to verify Telegram tasks
  // Function to verify Telegram tasks
@@ -222,16 +235,12 @@ const verifyTelegramTask = async (task) => {
 
   const handleTaskClick = (task) => {
     if (isCompletedTasksLoading || completedTasks[task._id]) return;
-  
+
     setSelectedTask(task);
     setIsClaimable(false);
     setUnderModeration(false);
     setTimer(10);
     setTimerStarted(false);
-  
-    if (task.taskType === "others") {
-      setSelectedTask({ ...task, isWalletTask: true });
-    }
   };
 
   const handleStartTask = () => {
@@ -242,8 +251,16 @@ const verifyTelegramTask = async (task) => {
   };
 
   const handleClaimReward = () => {
-    setUnderModeration(true);
-    claimRewardMutation.mutate({ task: selectedTask });
+    if (selectedTask.taskType === 'tonConnect') {
+      if (!tonWallet) {
+        showToast('Please connect your TON wallet to complete the task', 'info');
+      } else {
+        handleTonConnectTask();
+      }
+    } else {
+      // Handle other task types as usual
+      claimRewardMutation.mutate({ task: selectedTask });
+    }
   };
 
   const handleClose = () => setSelectedTask(null);
@@ -365,49 +382,38 @@ const verifyTelegramTask = async (task) => {
       {selectedTask && (
         <ModalOverlay>
           <Modal>
-            <CloseButtonModel onClick={handleClose} />
-            <ModalTaskLogo
-              src={selectedTask.logo || "https://via.placeholder.com/50"}
-              alt={`${selectedTask.name} logo`}
-            />
+            <CloseButtonModel onClick={() => setSelectedTask(null)} />
+            <ModalTaskLogo src={selectedTask.logo || "https://via.placeholder.com/50"} alt={`${selectedTask.name} logo`} />
             <ModalHeader>{selectedTask.name}</ModalHeader>
             <PointsDisplayModal>
               <GemIconModal />+{selectedTask.points} GEMS
             </PointsDisplayModal>
             <ModalContent>{selectedTask.description}</ModalContent>
 
-            {isClaimable && !underModeration ? (
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <ClaimButton onClick={handleClaimReward} disabled={underModeration}>
-                  {underModeration ? "Claiming..." : "Claim Reward"}
-                </ClaimButton>
-                <PerformAgainButton onClick={handleStartTask} disabled={underModeration}>
-                  Perform Again
-                </PerformAgainButton>
-              </div>
-            ) : timerStarted && !isClaimable ? (
-              <ModalButton disabled>Processing, please wait...</ModalButton>
-            ) : !timerStarted && !isClaimable && !underModeration ? (
-              <ModalButton onClick={handleStartTask}>Start Task</ModalButton>
-            ) : null}
+            {selectedTask.taskType === 'tonConnect' ? (
+              // Show TON Connect button if it's a TON Connect task
+              <>
+                <TonConnectButton />
+                {isClaimable && !underModeration && (
+                  <ClaimButton onClick={handleClaimReward} disabled={underModeration}>
+                    {underModeration ? "Claiming..." : "Verify TON Connect Task"}
+                  </ClaimButton>
+                )}
+              </>
+            ) : (
+              // Show regular task actions for other task types
+              <>
+                {isClaimable && !underModeration && (
+                  <ClaimButton onClick={handleClaimReward} disabled={underModeration}>
+                    {underModeration ? "Claiming..." : "Claim Reward"}
+                  </ClaimButton>
+                )}
+              </>
+            )}
+          </Modal>
+        </ModalOverlay>
+      )}
 
-            {underModeration && <ModalContent>Task under moderation...</ModalContent>}
-          </Modal>
-        </ModalOverlay>
-      )}
-{selectedTask?.isWalletTask && (
-        <ModalOverlay>
-          <Modal>
-            <ModalHeader>Connect TON Wallet</ModalHeader>
-            <ModalContent>Earn 5000 gems by connecting your TON wallet!</ModalContent>
-            <ConnectWallet onConnectionSuccess={() => {
-              setSelectedTask(null);
-              setCompletedTasks(prev => ({ ...prev, [selectedTask._id]: true }));
-            }} />
-            <CloseButtonModel onClick={() => setSelectedTask(null)} />
-          </Modal>
-        </ModalOverlay>
-      )}
       <ToastNotification />
     </>
   );

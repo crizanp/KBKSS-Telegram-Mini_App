@@ -23,147 +23,151 @@ import Game from "./pages/GemsCatch";
 import WeeklyLeaderboardPage from "./pages/WeeklyLeaderboard";
 import ProfilePage from "./pages/ProfilePage";
 import BallCatch from "./pages/ballcatchgame";
+import { TonConnectUIProvider } from '@tonconnect/ui-react';
 
 function App() {
   return (
-    <PointsProvider>
-      <BackgroundProvider>
-        <UserInfoProvider>
-          <UserAvatarProvider>
-            <EnergyProvider>
-              <Router>
-                <Layout>
-                  <Routes>
-                    <Route path="/" element={<LoadingPage />} />
-                    {/* Protected Routes */}
-                    <Route
-                      path="/home"
-                      element={
-                        <ProtectedRoute>
-                          <HomePage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/earn"
-                      element={
-                        <ProtectedRoute>
-                          <TaskList />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/ecosystem"
-                      element={
-                        <ProtectedRoute>
-                          <EcosystemPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/friend"
-                      element={
-                        <ProtectedRoute>
-                          <FriendPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/airdrop"
-                      element={
-                        <ProtectedRoute>
-                          <AirdropPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/games"
-                      element={
-                        <ProtectedRoute>
-                          <GamesPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/spin-wheel"
-                      element={
-                        <ProtectedRoute>
-                          <SpinWheelPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/leaderboard"
-                      element={
-                        <ProtectedRoute>
-                          <LeaderboardPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/levelpage"
-                      element={
-                        <ProtectedRoute>
-                          <LevelPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/boosts"
-                      element={
-                        <ProtectedRoute>
-                          <BoostsPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/avatars"
-                      element={
-                        <ProtectedRoute>
-                          <AvatarPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/catch-eagle"
-                      element={
-                        <ProtectedRoute>
-                          <Game />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/weekly-leaderboard"
-                      element={
-                        <ProtectedRoute>
-                          <WeeklyLeaderboardPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/profilepage"
-                      element={
-                        <ProtectedRoute>
-                          <ProfilePage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/catch-the-ball"
-                      element={
-                        <ProtectedRoute>
-                          <BallCatch />
-                        </ProtectedRoute>
-                      }
-                    />
-                  </Routes>
-                </Layout>
-              </Router>
-            </EnergyProvider>
-          </UserAvatarProvider>
-        </UserInfoProvider>
-      </BackgroundProvider>
-    </PointsProvider>
+    <TonConnectUIProvider manifestUrl="https://ksbsk-frontend.vercel.app/tonconnect-manifest.json">
+      <PointsProvider>
+        <BackgroundProvider>
+          <UserInfoProvider>
+            <UserAvatarProvider>
+              <EnergyProvider>
+                <Router>
+                  <Layout>
+                    <Routes>
+                      <Route path="/" element={<LoadingPage />} />
+                      {/* Protected Routes */}
+                      <Route
+                        path="/home"
+                        element={
+                          <ProtectedRoute>
+                            <HomePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/earn"
+                        element={
+                          <ProtectedRoute>
+                            <TaskList />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/ecosystem"
+                        element={
+                          <ProtectedRoute>
+                            <EcosystemPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/friend"
+                        element={
+                          <ProtectedRoute>
+                            <FriendPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/airdrop"
+                        element={
+                          <ProtectedRoute>
+                            <AirdropPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/games"
+                        element={
+                          <ProtectedRoute>
+                            <GamesPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/spin-wheel"
+                        element={
+                          <ProtectedRoute>
+                            <SpinWheelPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/leaderboard"
+                        element={
+                          <ProtectedRoute>
+                            <LeaderboardPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/levelpage"
+                        element={
+                          <ProtectedRoute>
+                            <LevelPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/boosts"
+                        element={
+                          <ProtectedRoute>
+                            <BoostsPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/avatars"
+                        element={
+                          <ProtectedRoute>
+                            <AvatarPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/catch-eagle"
+                        element={
+                          <ProtectedRoute>
+                            <Game />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/weekly-leaderboard"
+                        element={
+                          <ProtectedRoute>
+                            <WeeklyLeaderboardPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/profilepage"
+                        element={
+                          <ProtectedRoute>
+                            <ProfilePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/catch-the-ball"
+                        element={
+                          <ProtectedRoute>
+                            <BallCatch />
+                          </ProtectedRoute>
+                        }
+                      />
+                    </Routes>
+                  </Layout>
+                </Router>
+              </EnergyProvider>
+            </UserAvatarProvider>
+          </UserInfoProvider>
+        </BackgroundProvider>
+      </PointsProvider>
+    </TonConnectUIProvider>
+
   );
 }
 
