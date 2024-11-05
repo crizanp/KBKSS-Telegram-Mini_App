@@ -401,17 +401,19 @@ const TaskList = () => {
             <ModalContent>{selectedTask.description}</ModalContent>
 
             {selectedTask.taskType === 'tonConnect' ? (
-              // Show TON Connect button if it's a TON Connect task
               <>
-                <TonConnectButton />
-                {isClaimable && !underModeration && (
-                  <ClaimButton onClick={handleClaimReward} disabled={underModeration}>
-                    {underModeration ? "Claiming..." : "Verify TON Connect Task"}
-                  </ClaimButton>
+                {tonWallet ? (
+                  <>
+                    <div>Connected Wallet: {tonWallet.account.address}</div>
+                    <ClaimButton onClick={handleTonConnectTask} disabled={underModeration}>
+                      {underModeration ? "Claiming..." : "Verify TON Connect Task"}
+                    </ClaimButton>
+                  </>
+                ) : (
+                  <TonConnectButton />
                 )}
               </>
             ) : (
-              // Show regular task actions for other task types
               <>
                 {isClaimable && !underModeration && (
                   <ClaimButton onClick={handleClaimReward} disabled={underModeration}>
@@ -423,8 +425,6 @@ const TaskList = () => {
           </Modal>
         </ModalOverlay>
       )}
-
-      <ToastNotification />
     </>
   );
 };
